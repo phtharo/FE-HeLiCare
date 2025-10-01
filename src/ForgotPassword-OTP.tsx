@@ -1,84 +1,285 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function ForgotPasswordOTP({ onVerify, onResend }: { onVerify?: (otp: string) => void; onResend?: () => void }) {
-  const [otp, setOtp] = useState("");
+const ForgotPasswordOTP: React.FC = () => {
+  const navigate = useNavigate();
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState<string | null>(null);
-  const [seconds, setSeconds] = useState(120); // 2 minutes (120 seconds)
+  const [timeLeft, setTimeLeft] = useState(120); // Thời gian đếm ngược (120s)
+  const [resendDisabled, setResendDisabled] = useState(true); // Trạng thái nút resend
 
+  // Reset body styles để full màn hình
   useEffect(() => {
-    if (seconds > 0) {
-      const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [seconds]);
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.body.style.width = '100vw';
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, '0')}`;
+    document.documentElement.style.margin = '0';
+    document.documentElement.style.padding = '0';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.height = '100vh';
+    document.documentElement.style.width = '100vw';
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.documentElement.style.overflow = 'auto';
+    };
+  }, []);
+
+  // Đếm ngược thời gian
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setResendDisabled(false); // Hết thời gian thì nút resend được kích hoạt
+    }
+  }, [timeLeft]);
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length <= 1) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      setError(null);
+
+      // Auto focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        nextInput?.focus();
+      }
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp) {
-      setError("OTP is required");
+  const handleVerify = () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      setError('Please enter all 6 digits');
       return;
     }
-    if (!/^[0-9]{6}$/.test(otp)) {
-      setError("OTP must be 6 digits");
-      return;
+    navigate('/forgotpassword-reset');
+  };
+
+  const handleResend = () => {
+    if (!resendDisabled) {
+      setOtp(['', '', '', '', '', '']);
+      setError(null);
+      setTimeLeft(120); // Reset thời gian đếm ngược
+      setResendDisabled(true); // Vô hiệu hóa nút resend
+      // Logic gửi lại OTP
     }
-    setError(null);
-    if (onVerify) onVerify(otp);
+  };
+
+  const handleBack = () => {
+    navigate('/forgotpassword-email');
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-white">
-      <form className="w-full max-w-md flex flex-col items-center" onSubmit={handleSubmit}>
-        <h1 className="text-3xl font-bold text-[#5985d8] mb-4 mt-8 text-center">HeLiCare</h1>
-        <div className="text-center text-base text-gray-700 mb-8">
-          An OTP has just been sent to your email address.<br />
-          Please check your inbox and enter the code below.
-        </div>
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={6}
-          className="w-full rounded-md border border-gray-300 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#5985d8] mb-2 text-center"
-          placeholder="Enter OTP code"
-          value={otp}
-          onChange={e => {
-            setOtp(e.target.value.replace(/[^0-9]/g, ""));
-            setError(null);
-          }}
-          autoComplete="one-time-code"
-        />
-        {error && <div className="text-sm text-red-500 mb-2 w-full text-left">{error}</div>}
-        <div className="flex justify-between w-full text-sm text-gray-500 mt-2 mb-1">
-          <span>Code expires in 2 minutes</span>
-          <span className="font-bold text-[#5985d8]">{formatTime(seconds)}</span>
-        </div>
-        <div className="text-xs text-gray-500 mb-4 w-full text-left">*Your OTP is confidential. Never disclose it to anyone.</div>
-        <button
-          type="submit"
-          className="w-full bg-[#5985d8] text-white rounded-md py-2 font-semibold text-base hover:bg-[#466bb3] transition-colors mb-4"
-        >
-          Verify
-        </button>
-        <button
-          type="button"
-          className="flex items-center text-[#5985d8] text-sm gap-1 hover:underline"
-          disabled={seconds > 0}
-          onClick={() => {
-            setSeconds(120);
-            setOtp(""); // Reset OTP input field
-            if (onResend) onResend();
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f9fafb',
+        padding: '2rem',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: '28rem',
+          padding: '2rem',
+          backgroundColor: 'white',
+          borderRadius: '0.75rem',
+          boxShadow:
+            '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          textAlign: 'center',
+          boxSizing: 'border-box',
+        }}
+      >
+        <h1
+          style={{
+            fontSize: '1.875rem',
+            fontWeight: '600',
+            color: '#1f2937',
+            marginBottom: '1rem',
+            margin: '0 0 1rem 0',
           }}
         >
-          <span>&rarr;</span>
-          <span>Resend OTP</span>
-        </button>
-      </form>
+          Enter OTP Code
+        </h1>
+
+        <p
+          style={{
+            fontSize: '1rem',
+            color: '#6b7280',
+            marginBottom: '2rem',
+            margin: '0 0 2rem 0',
+          }}
+        >
+          We've sent a 6-digit code to your email address
+        </p>
+
+        {/* OTP Input */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            justifyContent: 'center',
+            marginBottom: '1.5rem',
+          }}
+        >
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              id={`otp-${index}`}
+              type="text"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleOtpChange(index, e.target.value)}
+              style={{
+                width: '3rem',
+                height: '3rem',
+                textAlign: 'center',
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                border: error ? '2px solid #ef4444' : '2px solid #d1d5db',
+                borderRadius: '0.5rem',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = '#5985d8')}
+              onBlur={(e) =>
+                (e.target.style.borderColor = error ? '#ef4444' : '#d1d5db')
+              }
+            />
+          ))}
+        </div>
+
+        {error && (
+          <p
+            style={{
+              fontSize: '0.875rem',
+              color: '#ef4444',
+              marginBottom: '1.5rem',
+              margin: '0 0 1.5rem 0',
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        {/* Resend */}
+        <div style={{ marginBottom: '2rem' }}>
+          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            Didn't receive the code?{' '}
+          </span>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resendDisabled}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: resendDisabled ? '#d1d5db' : '#5985d8',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              cursor: resendDisabled ? 'not-allowed' : 'pointer',
+              textDecoration: 'none',
+            }}
+            onMouseOver={(e) =>
+              !resendDisabled &&
+              ((e.target as HTMLButtonElement).style.textDecoration = 'underline')
+            }
+            onMouseOut={(e) =>
+              !resendDisabled &&
+              ((e.target as HTMLButtonElement).style.textDecoration = 'none')
+            }
+          >
+            Resend
+          </button>
+          <span
+            style={{
+              fontSize: '0.875rem',
+              color: '#5985d8',
+              fontWeight: 'bold',
+              marginLeft: '0.5rem',
+            }}
+          >
+            {timeLeft}s
+          </span>
+        </div>
+
+        {/* Buttons */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            flexDirection: 'column',
+          }}
+        >
+          <button
+            onClick={handleVerify}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              backgroundColor: '#5985d8',
+              color: 'white',
+              borderRadius: '0.5rem',
+              fontSize: '1rem',
+              fontWeight: '600',
+              border: 'none',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+            }}
+            onMouseOver={(e) =>
+              ((e.target as HTMLButtonElement).style.backgroundColor = '#466bb3')
+            }
+            onMouseOut={(e) =>
+              ((e.target as HTMLButtonElement).style.backgroundColor = '#5985d8')
+            }
+          >
+            Verify Code
+          </button>
+
+          <button
+            onClick={handleBack}
+            style={{
+              width: '100%',
+              padding: '0.875rem',
+              backgroundColor: 'transparent',
+              color: '#6b7280',
+              borderRadius: '0.5rem',
+              fontSize: '1rem',
+              fontWeight: '500',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer',
+              boxSizing: 'border-box',
+            }}
+            onMouseOver={(e) =>
+              ((e.target as HTMLButtonElement).style.backgroundColor = '#f9fafb')
+            }
+            onMouseOut={(e) =>
+              ((e.target as HTMLButtonElement).style.backgroundColor =
+                'transparent')
+            }
+          >
+            Back
+          </button>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default ForgotPasswordOTP;

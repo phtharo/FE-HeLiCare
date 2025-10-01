@@ -78,7 +78,6 @@ export default function App() {
             onVerify={() => setPage('signup-verify')} 
           />} />
           <Route path="/resident-information" element={<ResidentFileInformation />} />
-          {/* Add other routes here as needed */}
         </Routes>
       </div>
     </Router>

@@ -1,107 +1,140 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import bgImage from "./assets/signup_background.jpg"; // Import hình nền
 
+const SignupVerify: React.FC = () => {
+  const navigate = useNavigate();
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [error, setError] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(120); // Thời gian đếm ngược (120s)
+  const [resendDisabled, setResendDisabled] = useState(true); // Trạng thái nút resend
 
-
-import { useEffect, useState } from "react";
-import bgImage from "./assets/signup_background.jpg";
-
-export default function SignupVerify({ onBack, onVerified }: { onBack?: () => void; onVerified?: () => void }) {
-  const [seconds, setSeconds] = useState(300); // 5 phút = 300 giây
-  const [otp, setOtp] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [lastOtp, setLastOtp] = useState<string | null>(null);
-
+  // Đếm ngược thời gian
   useEffect(() => {
-    if (seconds > 0) {
-      const timer = setTimeout(() => setSeconds(seconds - 1), 1000);
-      return () => clearTimeout(timer);
+    if (timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setResendDisabled(false); // Hết thời gian thì nút resend được kích hoạt
     }
-  }, [seconds]);
+  }, [timeLeft]);
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, '0')}`;
+  const handleOtpChange = (index: number, value: string) => {
+    if (value.length <= 1) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      setError(null);
+
+      // Auto focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`otp-${index + 1}`);
+        nextInput?.focus();
+      }
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp) {
-      setOtpError("OTP is required");
+  const handleVerify = () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      setError('Please enter all 6 digits');
       return;
     }
-    if (otp.length !== 6 || !/^[0-9]{6}$/.test(otp)) {
-      setOtpError("OTP must be exactly 6 digits.");
-      return;
+    navigate('/signup-setpassword');
+  };
+
+  const handleResend = () => {
+    if (!resendDisabled) {
+      setOtp(['', '', '', '', '', '']);
+      setError(null);
+      setTimeLeft(120); // Reset thời gian đếm ngược
+      setResendDisabled(true); // Vô hiệu hóa nút resend
+      // Logic gửi lại OTP
     }
-    if (lastOtp && otp === lastOtp) {
-      setOtpError("OTP must be unique and not reused.");
-      return;
-    }
-    setOtpError(null);
-    setLastOtp(otp);
-    if (onVerified) onVerified();
+  };
+
+  const handleBack = () => {
+    navigate('/signup-email'); // Điều hướng về trang trước đó
   };
 
   return (
     <div className="relative min-h-screen w-full">
+      {/* Nền hình ảnh */}
       <div
         className="fixed inset-0 w-full h-full bg-cover bg-center z-0"
         style={{ backgroundImage: `url(${bgImage})` }}
       ></div>
+
+      {/* Nội dung */}
       <div className="fixed inset-0 flex items-center justify-center z-10">
-        {/* Nút quay lại góc phải */}
-        <div className="absolute top-6 right-10 text-sm text-gray-700">
-          <button type="button" className="underline" onClick={onBack}>
-            &larr; Back
-          </button>
-        </div>
-        <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-lg mx-auto p-10 flex flex-col items-center justify-center">
-          <h2 className="text-3xl font-bold mb-4 text-center text-[#5985d8]">Verify your email</h2>
-          <div className="text-base text-gray-700 text-center mb-6">An OTP has just been sent to your email address.<br/>Please check your inbox and enter the code below.</div>
-          <form className="w-full flex flex-col gap-4" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              className={`w-full rounded-md border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#5985d8] ${otpError ? 'border-red-500' : 'border-gray-300'}`}
-              placeholder="Enter 6-digit code"
-              value={otp}
-              onChange={e => {
-                // Chỉ cho phép nhập số
-                const val = e.target.value.replace(/[^0-9]/g, "");
-                setOtp(val);
-                setOtpError(null);
-              }}
-              autoComplete="one-time-code"
-            />
-            {otpError && (
-              <div className="text-sm text-red-500 mt-1">{otpError}</div>
-            )}
-            <div className="flex justify-between text-sm text-gray-500 mt-2 mb-1">
-              <span>Code expires in 5 minutes</span>
-              <span>{formatTime(seconds)}</span>
-            </div>
-            <div className="text-xs text-gray-500 mb-2">*Your OTP is confidential. Never disclose it to anyone.</div>
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+          <h1 className="!text-xl font-bold text-[#5985d8] mb-4 text-center">Verify your email</h1>
+          <p className="text-sm text-gray-600 text-center mb-6">
+            An OTP has just been sent to your email address.<br />
+            Please check your inbox and enter the code below.
+          </p>
+
+          {/* OTP Input */}
+          <div className="flex justify-center gap-2 mb-4">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                id={`otp-${index}`}
+                type="text"
+                inputMode="numeric" // Chỉ cho phép nhập số
+                maxLength={1}
+                value={digit}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, ""); // Loại bỏ ký tự không phải số
+                  handleOtpChange(index, value);
+                }}
+                className="w-12 h-12 text-center text-lg font-semibold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#5985d8]"
+              />
+            ))}
+          </div>
+          {error && <p className="text-sm text-red-500 mb-4 text-center">{error}</p>}
+
+          {/* Resend */}
+          <div className="flex justify-center items-center text-sm text-gray-500 mb-4">
+            <span>Didn't receive the code? </span>
             <button
-              type="submit"
-              className="w-full bg-[#5985d8] text-white rounded-md py-3 font-semibold text-lg hover:bg-[#466bb3] transition-colors"
+              type="button"
+              onClick={handleResend}
+              disabled={resendDisabled}
+              className={`ml-2 ${
+                resendDisabled
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-[#5985d8] hover:underline"
+              }`}
             >
-              Verify
+              Resend
             </button>
-            <div className="flex items-center mt-2">
-              <button
-                type="button"
-                className={`flex items-center text-[#5985d8] text-sm ${seconds > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={seconds > 0}
-                onClick={() => setSeconds(300)}
-              >
-                <span className="text-[#5985d8]">&rarr;</span>
-                <span className="ml-1 underline">Didn’t receive the code? Resend</span>
-              </button>
-            </div>
-          </form>
+            <span className="ml-4 font-bold text-[#5985d8]">{timeLeft}s</span>
+          </div>
+
+          {/* Verify Button */}
+          <button
+            type="button"
+            onClick={handleVerify}
+            className="w-full bg-[#5985d8] text-white rounded-md py-2 font-semibold text-sm hover:bg-[#466bb3] mt-4"
+          >
+            Verify Code
+          </button>
+
+          {/* Back Button */}
+          <button
+            type="button"
+            onClick={handleBack}
+            className="w-full bg-gray-200 text-gray-700 rounded-md py-2 font-semibold text-sm hover:bg-gray-300 mt-4"
+          >
+            Back
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default SignupVerify;

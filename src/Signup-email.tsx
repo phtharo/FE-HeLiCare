@@ -1,14 +1,38 @@
-import { useState } from "react";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import bgImage from "./assets/signup_background.jpg";
 
-interface SignupEmailProps {
-  onLoginClick: () => void;
-  onVerify: () => void;
+function validateEmail(email: string): { valid: boolean; error?: string } {
+  // Simple email regex for demonstration purposes
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) {
+    return { valid: false, error: "Email is required." };
+  }
+  if (!re.test(email)) {
+    return { valid: false, error: "Please enter a valid email address." };
+  }
+  return { valid: true };
 }
 
-const SignupEmail: React.FC<SignupEmailProps> = ({ onLoginClick, onVerify }) => {
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
+const SignupEmail: React.FC = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const validation = validateEmail(email);
+    setError(validation.error || null);
+    
+    if (validation.valid) {
+      navigate('/signup-verify');
+    }
+  };
+
+  const handleLoginClick = () => {
+    navigate('/signin');
+  };
+
   return ( 
     <div className="relative min-h-screen w-full">
       <div
@@ -19,7 +43,7 @@ const SignupEmail: React.FC<SignupEmailProps> = ({ onLoginClick, onVerify }) => 
         {/* Link đăng nhập góc phải */}
         <div className="absolute top-6 right-10 text-sm text-gray-700">
           Already have an account?{' '}
-          <button type="button" className="underline" onClick={onLoginClick}>
+          <button type="button" className="underline" onClick={handleLoginClick}>
             Log in
           </button>
         </div>
@@ -27,28 +51,14 @@ const SignupEmail: React.FC<SignupEmailProps> = ({ onLoginClick, onVerify }) => 
           <h2 className="text-3xl font-semibold mb-8 text-center text-[#5985d8]">Create an account</h2>
           <form
             className="w-full flex flex-col gap-6"
-            onSubmit={e => {
-              e.preventDefault();
-              // Validate email
-              if (!email) {
-                setEmailError("Email is required");
-                return;
-              }
-              const emailRegex = /^[a-zA-Z0-9]+([._+-]?[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
-              if (!emailRegex.test(email)) {
-                setEmailError("Invalid email address");
-                return;
-              }
-              setEmailError(null);
-              onVerify();
-            }}
+            onSubmit={handleSubmit}
           >
             <label htmlFor="email" className="block text-sm font-normal text-gray-700 -mb-2">
               Email address
             </label>
             <input
               type="email"
-              className={`w-full rounded-md border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#5985d8] mt-0 ${emailError ? 'border-red-500' : 'border-gray-400'}`}
+              className={`w-full rounded-md border px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#5985d8] mt-0 ${error ? 'border-red-500' : 'border-gray-400'}`}
               placeholder="example@gmail.com"
               aria-label="Email"
               id="email"
@@ -56,12 +66,12 @@ const SignupEmail: React.FC<SignupEmailProps> = ({ onLoginClick, onVerify }) => 
               value={email}
               onChange={e => {
                 setEmail(e.target.value);
-                setEmailError(null);
+                setError(null);
               }}
               autoComplete="email"
             />
-            {emailError && (
-              <div className="text-sm text-red-500 mt-1">{emailError}</div>
+            {error && (
+              <div className="text-sm text-red-500 mt-1">{error}</div>
             )}
             <button
               type="submit"
