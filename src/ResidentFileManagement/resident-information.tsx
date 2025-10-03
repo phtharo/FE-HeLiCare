@@ -43,14 +43,32 @@ type UploadItem = {
 const uid = () => Math.random().toString(36).slice(2);
 
 function ageFromDob(dobStr?: string): string {
-    if (!dobStr) return "";
-    const dob = new Date(dobStr);
-    if (isNaN(dob.getTime())) return "";
-    const now = new Date();
-    let age = now.getFullYear() - dob.getFullYear();
-    const m = now.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-    return String(Math.max(0, age));
+  if (!dobStr) return "";
+  const dob = new Date(dobStr);
+  if (isNaN(dob.getTime())) return "";
+  const now = new Date();
+  let age = now.getFullYear() - dob.getFullYear();
+  const m = now.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+  return String(Math.max(0, age));
+}
+
+function isValidDob(dobStr: string): boolean {
+  const dob = new Date(dobStr);
+  const now = new Date();
+  const minYear = now.getFullYear() - 130; // Ngưỡng tối đa: 130 tuổi
+  const maxYear = now.getFullYear(); // Ngưỡng tối thiểu: ≤ ngày hôm nay
+
+  if (isNaN(dob.getTime())) return false; // Không phải ngày hợp lệ
+  if (dob > now) return false; // Không thể lớn hơn ngày hiện tại
+  if (dob.getFullYear() < minYear || dob.getFullYear() > maxYear) return false; // Giới hạn tuổi hợp lý
+
+  return true;
+}
+
+function isValidPhone(phone: string): boolean {
+  const regex = /^(0\d{9}|\+84\d{9})$/; // Bắt đầu bằng 0 hoặc +84, theo sau là 9 chữ số
+  return regex.test(phone);
 }
 
 const ResidentFileInformation: React.FC = () => {
@@ -74,7 +92,17 @@ const ResidentFileInformation: React.FC = () => {
     const [uploading, setUploading] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const requiredOk = Boolean(fullName && dob && ec.name && ec.phone);
+    const [activeButton, setActiveButton] = useState<string | null>(null);
+    const [showNotification, setShowNotification] = useState<boolean>(false);
+
+    const requiredOk = Boolean(
+      fullName.trim() &&
+      dob.trim() &&
+      isValidDob(dob) &&
+      ec.name.trim() &&
+      isValidPhone(ec.phone) &&
+      medications.every((m) => m.name.trim() && m.dose.trim() && m.freq.trim())
+    );
 
     // Allergies
     const addAllergy = (): void => {
@@ -128,21 +156,25 @@ const ResidentFileInformation: React.FC = () => {
 
     // Submit (prototype)
     const onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-        e.preventDefault();
-        if (!requiredOk) return;
-        const payload = {
-            full_name: fullName,
-            dob,
-            age,
-            gender,
-            emergency_contact: ec,
-            allergies,
-            medications: medications.filter((m) => (m.name + m.dose + m.freq).trim() !== "").map(({ id, ...rest }) => rest),
-            notes,
-            documents: uploads.filter((u) => u.status === "done").map((u) => ({ name: u.file.name, size: u.file.size })),
-        };
-        alert(`[Prototype] Resident created!
-${JSON.stringify(payload, null, 2)}`);
+      e.preventDefault();
+      if (!requiredOk) {
+        alert("Please fill in all required fields.");
+        return;
+      }
+      const payload = {
+        full_name: fullName,
+        dob,
+        age,
+        gender,
+        emergency_contact: ec,
+        allergies,
+        medications: medications.filter((m) => (m.name + m.dose + m.freq).trim() !== "").map(({ id, ...rest }) => rest),
+        notes,
+        documents: uploads.filter((u) => u.status === "done").map((u) => ({ name: u.file.name, size: u.file.size })),
+      };
+      console.log(payload);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000); // Thông báo sẽ biến mất sau 3 giây
     };
 
     useEffect(() => {
@@ -176,66 +208,77 @@ ${JSON.stringify(payload, null, 2)}`);
 
             <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
                 <div className="flex min-h-full gap-4 lg:gap-6">
-                    <aside className="w-[72px] shrink-0">
-                        <div className="h-full flex flex-col items-center">
-                            <div className="mt-4 w-[56px] rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col items-center py-4 gap-5">
+                    <aside className="w-[240px] shrink-0">
+                        <div className="h-full flex flex-col items-start">
+                            <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
                                 <button
                                     type="button"
-                                    aria-label="Dashboard"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-[#222] text-white shadow flex items-center justify-center"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Medical")}
                                 >
-                                    <LayoutGrid size={22} className="block" />
+                                    Medical & Health Record Management
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex items-center justify-center"
-                                    aria-label="Care"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("DailyLife")}
                                 >
-                                    <Stethoscope size={20} className="block" />
+                                    Daily Life & Nutrition Management
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex items-center justify-center"
-                                    aria-label="Records"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Incident")}
                                 >
-                                    <ClipboardList size={20} className="block" />
+                                    Incident & Emergency Handling
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex flex-col items-center justify-center leading-none"
-                                    aria-label="SOS"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Room")}
                                 >
-                                    <AlertTriangle size={18} className="block" />
-                                    <span className="mt-0.5 text-[10px] uppercase tracking-[0.02em] text-slate-700">SOS</span>
+                                    Room & Facility Management
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex items-center justify-center"
-                                    aria-label="Photos"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Communication")}
                                 >
-                                    <Camera size={20} className="block" />
+                                    Communication & Reporting
                                 </button>
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex items-center justify-center"
-                                    aria-label="Documents"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Visitation")}
                                 >
-                                    <FileText size={20} className="block" />
+                                    Visitation & Access Control
                                 </button>
-
-                                <div className="mt-auto" />
 
                                 <button
                                     type="button"
-                                    className="h-12 w-12 rounded-2xl p-0 bg-white text-slate-700 ring-1 ring-black/5 hover:bg-slate-50 flex items-center justify-center"
-                                    aria-label="Back"
+                                    className={`w-full text-left px-4 py-2 font-semibold ${
+                                        activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                    }`}
+                                    onClick={() => setActiveButton("Payments")}
                                 >
-                                    <ArrowLeft size={20} className="block" />
+                                    Payments & Additional Services
                                 </button>
                             </div>
                         </div>
@@ -248,7 +291,7 @@ ${JSON.stringify(payload, null, 2)}`);
                                     <div className="absolute right-0 top-1/2 -translate-y-1/2 rounded-xl bg-slate-50 px-4 py-2 text-xs text-slate-600 hidden md:block">
                                         <span className="font-medium">Audit:</span> staff & timestamp will be recorded on create.
                                     </div>
-                                    <div className="text-center">
+                                    <div className="text-left">
                                         <h1 className="text-xl font-semibold text-gray-900">Resident Information</h1>
                                         <p className="text-sm text-gray-500">August 12, 2021</p>
                                     </div>
@@ -280,8 +323,21 @@ ${JSON.stringify(payload, null, 2)}`);
                                                         <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <Label>Date of birth *</Label>
-                                                        <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+                                                        <Label>Date of Birth *</Label>
+                                                        <Input
+                                                            type="date"
+                                                            value={dob}
+                                                            onChange={(e) => {
+                                                              const value = e.target.value;
+                                                              if (isValidDob(value)) {
+                                                                setDob(value);
+                                                              } else {
+                                                                alert("Invalid Date of Birth. Please enter a valid date.");
+                                                              }
+                                                            }}
+                                                            placeholder="YYYY-MM-DD"
+                                                            className="bg-white"
+                                                        />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Age</Label>
@@ -311,16 +367,27 @@ ${JSON.stringify(payload, null, 2)}`);
                                                 </CardHeader>
                                                 <CardContent className="grid grid-cols-1 gap-4">
                                                     <div className="flex flex-col gap-1">
-                                                        <Label>Name</Label>
-                                                        <Input value={ec.name} onChange={(e) => setEc({ ...ec, name: e.target.value })} />
+                                                      <Label>Name</Label>
+                                                      <Input value={ec.name} onChange={(e) => setEc({ ...ec, name: e.target.value })} />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <Label>Relationship</Label>
-                                                        <Input value={ec.relation} onChange={(e) => setEc({ ...ec, relation: e.target.value })} placeholder="Son/Daughter…" />
+                                                      <Label>Relationship</Label>
+                                                      <Input value={ec.relation} onChange={(e) => setEc({ ...ec, relation: e.target.value })} placeholder="Son/Daughter…" />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <Label>Phone *</Label>
-                                                        <Input value={ec.phone} onChange={(e) => setEc({ ...ec, phone: e.target.value })} placeholder="+84…" />
+                                                      <Label>Phone *</Label>
+                                                      <Input
+                                                        value={ec.phone}
+                                                        onChange={(e) => {
+                                                          const value = e.target.value;
+                                                          if (isValidPhone(value)) {
+                                                            setEc({ ...ec, phone: value });
+                                                          } else {
+                                                            alert("Invalid phone number. Please enter a valid phone number.");
+                                                          }
+                                                        }}
+                                                        placeholder="+84xxxxxxxxx or 0xxxxxxxxx"
+                                                      />
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -430,8 +497,8 @@ ${JSON.stringify(payload, null, 2)}`);
                                         <div className="lg:col-span-1">
                                             <Card className="rounded-2xl">
                                                 <CardHeader>
-                                                    <CardTitle>Upload Documents</CardTitle>
-                                                    <CardDescription>PDF, JPG, PNG up to 20MB each</CardDescription>
+                                                    <CardTitle className="text-lg font-bold text-gray-900">Upload Documents</CardTitle>
+                                                    <CardDescription className="text-sm text-gray-700 hover:text-gray-900">PDF, JPG, PNG up to 20MB each</CardDescription>
                                                 </CardHeader>
                                                 <CardContent>
                                                     <input
@@ -447,7 +514,7 @@ ${JSON.stringify(payload, null, 2)}`);
                                                     />
                                                     <Button
                                                         type="button"
-                                                        className="w-full mb-3"
+                                                        className="w-full mb-3 bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition duration-300"
                                                         onClick={() => fileInputRef.current?.click()}
                                                         disabled={uploading}
                                                     >
@@ -455,20 +522,20 @@ ${JSON.stringify(payload, null, 2)}`);
                                                     </Button>
                                                     <div className="space-y-2">
                                                         {uploads.map((u) => (
-                                                            <div key={u.id} className="flex items-center gap-2">
-                                                                <div className="flex-1 truncate">{u.file.name}</div>
+                                                            <div key={u.id} className="flex items-center gap-2 bg-gray-100 p-2 rounded-md">
+                                                                <div className="flex-1 truncate font-medium text-gray-800">{u.file.name}</div>
                                                                 <div className="w-24">
                                                                     <Progress value={u.progress} />
                                                                 </div>
                                                                 <Button type="button" size="icon" variant="ghost" onClick={() => removeUpload(u.id)}>
-                                                                    <X className="size-4" />
+                                                                    <X className="size-4 text-red-500 hover:text-red-600" />
                                                                 </Button>
                                                             </div>
                                                         ))}
                                                     </div>
                                                     <Button
                                                         type="button"
-                                                        className="w-full mt-3"
+                                                        className="w-full mt-3 bg-[#5985D8] text-white font-semibold hover:bg-[#4a74c1]"
                                                         onClick={simulateUpload}
                                                         disabled={uploading || uploads.length === 0}
                                                     >
@@ -478,9 +545,20 @@ ${JSON.stringify(payload, null, 2)}`);
                                             </Card>
                                         </div>
 
-                                        <div className="lg:col-span-3 flex justify-end">
-                                            <Button type="submit" disabled={!requiredOk || uploading}>
-                                                Create Resident
+                                        <div className="lg:col-span-3 flex justify-end gap-4">
+                                            <Button
+                                                type="button"
+                                                className="bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-md"
+                                                onClick={() => console.log("Cancel clicked")}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                className="bg-blue-500 text-white font-semibold hover:bg-blue-600 px-4 py-2 rounded-md"
+                                                disabled={!requiredOk || uploading}
+                                            >
+                                                Save & Create
                                             </Button>
                                         </div>
                                     </form>
