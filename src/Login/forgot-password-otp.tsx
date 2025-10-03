@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const ForgotPasswordOTP: React.FC = () => {
+interface ForgotPasswordOTPProps {
+  onVerify: () => void;
+  onResend: () => void;
+}
+
+const ForgotPasswordOTP: React.FC<ForgotPasswordOTPProps> = () => {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState<string | null>(null);

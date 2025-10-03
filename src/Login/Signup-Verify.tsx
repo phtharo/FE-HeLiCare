@@ -2,7 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/signup_background.jpg"; // Import hình nền
 
-const SignupVerify: React.FC = () => {
+interface SignupVerifyProps {
+  onBack: () => void;
+  onVerified: () => void;
+}
+
+const SignupVerify: React.FC<SignupVerifyProps> = () => {
   const navigate = useNavigate();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState<string | null>(null);

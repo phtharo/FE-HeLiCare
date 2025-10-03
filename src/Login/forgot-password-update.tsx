@@ -2,7 +2,13 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
-const ForgotPasswordUpdate: React.FC = () => {
+interface ForgotPasswordUpdateProps {
+  onBackToLogin: () => void;
+}
+
+const ForgotPasswordUpdate: React.FC<ForgotPasswordUpdateProps> = ({
+  onBackToLogin,
+}) => {
   const navigate = useNavigate();
 
   const handleBackToLogin = () => {
