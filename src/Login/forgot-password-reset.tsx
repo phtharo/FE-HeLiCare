@@ -11,7 +11,11 @@ function validatePassword(pw: string) {
   };
 }
 
-const ForgotPasswordReset: React.FC = () => {
+interface ForgotPasswordResetProps {
+  onSuccess: () => void;
+}
+
+const ForgotPasswordReset: React.FC<ForgotPasswordResetProps> = ({ onSuccess }) => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

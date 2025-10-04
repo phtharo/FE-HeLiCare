@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
-export default function ForgotPasswordEmail() {
+interface ForgotPasswordEmailProps {
+    onSend: () => void;
+}
+
+const ForgotPasswordEmail: React.FC<ForgotPasswordEmailProps> = ({ onSend }) => {
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -26,10 +30,6 @@ export default function ForgotPasswordEmail() {
             // Simulate API call
             navigate('/forgotpassword-otp'); // Thay vì onSend()
         }
-    };
-
-    const handleBack = () => {
-        navigate('/signin'); // Điều hướng về trang đăng nhập
     };
 
     return (
@@ -59,12 +59,14 @@ export default function ForgotPasswordEmail() {
                 {/* Nút Back */}
                 <button
                     type="button"
-                    onClick={handleBack}
+                    onClick={() => navigate("/")}
                     className="w-full bg-gray-200 text-gray-700 rounded-md py-2 font-semibold text-base hover:bg-gray-300 transition-colors"
                 >
-                    Back
+                    Back to Signin
                 </button>
             </form>
         </div>
     );
 }
+
+export default ForgotPasswordEmail;

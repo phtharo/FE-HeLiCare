@@ -14,7 +14,12 @@ function validateEmail(email: string): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-const SignupEmail: React.FC = () => {
+interface SignupEmailProps {
+  onLoginClick: () => void;
+  onVerify: () => void;
+}
+
+const SignupEmail: React.FC<SignupEmailProps> = ({ onLoginClick, onVerify }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,12 +30,8 @@ const SignupEmail: React.FC = () => {
     setError(validation.error || null);
     
     if (validation.valid) {
-      navigate('/signup-verify');
+      onVerify();
     }
-  };
-
-  const handleLoginClick = () => {
-    navigate('/signin');
   };
 
   return ( 
@@ -43,7 +44,7 @@ const SignupEmail: React.FC = () => {
         {/* Link đăng nhập góc phải */}
         <div className="absolute top-6 right-10 text-sm text-gray-700">
           Already have an account?{' '}
-          <button type="button" className="underline" onClick={handleLoginClick}>
+          <button type="button" className="underline" onClick={onLoginClick}>
             Log in
           </button>
         </div>
