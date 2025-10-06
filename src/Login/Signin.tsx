@@ -87,6 +87,13 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
     };
   }, []);
 
+  useEffect(() => {
+    setEmail("");
+    setPassword("");
+    setEmailError(null);
+    setPasswordError(null);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 

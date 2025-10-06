@@ -12,7 +12,11 @@ function validatePassword(password: string) {
   };
 }
 
-const SignupSetPassword: React.FC = () => {
+interface SignupSetPasswordProps {
+  onLoginClick: () => void;
+}
+
+const SignupSetPassword: React.FC<SignupSetPasswordProps> = ({ onLoginClick }) => {
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -55,10 +59,6 @@ const SignupSetPassword: React.FC = () => {
     }
   };
 
-
-  const onLoginClick = () => {
-    navigate("/signin");
-  };
 
   return (
     <div className="relative min-h-screen w-full">
