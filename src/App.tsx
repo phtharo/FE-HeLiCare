@@ -1,14 +1,16 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Signin from './Login/Signin';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+
+
 import SignupEmail from './Login/Signup-Email';
 import SignupVerify from './Login/Signup-Verify';
 import SignupSetPassword from './Login/Signup-Setpassword';
 import ForgotPasswordEmail from './Login/forgot-password-email';
 import ForgotPasswordOTP from './Login/forgot-password-otp';
 import ForgotPasswordReset from './Login/forgot-password-reset';
+import Signin from './Login/Signin';
 import ForgotPasswordUpdate from './Login/forgot-password-update';
-// Update the import path and filename casing as needed to match your file system
-import ResidentFileInformation from './ResidentFileManagement/Resident-Information';
+
+import ResidentFileInformation from './ResidentFileManagement/ResidentFileInformation';
 import './App.css';
 
 export default function App() {
@@ -18,71 +20,131 @@ export default function App() {
         <Routes>
           <Route
             path="/"
-            element={
-              <Signin
-                onSignupClick={() => (window.location.href = '/signup-email')}
-                onForgotPasswordClick={() => (window.location.href = '/forgotpassword-email')}
-              />
-            }
+            element={<SigninWrapper />}
           />
 
           <Route
             path="/forgotpassword-email"
-            element={<ForgotPasswordEmail />}
+            element={<ForgotPasswordEmailWrapper />}
           />
 
           <Route
             path="/forgotpassword-otp"
-            element={
-              <ForgotPasswordOTP
-                onVerify={() => (window.location.href = '/forgotpassword-reset')}
-                onResend={() => {
-                  // Implement resend logic here, or show a notification
-                }}
-              />
-            }
+            element={<ForgotPasswordOTPWrapper />}
           />
 
           <Route
             path="/forgotpassword-reset"
-            element={<ForgotPasswordReset />}
+            element={<ForgotPasswordResetWrapper />}
           />
 
           <Route
             path="/signup-email"
-            element={
-              <SignupEmail
-                onLoginClick={() => (window.location.href = '/')}
-                onVerify={() => (window.location.href = '/signup-verify')}
-              />
-            }
+            element={<SignupEmailWrapper />}
           />
 
           <Route
             path="/signup-verify"
-            element={<SignupVerify />}
+            element={<SignupVerifyWrapper />}
           />
 
           <Route
             path="/signup-setpassword"
-            element={
-              <SignupSetPassword
-                onLoginClick={() => (window.location.href = '/')}
-              />
-            }
+            element={<SignupSetPasswordWrapper />}
           />
 
           <Route
             path="/forgotpassword-update"
-            element={<ForgotPasswordUpdate />}
+            element={<ForgotPasswordUpdateWrapper />}
           />
 
-          <Route
-            path="/resident-information"
-            element={<ResidentFileInformation />}
-          />
+          <Route path="/resident-information" element={<ResidentFileInformation />} />
         </Routes>
       </div>
     </Router>
   );
 }
+
+// Wrapper cho Signin
+const SigninWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <Signin
+      onSignupClick={() => navigate('/signup-email')}
+      onForgotPasswordClick={() => navigate('/forgotpassword-email')}
+    />
+  );
+};
+
+// Wrapper cho ForgotPasswordEmail
+const ForgotPasswordEmailWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <ForgotPasswordEmail
+      onSend={() => navigate('/forgotpassword-otp')}
+    />
+  );
+};
+
+// Wrapper cho ForgotPasswordOTP
+const ForgotPasswordOTPWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <ForgotPasswordOTP
+      onVerify={() => navigate('/forgotpassword-reset')}
+      onResend={() => navigate('/forgotpassword-otp')}
+    />
+  );
+};
+
+// Wrapper cho ForgotPasswordReset
+const ForgotPasswordResetWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <ForgotPasswordReset
+      onSuccess={() => navigate('/forgotpassword-update')}
+    />
+  );
+};
+
+// Wrapper cho SignupEmail
+const SignupEmailWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <SignupEmail
+      onLoginClick={() => navigate('/')}
+      onVerify={() => navigate('/signup-verify')}
+    />
+  );
+};
+
+// Wrapper cho SignupVerify
+const SignupVerifyWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <SignupVerify
+      onBack={() => navigate('/signup-email')}
+      onVerified={() => navigate('/signup-setpassword')}
+    />
+  );
+};
+
+// Wrapper cho SignupSetPassword
+const SignupSetPasswordWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <SignupSetPassword
+      onLoginClick={() => navigate('/')}
+    />
+  );
+};
+
+// Wrapper cho ForgotPasswordUpdate
+const ForgotPasswordUpdateWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <ForgotPasswordUpdate
+      onBackToLogin={() => navigate('/')}
+    />
+  );
+};
