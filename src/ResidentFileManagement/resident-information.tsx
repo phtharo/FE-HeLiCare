@@ -8,16 +8,9 @@ import { Textarea } from "../components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "../components/ui/table";
 import { Progress } from "../components/ui/progress";
-import {
-    FileText,
-    AlertTriangle,
-    Camera,
-    X,
-    LayoutGrid,
-    Stethoscope,
-    ClipboardList,
-    ArrowLeft
-} from "lucide-react";
+import { X, CalendarIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
 type Medication = {
     id: string;
@@ -43,32 +36,32 @@ type UploadItem = {
 const uid = () => Math.random().toString(36).slice(2);
 
 function ageFromDob(dobStr?: string): string {
-  if (!dobStr) return "";
-  const dob = new Date(dobStr);
-  if (isNaN(dob.getTime())) return "";
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const m = now.getMonth() - dob.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-  return String(Math.max(0, age));
+    if (!dobStr) return "";
+    const dob = new Date(dobStr);
+    if (isNaN(dob.getTime())) return "";
+    const now = new Date();
+    let age = now.getFullYear() - dob.getFullYear();
+    const m = now.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
+    return String(Math.max(0, age));
 }
 
 function isValidDob(dobStr: string): boolean {
-  const dob = new Date(dobStr);
-  const now = new Date();
-  const minYear = now.getFullYear() - 130; // Ngưỡng tối đa: 130 tuổi
-  const maxYear = now.getFullYear(); // Ngưỡng tối thiểu: ≤ ngày hôm nay
+    const dob = new Date(dobStr);
+    const now = new Date();
+    const minYear = now.getFullYear() - 130;
+    const maxYear = now.getFullYear(); //≤ ngày hôm nay
 
-  if (isNaN(dob.getTime())) return false; // Không phải ngày hợp lệ
-  if (dob > now) return false; // Không thể lớn hơn ngày hiện tại
-  if (dob.getFullYear() < minYear || dob.getFullYear() > maxYear) return false; // Giới hạn tuổi hợp lý
+    if (isNaN(dob.getTime())) return false; // Không phải ngày hợp lệ
+    if (dob > now) return false; // Không thể lớn hơn ngày hiện tại
+    if (dob.getFullYear() < minYear || dob.getFullYear() > maxYear) return false; // Giới hạn tuổi
 
-  return true;
+    return true;
 }
 
 function isValidPhone(phone: string): boolean {
-  const regex = /^(0\d{9}|\+84\d{9})$/; // Bắt đầu bằng 0 hoặc +84, theo sau là 9 chữ số
-  return regex.test(phone);
+    const regex = /^(0\d{9}|\+84\d{9})$/; // Bắt đầu bằng 0 hoặc +84, theo sau là 9 chữ số
+    return regex.test(phone);
 }
 
 const ResidentFileInformation: React.FC = () => {
@@ -94,14 +87,17 @@ const ResidentFileInformation: React.FC = () => {
 
     const [activeButton, setActiveButton] = useState<string | null>(null);
     const [showNotification, setShowNotification] = useState<boolean>(false);
+    const [showDialog, setShowDialog] = useState<boolean>(false);
+
+    const navigate = useNavigate();
 
     const requiredOk = Boolean(
-      fullName.trim() &&
-      dob.trim() &&
-      isValidDob(dob) &&
-      ec.name.trim() &&
-      isValidPhone(ec.phone) &&
-      medications.every((m) => m.name.trim() && m.dose.trim() && m.freq.trim())
+        fullName.trim() &&
+        dob.trim() &&
+        isValidDob(dob) &&
+        ec.name.trim() &&
+        isValidPhone(ec.phone) &&
+        medications.every((m) => m.name.trim() && m.dose.trim() && m.freq.trim())
     );
 
     // Allergies
@@ -156,25 +152,34 @@ const ResidentFileInformation: React.FC = () => {
 
     // Submit (prototype)
     const onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
-      e.preventDefault();
-      if (!requiredOk) {
-        alert("Please fill in all required fields.");
-        return;
-      }
-      const payload = {
-        full_name: fullName,
-        dob,
-        age,
-        gender,
-        emergency_contact: ec,
-        allergies,
-        medications: medications.filter((m) => (m.name + m.dose + m.freq).trim() !== "").map(({ id, ...rest }) => rest),
-        notes,
-        documents: uploads.filter((u) => u.status === "done").map((u) => ({ name: u.file.name, size: u.file.size })),
-      };
-      console.log(payload);
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 3000); // Thông báo sẽ biến mất sau 3 giây
+        e.preventDefault();
+        if (!requiredOk) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+        const payload = {
+            full_name: fullName,
+            dob,
+            age,
+            gender,
+            emergency_contact: ec,
+            allergies,
+            medications: medications.filter((m) => (m.name + m.dose + m.freq).trim() !== "").map(({ id, ...rest }) => rest),
+            notes,
+            documents: uploads.filter((u) => u.status === "done").map((u) => ({ name: u.file.name, size: u.file.size })),
+        };
+        console.log(payload);
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+
+        // Navigate to Resident Detail page with payload
+        //navigate("/resident-detail", { state: { residentInfo: payload } });
+    };
+
+    const handleConfirm = () => {
+        setShowDialog(false);
+        // Here you can handle the confirmed action, like navigating or submitting data
+        navigate("/resident-detail", { state: { residentInfo: { fullName, dob, age, gender, ec, allergies, medications, notes, uploads } } });
     };
 
     useEffect(() => {
@@ -213,9 +218,8 @@ const ResidentFileInformation: React.FC = () => {
                             <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Medical")}
                                 >
                                     Medical & Health Record Management
@@ -223,9 +227,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("DailyLife")}
                                 >
                                     Daily Life & Nutrition Management
@@ -233,9 +236,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Incident")}
                                 >
                                     Incident & Emergency Handling
@@ -243,9 +245,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Room")}
                                 >
                                     Room & Facility Management
@@ -253,9 +254,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Communication")}
                                 >
                                     Communication & Reporting
@@ -263,9 +263,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Visitation")}
                                 >
                                     Visitation & Access Control
@@ -273,9 +272,8 @@ const ResidentFileInformation: React.FC = () => {
 
                                 <button
                                     type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${
-                                        activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
+                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
+                                        }`}
                                     onClick={() => setActiveButton("Payments")}
                                 >
                                     Payments & Additional Services
@@ -324,20 +322,32 @@ const ResidentFileInformation: React.FC = () => {
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Date of Birth *</Label>
-                                                        <Input
-                                                            type="date"
-                                                            value={dob}
-                                                            onChange={(e) => {
-                                                              const value = e.target.value;
-                                                              if (isValidDob(value)) {
-                                                                setDob(value);
-                                                              } else {
-                                                                alert("Invalid Date of Birth. Please enter a valid date.");
-                                                              }
-                                                            }}
-                                                            placeholder="YYYY-MM-DD"
-                                                            className="bg-white"
-                                                        />
+                                                        <div className="relative">
+                                                            <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
+                                                                onClick={() => {
+                                                                    const input = document.getElementById('dob') as HTMLInputElement;
+                                                                    if (input && typeof input.showPicker === 'function') {
+                                                                        input.showPicker();
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Input
+                                                                id="dob"
+                                                                name="dob"
+                                                                type="date"
+                                                                value={dob}
+                                                                onChange={(e) => {
+                                                                    const value = e.target.value;
+                                                                    if (isValidDob(value)) {
+                                                                        setDob(value);
+                                                                    } else {
+                                                                        alert("Invalid Date of Birth. Please enter a valid date.");
+                                                                    }
+                                                                }}
+                                                                placeholder="YYYY-MM-DD"
+                                                                className="pl-10 bg-white pr-10"
+                                                            />
+                                                        </div>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Age</Label>
@@ -367,27 +377,27 @@ const ResidentFileInformation: React.FC = () => {
                                                 </CardHeader>
                                                 <CardContent className="grid grid-cols-1 gap-4">
                                                     <div className="flex flex-col gap-1">
-                                                      <Label>Name</Label>
-                                                      <Input value={ec.name} onChange={(e) => setEc({ ...ec, name: e.target.value })} />
+                                                        <Label>Name</Label>
+                                                        <Input value={ec.name} onChange={(e) => setEc({ ...ec, name: e.target.value })} />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                      <Label>Relationship</Label>
-                                                      <Input value={ec.relation} onChange={(e) => setEc({ ...ec, relation: e.target.value })} placeholder="Son/Daughter…" />
+                                                        <Label>Relationship</Label>
+                                                        <Input value={ec.relation} onChange={(e) => setEc({ ...ec, relation: e.target.value })} placeholder="Son/Daughter…" />
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                      <Label>Phone *</Label>
-                                                      <Input
-                                                        value={ec.phone}
-                                                        onChange={(e) => {
-                                                          const value = e.target.value;
-                                                          if (isValidPhone(value)) {
-                                                            setEc({ ...ec, phone: value });
-                                                          } else {
-                                                            alert("Invalid phone number. Please enter a valid phone number.");
-                                                          }
-                                                        }}
-                                                        placeholder="+84xxxxxxxxx or 0xxxxxxxxx"
-                                                      />
+                                                        <Label>Phone *</Label>
+                                                        <Input
+                                                            value={ec.phone}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                if (value.length >= 10 && !isValidPhone(value)) {
+                                                                    alert("Invalid phone number. Please enter a valid phone number.");
+                                                                } else {
+                                                                    setEc({ ...ec, phone: value });
+                                                                }
+                                                            }}
+                                                            placeholder="+84xxxxxxxxx or 0xxxxxxxxx"
+                                                        />
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -557,6 +567,14 @@ const ResidentFileInformation: React.FC = () => {
                                                 type="submit"
                                                 className="bg-blue-500 text-white font-semibold hover:bg-blue-600 px-4 py-2 rounded-md"
                                                 disabled={!requiredOk || uploading}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    if (requiredOk) {
+                                                        setShowDialog(true);
+                                                    } else {
+                                                        alert("Please fill in all required fields.");
+                                                    }
+                                                }}
                                             >
                                                 Save & Create
                                             </Button>
@@ -568,6 +586,56 @@ const ResidentFileInformation: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={showDialog} onOpenChange={setShowDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Review Resident Information</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                        <p><strong>Full Name:</strong> {fullName}</p>
+                        <p><strong>Date of Birth:</strong> {dob}</p>
+                        <p><strong>Age:</strong> {age}</p>
+                        <p><strong>Gender:</strong> {gender}</p>
+                        <p><strong>Emergency Contact:</strong> {ec.name} ({ec.relation}) - {ec.phone}</p>
+                        <p><strong>Allergies:</strong> {allergies.join(", ") || "None"}</p>
+                        <p><strong>Medications:</strong> {medications.map(m => `${m.name} (${m.dose}, ${m.freq})`).join(", ") || "None"}</p>
+                        <p><strong>Notes:</strong> {notes || "None"}</p>
+                        <p><strong>Documents:</strong> {uploads.filter(u => u.status === "done").map(u => u.file.name).join(", ") || "None"}</p>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setShowDialog(false)} variant="outline">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirm} className="bg-blue-500 text-white hover:bg-blue-600">
+                            Confirm
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setShowDialog(false);
+                                navigate("/issue-link-code", {
+                                    state: {
+                                        residentInfo: {
+                                            fullName,
+                                            dob,
+                                            age,
+                                            gender,
+                                            ec,
+                                            allergies,
+                                            medications,
+                                            notes,
+                                            uploads,
+                                        },
+                                    },
+                                });
+                            }}
+                            className="bg-blue-500 text-white hover:bg-blue-600"
+                        >
+                            Generate invite
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

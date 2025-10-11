@@ -10,7 +10,7 @@ import ForgotPasswordReset from './Login/forgot-password-reset';
 import Signin from './Login/Signin';
 import ForgotPasswordUpdate from './Login/forgot-password-update';
 
-import ResidentFileInformation from './ResidentFileManagement/ResidentFileInformation';
+import ResidentFileInformation from './ResidentFileManagement/resident-information';
 import './App.css';
 
 export default function App() {
