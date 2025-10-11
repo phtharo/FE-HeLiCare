@@ -322,7 +322,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[type="datetime-local"]') as HTMLInputElement;
-                                                                if (input) input.showPicker();
+                                                                if (input && typeof input.showPicker === 'function') {
+                                                                    input.showPicker();
+                                                                } else {
+                                                                    alert('Please manually select a date and time.');
+                                                                }
                                                             }}
                                                         />
                                                         <Input
@@ -342,7 +346,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[name="end-datetime"]') as HTMLInputElement;
-                                                                if (input) input.showPicker();
+                                                                if (input && typeof input.showPicker === 'function') {
+                                                                    input.showPicker();
+                                                                } else {
+                                                                    alert('Please manually select an end date and time.');
+                                                                }
                                                             }}
                                                         />
                                                         <Input
@@ -353,7 +361,9 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             onChange={(e) => setEndAt(e.target.value)}
                                                         />
                                                     </div>
-                                                    {validationError && <p className="text-xs text-red-600">{validationError}</p>}
+                                                    {validationError && (
+                                                        <p className="text-xs text-red-600">{validationError}</p>
+                                                    )}
                                                 </div>
 
                                                 {/* Notes */}
