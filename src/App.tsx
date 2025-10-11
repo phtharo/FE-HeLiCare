@@ -11,6 +11,7 @@ import Signin from './Login/Signin';
 import ForgotPasswordUpdate from './Login/forgot-password-update';
 
 import ResidentFileInformation from './ResidentFileManagement/resident-information';
+import StaffCreateEvent from './event/staff-create-event';
 import './App.css';
 
 export default function App() {
@@ -59,6 +60,7 @@ export default function App() {
           />
 
           <Route path="/resident-information" element={<ResidentFileInformation />} />
+          <Route path="/staff-create-event" element={<StaffCreateEvent />} />
         </Routes>
       </div>
     </Router>
