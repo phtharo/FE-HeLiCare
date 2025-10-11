@@ -14,6 +14,9 @@ import { Switch } from "../components/ui/switch";
 //import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Badge } from "../components/ui/badge";
 import { ArrowLeft, Calendar, Clock, QrCode } from "lucide-react";
+// import { SearchIcon } from "@heroicons/react/solid";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import type { CareEvent, FamilyVisit } from "../layout/AppLayout";
 
 /** ────────────────────────────────────────────────────────────────────────────
  *  Types
@@ -56,6 +59,14 @@ function buildRRule(freq: Frequency, dt: string) {
  *  Page
  *  ──────────────────────────────────────────────────────────────────────────── */
 export default function StaffCreateEvent(): React.JSX.Element {
+    const navigate = useNavigate();
+    const { care, setCare, visits, setVisits } = useOutletContext<{
+        care: CareEvent[];
+        setCare: React.Dispatch<React.SetStateAction<CareEvent[]>>;
+        visits: FamilyVisit[];
+        setVisits: React.Dispatch<React.SetStateAction<FamilyVisit[]>>;
+    }>();
+
     // Loại sự kiện
     const [kind, setKind] = useState<EventKind>("care");
 
@@ -118,8 +129,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
         }
 
         const duration = (end.getTime() - start.getTime()) / (1000 * 60); // Duration in minutes
-        if (duration < 5 || duration > 480) {
-            setValidationError("The event duration must be between 5 minutes and 8 hours.");
+        if (duration < 5 || duration > 20160) { // 20160 minutes = 2 weeks
+            setValidationError("The event duration must be between 5 minutes and 2 weeks.");
             return;
         }
 
@@ -141,36 +152,39 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
         if (!valid) return;
 
+        const startISO = new Date(scheduledAt).toISOString();
+        const dateISO  = startISO.split("T")[0];
+        const label    = new Date(scheduledAt).toLocaleString();
+
         if (kind === "care") {
-            const payload = {
-                kind: "care",
-                resident_id: residentId!,
-                type: careType,
-                scheduled_time: start.toISOString(),
-                end_time: end.toISOString(),
-                recurrence: rrule,               // null nếu không lặp
-                assigned_staff_id: assignedStaffId!,
-                room_id: room ? Number(room) : undefined,
-                bed: bed || undefined,
+            const newEventCare: CareEvent = {
+                id: crypto.randomUUID(),
                 priority,
-                notes: notes || undefined,
-                medication: careType === "medication" ? { name: medName, dose: medDose } : undefined,
+                resident: RESIDENTS.find(r => r.id === residentId)?.name ?? "Unknown",
+                datetimeISO: startISO,
+                dateISO,
+                datetimeLabel: label,
+                staffName: STAFFS.find(s => s.id === assignedStaffId)?.name ?? "",
+                location: `Room ${room} / Bed ${bed}`,
+                type: careType,
             };
-            console.log("CREATE CARE EVENT →", payload);
-            alert("Logged care-event payload to console.");
-        } else {
-            const payload = {
-                kind: "visit",
-                resident_id: residentId!,
-                family_user_id: familyUserId!,
-                scheduled_time: start.toISOString(),
-                end_time: end.toISOString(),
-                create_qr: createQR,
-                notes: notes || undefined,
-            };
-            console.log("CREATE FAMILY VISIT →", payload);
-            alert("Logged visit-event payload to console.");
+
+            setCare(prev => [newEventCare, ...prev]);
+            navigate("/staff-manage-event");
+            return;
         }
+
+        const newEventVisit: FamilyVisit = {
+            id: crypto.randomUUID(),
+            priority: "Normal",
+            resident: RESIDENTS.find(r => r.id === residentId)?.name ?? "Unknown",
+            datetime: label,
+            family: familyUserId === 987 ? "Pham T. (Father)" : "Le H. (Daughter)",
+            qr: createQR,
+        };
+
+        setVisits(prev => [newEventVisit, ...prev]);
+        navigate("/staff-manage-event");
     }
 
     return (
@@ -254,13 +268,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                     <div className="flex items-center gap-3">
                                         <ArrowLeft className="h-5 w-5 text-slate-700 cursor-pointer" />
                                         <div>
-                                            <CardTitle className="text-2xl">Create Event</CardTitle>
-                                            <CardDescription>Staff schedules care tasks or family visits</CardDescription>
+                                            <CardTitle className="text-xl">Create Event</CardTitle>
+                                            <CardDescription>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
                                         </div>
                                     </div>
-                                    <div className="hidden md:block rounded-xl bg-slate-50 px-4 py-2 text-xs text-slate-600">
-                                        <span className="font-medium">Audit:</span> staff & timestamp will be recorded on create.
-                                    </div>
+                                    
                                 </div>
                             </CardHeader>
 
@@ -310,7 +322,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[type="datetime-local"]') as HTMLInputElement;
-                                                                if (input) input.showPicker();
+                                                                if (input && typeof input.showPicker === 'function') {
+                                                                    input.showPicker();
+                                                                } else {
+                                                                    alert('Please manually select a date and time.');
+                                                                }
                                                             }}
                                                         />
                                                         <Input
@@ -330,7 +346,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer"
                                                             onClick={() => {
                                                                 const input = document.querySelector('input[name="end-datetime"]') as HTMLInputElement;
-                                                                if (input) input.showPicker();
+                                                                if (input && typeof input.showPicker === 'function') {
+                                                                    input.showPicker();
+                                                                } else {
+                                                                    alert('Please manually select an end date and time.');
+                                                                }
                                                             }}
                                                         />
                                                         <Input
@@ -341,7 +361,9 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             onChange={(e) => setEndAt(e.target.value)}
                                                         />
                                                     </div>
-                                                    {validationError && <p className="text-xs text-red-600">{validationError}</p>}
+                                                    {validationError && (
+                                                        <p className="text-xs text-red-600">{validationError}</p>
+                                                    )}
                                                 </div>
 
                                                 {/* Notes */}
