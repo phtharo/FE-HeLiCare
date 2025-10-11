@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreHorizontal } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
 type Resident = {
   id: number;
@@ -12,7 +12,8 @@ type Resident = {
 
 export default function ListResident(): React.JSX.Element {
   const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState<number | null>(null);
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   // Mock data
   const [data] = useState<Resident[]>([
@@ -23,6 +24,11 @@ export default function ListResident(): React.JSX.Element {
   ]);
 
   const slice = data; // Simplified for demonstration
+
+  const handleRowDoubleClick = (resident: Resident) => {
+    setSelectedResident(resident);
+    setShowDialog(true);
+  };
 
   return (
     <div className="fixed inset-0 overflow-hidden">
@@ -116,7 +122,11 @@ export default function ListResident(): React.JSX.Element {
                   </thead>
                   <tbody>
                     {slice.map((r) => (
-                      <tr key={r.id} className="hover:bg-slate-50 rounded-xl">
+                      <tr
+                        key={r.id}
+                        className="hover:bg-slate-50 rounded-xl cursor-pointer"
+                        onDoubleClick={() => handleRowDoubleClick(r)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap font-medium text-left">{r.fullName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-left">{r.dob}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-left">{r.age}</td>
@@ -125,52 +135,10 @@ export default function ListResident(): React.JSX.Element {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-left relative" style={{ minWidth: '180px' }}>
                           BP: 120/80, HR: 72
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                            <button
-                              type="button"
-                              className="cursor-pointer text-gray-500 hover:text-gray-700 p-1 focus:outline-none focus:shadow-none"
-                              onClick={() => setShowDropdown(showDropdown === r.id ? null : r.id)}
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                            {showDropdown === r.id && (
-                              <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow-lg">
-                                <button
-                                  type="button"
-                                  style={{ fontSize: '14px !important', fontWeight: 'normal', outline: 'none', boxShadow: 'none' }}
-                                  className="block w-full px-2 py-1 text-left text-gray-700 hover:bg-gray-100 focus:outline-none focus:shadow-none"
-                                  onClick={() => console.log(`Details for Last vital sign`)}
-                                >
-                                  Detail
-                                </button>
-                              </div>
-                            )}
-                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-left">Diabetes</td>
                         <td className="px-6 py-4 whitespace-nowrap text-left relative" style={{ minWidth: '120px' }}>
                           Last alert: 2 recent
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                            <button
-                              type="button"
-                              className="cursor-pointer text-gray-500 hover:text-gray-700 p-1 focus:outline-none focus:shadow-none"
-                              onClick={() => setShowDropdown(showDropdown === r.id ? null : r.id)}
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                            {showDropdown === r.id && (
-                              <div className="absolute right-0 mt-1 w-24 bg-white border rounded shadow-lg">
-                                <button
-                                  type="button"
-                                  style={{ fontSize: '14px !important', fontWeight: 'normal', outline: 'none', boxShadow: 'none' }}
-                                  className="block w-full px-2 py-1 text-left text-gray-700 hover:bg-gray-100 focus:outline-none focus:shadow-none"
-                                  onClick={() => console.log(`Details for Last alert`)}
-                                >
-                                  Detail
-                                </button>
-                              </div>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     ))}
@@ -181,6 +149,46 @@ export default function ListResident(): React.JSX.Element {
           </div>
         </div>
       </div>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center w-full">Resident information</DialogTitle>
+          </DialogHeader>
+          {selectedResident && (
+            <div className="space-y-4 text-left">
+              <p><strong>Name:</strong> {selectedResident.fullName}</p>
+              <p>
+                <strong>Date of birth:</strong> {selectedResident.dob} <span className="ml-4"><strong>Age:</strong> {selectedResident.age}</span>
+              </p>
+              <p><strong>Gender:</strong> {selectedResident.gender}</p>
+              <p><strong>Room/bed:</strong> Room 101 / Bed 1</p>
+              <p><strong>Diet group:</strong> Diabetes</p>
+              <p><strong>Last vital sign:</strong> BP: 120/80, HR: 72</p>
+              <p><strong>Notes:</strong> None</p>
+            </div>
+          )}
+          <DialogFooter className="flex justify-center gap-4">
+            <button
+              onClick={() => setShowDialog(false)}
+              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => {
+                setShowDialog(false);
+                navigate("/issue-link-code", {
+                  state: { residentInfo: selectedResident },
+                });
+              }}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            >
+              Generate invite
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
