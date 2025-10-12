@@ -10,6 +10,8 @@ import { SearchIcon } from "@heroicons/react/solid";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
 import type { CareEvent, FamilyVisit } from "../layout/AppLayout";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import { MoreVertical } from "lucide-react"; // Import the MoreVertical icon
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu"; // Import DropdownMenu components
 
 
 type FilterState = {
@@ -171,11 +173,11 @@ export default function StaffManageEvent(): React.JSX.Element {
                 datetimeISO: ev.datetimeISO!,
                 dateISO: ev.dateISO!,
                 datetimeLabel: ev.datetimeLabel!,
-                staffName: ev.staffName ?? "", // Updated to use staffName
+                staffName: ev.staffName ?? "", 
                 location: ev.location ?? "",
-                type: ev.type ?? "General", // Default care type if not provided
+                type: ev.type ?? "General", 
             };
-            // Removed local state update for care events
+          
         } else if (ev.kind === "visit") {
             const mapped: FamilyVisit = {
                 id: ev.id ?? crypto.randomUUID(),
@@ -185,17 +187,16 @@ export default function StaffManageEvent(): React.JSX.Element {
                 family: ev.family ?? "",
                 qr: Boolean(ev.qr),
             };
-            // Removed local state update for visit events
+          
         }
 
-        // Reset filters to ensure all events are visible
+        
         setFilters({ from: "", to: "", priority: "all", staff: "all" });
 
-        // Clear route state to avoid duplicate additions
         navigate(location.pathname, { replace: true, state: {} });
     }, [location.state, navigate, location.pathname]);
 
-    // 4) Filter from state care/visits
+    //filter
     const toNum = (d?: string) => (d ? Number(d.replaceAll("-", "")) : undefined);
     const fNum = toNum(filters.from);
     const tNum = toNum(filters.to);
@@ -214,7 +215,7 @@ export default function StaffManageEvent(): React.JSX.Element {
         return prOk && stOk;
     });
 
-    const filteredFamilyVisits = visits; // No filtering logic applied yet
+    const filteredFamilyVisits = visits; 
 
     const staffOptions = [
         { id: "s1", name: "Nurse Linh" },
@@ -297,7 +298,7 @@ export default function StaffManageEvent(): React.JSX.Element {
                                     <div className="flex items-center gap-3">
                                         <div>
                                             <h1 className="text-2xl">Manage Event</h1>
-                                            <p className="text-sm text-gray-600">Staff manages existing events</p>
+
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -349,37 +350,60 @@ export default function StaffManageEvent(): React.JSX.Element {
 
                             <div className="px-2 pb-2">
                                 <div className="space-y-6">
-                                    <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-10">
+                                    <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12">
                                         {care.map((e) => (
-                                            <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100" style={{ width: '240px' }}>
+                                            <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative" style={{ width: '240px' }}>
                                               <CardHeader>
                                                 <CardTitle>Care Event</CardTitle>
+                                                <DropdownMenu>
+                                                  <DropdownMenuTrigger asChild>
+                                                    <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
+                                                      <MoreVertical className="h-5 w-5" />
+                                                    </button>
+                                                  </DropdownMenuTrigger>
+                                                  <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => console.log('Edit clicked', e.id)}>Edit</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => console.log('Delete clicked', e.id)}>Delete</DropdownMenuItem>
+                                                  </DropdownMenuContent>
+                                                </DropdownMenu>
                                               </CardHeader>
                                               <CardContent>
                                                 <ul className="space-y-2 text-sm text-left">
                                                   <li><span className="font-medium">Priority:</span> {e.priority}</li>
+                                                  <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
                                                   <li><span className="font-medium">Resident:</span> {e.resident}</li>
                                                   <li className="flex items-center gap-1">
                                                       <span className="font-medium">Time:</span> {e.datetimeLabel}
                                                   </li>
                                                   <li><span className="font-medium">Staff:</span> {e.staffName}</li>
                                                   <li><span className="font-medium">Location:</span> {e.location}</li>
-                                                  <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
+                                                  
                                                 </ul>
                                               </CardContent>
                                             </Card>
                                         ))}
                                     </div>
 
-                                    <div className="mt-6 grid grid-cols-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                                    <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12">
                                         {visits.map((v) => (
-                                            <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100" style={{ width: '300px' }}>
+                                            <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative" style={{ width: '240px' }}>
                                               <CardHeader>
                                                 <CardTitle>Family Visit</CardTitle>
+                                                <DropdownMenu>
+                                                  <DropdownMenuTrigger asChild>
+                                                    <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
+                                                      <MoreVertical className="h-5 w-5" />
+                                                    </button>
+                                                  </DropdownMenuTrigger>
+                                                  <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => console.log('Edit clicked', v.id)}>Edit</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => console.log('Delete clicked', v.id)}>Delete</DropdownMenuItem>
+                                                  </DropdownMenuContent>
+                                                </DropdownMenu>
                                               </CardHeader>
                                               <CardContent>
                                                 <ul className="space-y-2 text-sm text-left">
-                                                  <li><span className="font-medium">Priority:</span> {v.priority}</li>
+                                                  
                                                   <li><span className="font-medium">Resident:</span> {v.resident}</li>
                                                   <li className="flex items-center gap-1">
                                                     <span className="font-medium">Time:</span> {v.datetime}

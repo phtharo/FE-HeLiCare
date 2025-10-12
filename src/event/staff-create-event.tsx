@@ -10,13 +10,15 @@ import { Label } from "../components/ui/label";
 import {
     Select, SelectTrigger, SelectValue, SelectContent, SelectItem
 } from "../components/ui/select";
-import { Switch } from "../components/ui/switch";
+//import { Switch } from "../components/ui/switch";
 //import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Badge } from "../components/ui/badge";
-import { ArrowLeft, Calendar, Clock, QrCode } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Clock, QrCode } from "lucide-react";
 // import { SearchIcon } from "@heroicons/react/solid";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { CareEvent, FamilyVisit } from "../layout/AppLayout";
+// import { Checkbox } from "../components/ui/checkbox";
+import { Checkbox } from "../components/ui/checkbox";
 
 /** ────────────────────────────────────────────────────────────────────────────
  *  Types
@@ -60,8 +62,7 @@ function buildRRule(freq: Frequency, dt: string) {
  *  ──────────────────────────────────────────────────────────────────────────── */
 export default function StaffCreateEvent(): React.JSX.Element {
     const navigate = useNavigate();
-    const { care, setCare, visits, setVisits } = useOutletContext<{
-        care: CareEvent[];
+    const { setCare, setVisits } = useOutletContext<{
         setCare: React.Dispatch<React.SetStateAction<CareEvent[]>>;
         visits: FamilyVisit[];
         setVisits: React.Dispatch<React.SetStateAction<FamilyVisit[]>>;
@@ -153,8 +154,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
         if (!valid) return;
 
         const startISO = new Date(scheduledAt).toISOString();
-        const dateISO  = startISO.split("T")[0];
-        const label    = new Date(scheduledAt).toLocaleString();
+        const dateISO = startISO.split("T")[0];
+        const label = new Date(scheduledAt).toLocaleString();
 
         if (kind === "care") {
             const newEventCare: CareEvent = {
@@ -272,7 +273,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                             <CardDescription>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
                                         </div>
                                     </div>
-                                    
+
                                 </div>
                             </CardHeader>
 
@@ -501,12 +502,17 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                                 <p className="text-xs text-slate-500">QR code for family with the schedule.</p>
                                                             </div>
                                                         </div>
-                                                        <Switch
+                                                        <Checkbox
                                                             checked={createQR}
-                                                            onCheckedChange={setCreateQR}
-                                                            className="h-5 w-10 data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-gray-300"
-                                                            thumbClassName="h-4 w-4 bg-white rounded-full"
+                                                            onCheckedChange={(v) => setCreateQR(v === true)}
+                                                            className="
+                                                                h-5 w-5 rounded-full border border-gray-300 bg-white
+                                                                data-[state=checked]:bg-black data-[state=checked]:border-black
+                                                                data-[state=checked]:text-white
+                                                                [&>svg]:h-3 [&>svg]:w-3
+                                                            "
                                                         />
+
                                                     </div>
                                                 </CardContent>
                                             </Card>
