@@ -1,3 +1,10 @@
+//xem lại cái family đăng kí lịch thăm
+//chỉ cần nhập sl family sau đó mỗi gd đki thì sẽ có mã QR riêng
+//tạo mã QR cho family
+//family visit thì k cần event name
+//mã QR hiển thị ở đâu?
+//family sẽ
+
 // Form for staff to create/edit/delete events
 import React, { useMemo, useState } from "react";
 import {
@@ -13,22 +20,36 @@ import {
 //import { Switch } from "../components/ui/switch";
 //import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Badge } from "../components/ui/badge";
-import { ArrowLeft, Calendar, Check, Clock, QrCode } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, QrCode } from "lucide-react";
 // import { SearchIcon } from "@heroicons/react/solid";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import type { CareEvent, FamilyVisit } from "../layout/AppLayout";
+import type { FamilyVisit } from "../layout/AppLayout";
+import MultiSelect from "react-select";
+
+/** Extend CareEvent type to include staffId */
+export type CareEvent = {
+    id: string;
+    priority: "low" | "normal" | "high";
+    datetimeISO: string;
+    dateISO: string;
+    datetimeLabel: string;
+    staffId: string;
+    staffName: string;
+    location: string;
+    type?: string;
+    resident?: string;
+    quantity?: number; // Added quantity field
+};
+
 // import { Checkbox } from "../components/ui/checkbox";
 import { Checkbox } from "../components/ui/checkbox";
 
-/** ────────────────────────────────────────────────────────────────────────────
- *  Types
- *  ──────────────────────────────────────────────────────────────────────────── */
+
 type EventKind = "care" | "visit";
 type CareType = "vital_check" | "medication" | "hygiene" | "therapy" | "meal";
 type Frequency = "none" | "daily" | "weekly" | "monthly";
 
 type StaffOption = { id: number; name: string };
-type ResidentOption = { id: number; name: string };
 
 /** Mock options (thay = API thực) */
 const STAFFS: StaffOption[] = [
@@ -36,156 +57,90 @@ const STAFFS: StaffOption[] = [
     { id: 42, name: "Nurse Khoa" },
     { id: 45, name: "Caregiver Minh" },
 ];
-const RESIDENTS: ResidentOption[] = [
-    { id: 101, name: "John Doe" },
-    { id: 102, name: "Jane Smith" },
-    { id: 103, name: "Nguyen Van A" },
-];
 
-/** Build RRULE cơ bản */
-function buildRRule(freq: Frequency, dt: string) {
-    if (freq === "none" || !dt) return null;
-    const d = new Date(dt);
-    const h = d.getHours();
-    const m = d.getMinutes();
-    const BYHOUR = `BYHOUR=${h}`;
-    const BYMINUTE = `BYMINUTE=${m}`;
-    if (freq === "daily") return `FREQ=DAILY;${BYHOUR};${BYMINUTE}`;
-    if (freq === "weekly")
-        return `FREQ=WEEKLY;BYDAY=${["SU", "MO", "TU", "WE", "TH", "FR", "SA"][d.getDay()]};${BYHOUR};${BYMINUTE}`;
-    if (freq === "monthly") return `FREQ=MONTHLY;BYMONTHDAY=${d.getDate()};${BYHOUR};${BYMINUTE}`;
-    return null;
-}
-
-/** ────────────────────────────────────────────────────────────────────────────
- *  Page
- *  ──────────────────────────────────────────────────────────────────────────── */
 export default function StaffCreateEvent(): React.JSX.Element {
     const navigate = useNavigate();
-    const { setCare, setVisits } = useOutletContext<{
+    const { setCare, setVisits, addNotification } = useOutletContext<{
         setCare: React.Dispatch<React.SetStateAction<CareEvent[]>>;
         visits: FamilyVisit[];
         setVisits: React.Dispatch<React.SetStateAction<FamilyVisit[]>>;
+        addNotification: (type: "new" | "update" | "delete", message: string) => void;
     }>();
 
-    // Loại sự kiện
     const [kind, setKind] = useState<EventKind>("care");
-
-    // Common fields
-    const [residentId, setResidentId] = useState<number | null>(101);
-    const [scheduledAt, setScheduledAt] = useState<string>(""); // datetime-local
-    const [endAt, setEndAt] = useState<string>(""); // End datetime-local
-    const [notes, setNotes] = useState("");
-
-    // Care-only
-    const [careType, setCareType] = useState<CareType>("vital_check");
-    const [assignedStaffId, setAssignedStaffId] = useState<number | null>(41);
-    const [room, setRoom] = useState<string>("101");
-    const [bed, setBed] = useState<string>("1");
-    const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
-    const [freq, setFreq] = useState<Frequency>("none");
-
-    // Medication extra (nếu careType=medication)
-    const [medName, setMedName] = useState("");
-    const [medDose, setMedDose] = useState("");
-
-    // Visit-only
-    const [familyUserId, setFamilyUserId] = useState<number | null>(987);
-    const [createQR, setCreateQR] = useState<boolean>(true);
-
-    // Add state for activeButton and setActiveButton
+    const [scheduledAt, setScheduledAt] = useState<string>("");
+    const [endAt, setEndAt] = useState<string>("");
+    const [notes, setNotes] = useState<string>("");
+    const [eventName, setEventName] = useState<string>("");
     const [activeButton, setActiveButton] = useState<string | null>(null);
-    const [validationError, setValidationError] = useState<string | null>(null);
 
-    const rrule = useMemo(() => buildRRule(freq, scheduledAt), [freq, scheduledAt]);
+    // Care-only fields
+    const [careType, setCareType] = useState<CareType>("vital_check");
+    const [quantity, setQuantity] = useState<number>(1);
+    const [assignedStaffIds, setAssignedStaffIds] = useState<number[]>([]);
+    const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
+    const [location, setLocation] = useState<string>("");
+    const [freq, setFreq] = useState<Frequency>("none");
+    const [medName, setMedName] = useState<string>("");
+    const [medDose, setMedDose] = useState<string>("");
+
+    // Visit-only fields
+    const [createQR, setCreateQR] = useState<boolean>(true);
+    const [familyUserId, setFamilyUserId] = useState<number | null>(null);
 
     const valid = useMemo(() => {
-        if (!residentId || !scheduledAt) return false;
+        if (!scheduledAt) return false;
         if (kind === "care") {
-            if (!assignedStaffId) return false;
+            if (!assignedStaffIds.length) return false;
             if (careType === "medication" && (!medName.trim() || !medDose.trim())) return false;
         } else {
             if (!familyUserId) return false;
         }
         return true;
-    }, [residentId, scheduledAt, kind, assignedStaffId, careType, medName, medDose, familyUserId]);
+    }, [scheduledAt, kind, assignedStaffIds, careType, medName, medDose, familyUserId]);
 
     function onCreate(e: React.FormEvent) {
         e.preventDefault();
 
-        const now = new Date();
-        const start = new Date(scheduledAt);
-        const end = new Date(endAt);
-
-        // 1. Không được ở quá khứ
-        if (start < now) {
-            setValidationError("The start time cannot be in the past.");
-            return;
-        }
-
-        // 2. Thứ tự hợp lệ
-        if (end <= start) {
-            setValidationError("The end time must be after the start time.");
-            return;
-        }
-
-        const duration = (end.getTime() - start.getTime()) / (1000 * 60); // Duration in minutes
-        if (duration < 5 || duration > 20160) { // 20160 minutes = 2 weeks
-            setValidationError("The event duration must be between 5 minutes and 2 weeks.");
-            return;
-        }
-
-        // 3. Khoảng báo trước (lead time)
-        const leadTime = (start.getTime() - now.getTime()) / (1000 * 60); // Lead time in minutes
-        if (leadTime < 15) {
-            setValidationError("The event must be created at least 15 minutes in advance.");
-            return;
-        }
-
-        // 4. Giới hạn tầm nhìn (horizon)
-        const horizon = (start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 30); // Horizon in months
-        if (horizon > 12) {
-            setValidationError("The event cannot be scheduled more than 12 months in advance.");
-            return;
-        }
-
-        setValidationError(null); // Clear any previous errors
-
-        if (!valid) return;
-
         const startISO = new Date(scheduledAt).toISOString();
-        const dateISO = startISO.split("T")[0];
         const label = new Date(scheduledAt).toLocaleString();
 
         if (kind === "care") {
             const newEventCare: CareEvent = {
                 id: crypto.randomUUID(),
                 priority,
-                resident: RESIDENTS.find(r => r.id === residentId)?.name ?? "Unknown",
                 datetimeISO: startISO,
-                dateISO,
+                dateISO: startISO.split("T")[0],
                 datetimeLabel: label,
-                staffName: STAFFS.find(s => s.id === assignedStaffId)?.name ?? "",
-                location: `Room ${room} / Bed ${bed}`,
+                staffId: assignedStaffIds.join(","),
+                staffName: STAFFS.filter(s => assignedStaffIds.includes(s.id)).map(s => s.name).join(", "), // Populate staffName
+                location,
                 type: careType,
+                quantity, // Added quantity field
             };
 
-            setCare(prev => [newEventCare, ...prev]);
-            navigate("/staff-manage-event");
+            setCare((prev) => [newEventCare, ...prev]);
+            navigate("/staff-manage-event", { state: { newEvent: newEventCare } });
+            addNotification("new", `New care event '${newEventCare.type}' added.`); // Add notification
             return;
         }
 
         const newEventVisit: FamilyVisit = {
             id: crypto.randomUUID(),
             priority: "Normal",
-            resident: RESIDENTS.find(r => r.id === residentId)?.name ?? "Unknown",
-            datetime: label,
-            family: familyUserId === 987 ? "Pham T. (Father)" : "Le H. (Daughter)",
+            resident: "",
+            family: "Pham T. (Father)",
             qr: createQR,
+            date: startISO.split("T")[0],
+            datetimeISO: startISO,
+            datetime: label,
+            endDatetime: endAt ? new Date(endAt).toISOString() : undefined,
+            notes,
         };
 
-        setVisits(prev => [newEventVisit, ...prev]);
-        navigate("/staff-manage-event");
+        setVisits((prev) => [newEventVisit, ...prev]);
+        navigate("/staff-manage-event", { state: { newEvent: newEventVisit } });
+        addNotification("new", `New family visit for '${newEventVisit.resident}' added.`); // Add notification
     }
 
     return (
@@ -267,7 +222,10 @@ export default function StaffCreateEvent(): React.JSX.Element {
                             <CardHeader className="px-6 pt-6 pb-3">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-center gap-3">
-                                        <ArrowLeft className="h-5 w-5 text-slate-700 cursor-pointer" />
+                                        <ArrowLeft
+                                            className="h-5 w-5 text-slate-700 cursor-pointer"
+                                            onClick={() => navigate("/staff-manage-event")}
+                                        />
                                         <div>
                                             <CardTitle className="text-xl">Create Event</CardTitle>
                                             <CardDescription>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
@@ -287,7 +245,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 <CardDescription>Choose type and fill required information</CardDescription>
                                             </CardHeader>
                                             <CardContent className="grid gap-4 md:grid-cols-2">
-                                                {/* Kind */}
+                                                {/* event kind  */}
                                                 <div className="flex flex-col gap-1">
                                                     <Label>Event kind</Label>
                                                     <Select value={kind} onValueChange={(v) => setKind(v as EventKind)}>
@@ -299,23 +257,47 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     </Select>
                                                 </div>
 
-                                                {/* Resident */}
-                                                <div className="flex flex-col gap-1">
-                                                    <Label>Resident *</Label>
-                                                    <Select
-                                                        value={residentId?.toString() ?? ""}
-                                                        onValueChange={(v) => setResidentId(Number(v))}
-                                                    >
-                                                        <SelectTrigger><SelectValue placeholder="Select resident" /></SelectTrigger>
-                                                        <SelectContent>
-                                                            {RESIDENTS.map(r => (
-                                                                <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
+                                                {/* quantity */}
+                                                {kind === "care" && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label>Quantity (Maximum) *</Label>
+                                                        <Input
+                                                            type="number"
+                                                            min={1}
+                                                            value={quantity === 0 ? "" : String(quantity)}
+                                                            onChange={(e) => setQuantity(Number(e.target.value) || 0)}
+                                                            onBlur={() => setQuantity(quantity || 1)}
+                                                            placeholder="Enter quantity"
+                                                            className="appearance-none"
+                                                        />
+                                                    </div>
+                                                )}
 
-                                                {/* Date time */}
+                                                {/* Hide resident field when care event is selected */}
+                                                {kind === "visit" && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <Label>Resident name *</Label>
+                                                        <Input
+                                                            value={eventName}
+                                                            onChange={(e) => setEventName(e.target.value)}
+                                                            placeholder="Enter resident name"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {/* Hide event name field when family name is selected */}
+                                                {kind !== "visit" && (
+                                                    <div className="flex flex-col gap-1 md:col-span-2">
+                                                        <Label>Event name *</Label>
+                                                        <Input
+                                                            value={eventName}
+                                                            onChange={(e) => setEventName(e.target.value)}
+                                                            placeholder="Enter event name"
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {/* from - to */}
                                                 <div className="flex flex-col gap-1">
                                                     <Label>Date & time *</Label>
                                                     <div className="relative">
@@ -339,7 +321,6 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     </div>
                                                 </div>
 
-                                                {/* End Date time */}
                                                 <div className="flex flex-col gap-1">
                                                     <Label>End Date & time *</Label>
                                                     <div className="relative">
@@ -362,12 +343,9 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             onChange={(e) => setEndAt(e.target.value)}
                                                         />
                                                     </div>
-                                                    {validationError && (
-                                                        <p className="text-xs text-red-600">{validationError}</p>
-                                                    )}
                                                 </div>
 
-                                                {/* Notes */}
+                                                {/* Row 4: Notes (full width) */}
                                                 <div className="flex flex-col gap-1 md:col-span-2">
                                                     <Label>Notes</Label>
                                                     <Textarea
@@ -403,9 +381,10 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Assigned staff *</Label>
-                                                        <Select
-                                                            value={assignedStaffId?.toString() ?? ""}
-                                                            onValueChange={(v) => setAssignedStaffId(Number(v))}
+                                                        {/* <Select
+                                                            value={assignedStaffIds.map(String).join(",") ?? ""}
+                                                            onValueChange={(v) => setAssignedStaffIds(v.split(",").map(id => Number(id)))}
+                                                            multiple
                                                         >
                                                             <SelectTrigger><SelectValue placeholder="Select staff" /></SelectTrigger>
                                                             <SelectContent>
@@ -413,17 +392,20 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                                     <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
                                                                 ))}
                                                             </SelectContent>
-                                                        </Select>
+                                                        </Select> */}
+                                                        <MultiSelect
+                                                            options={STAFFS.map(s => ({ value: s.id, label: s.name }))}
+                                                            value={STAFFS.filter(s => assignedStaffIds.includes(s.id)).map(s => ({ value: s.id, label: s.name }))}
+                                                            onChange={(selected) => setAssignedStaffIds((selected || []).map(option => option.value))}
+                                                            placeholder="Select staff"
+                                                            isMulti
+                                                        />
                                                     </div>
 
                                                     <div className="flex items-center gap-2">
                                                         <div className="flex-1">
-                                                            <Label>Room</Label>
-                                                            <Input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="101" />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <Label>Bed</Label>
-                                                            <Input value={bed} onChange={(e) => setBed(e.target.value)} placeholder="1" />
+                                                            <Label>Location</Label>
+                                                            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Enter location" />
                                                         </div>
                                                     </div>
 
@@ -450,9 +432,6 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                                 <SelectItem value="monthly">Monthly</SelectItem>
                                                             </SelectContent>
                                                         </Select>
-                                                        {rrule && (
-                                                            <p className="text-xs text-slate-500 mt-1">RRULE: <span className="font-mono">{rrule}</span></p>
-                                                        )}
                                                     </div>
 
                                                     {/* Medication extras */}
@@ -471,8 +450,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 </CardContent>
                                             </Card>
                                         )}
-
-                                        {/* VISIT-only block */}
+                                        {/* FAMILY VISIT */}
                                         {kind === "visit" && (
                                             <Card className="rounded-2xl">
                                                 <CardHeader>
@@ -480,7 +458,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     <CardDescription>QR will be used for check-in if enabled</CardDescription>
                                                 </CardHeader>
                                                 <CardContent className="grid gap-4 md:grid-cols-2">
-                                                    <div className="flex flex-col gap-1">
+                                                    <div className="flex flex-col gap-1 md:col-span-1">
                                                         <Label>Family user</Label>
                                                         <Select
                                                             value={familyUserId?.toString() ?? ""}
@@ -488,13 +466,16 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                         >
                                                             <SelectTrigger><SelectValue placeholder="Select family account" /></SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="987">Pham T. (Father)</SelectItem>
-                                                                <SelectItem value="988">Le H. (Daughter)</SelectItem>
+                                                                {/*
+                                                                {residentFamilyOptions.map((option) => (
+                                                                    <SelectItem key={option.id} value={option.id.toString()}>{option.name}</SelectItem>
+                                                                ))}
+                                                                */}
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 md:col-span-1">
                                                         <div className="flex items-center gap-2">
                                                             <QrCode className="h-4 w-4 text-slate-500" />
                                                             <div>
@@ -517,6 +498,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 </CardContent>
                                             </Card>
                                         )}
+                                        
                                     </div>
 
                                     {/* Right column – Summary & Actions */}
@@ -529,24 +511,26 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                             <CardContent className="space-y-3">
                                                 <div className="text-sm">
                                                     <p><span className="text-left text-slate-500">Kind:</span> <span className="font-medium">{kind}</span></p>
-                                                    <p><span className="text-left text-slate-500">Resident:</span> {RESIDENTS.find(r => r.id === residentId)?.name}</p>
                                                     <p className="flex items-left gap-1">
                                                         <Clock className="h-3.5 w-3.5 text-slate-500" />
                                                         {scheduledAt ? new Date(scheduledAt).toLocaleString() : "—"}
                                                     </p>
                                                     {kind === "care" && (
                                                         <>
+                                                            <p><span className="text-left text-slate-500">Event Name:</span> {eventName || "—"}</p>
+                                                            <p><span className="text-left text-slate-500">Quantity:</span> {quantity || "—"}</p>
                                                             <p><span className="text-left text-slate-500">Care type:</span> {careType}</p>
-                                                            <p><span className="text-left text-slate-500">Staff:</span> {STAFFS.find(s => s.id === assignedStaffId)?.name}</p>
-                                                            <p><span className="text-left text-slate-500">Loc:</span> Room {room} / Bed {bed}</p>
+                                                            <p><span className="text-left text-slate-500">Staff:</span> {STAFFS.filter(s => assignedStaffIds.includes(s.id)).map(s => s.name).join(", ")}</p>
+                                                            <p><span className="text-left text-slate-500">Loc:</span> Room {location} / Bed 1</p>
                                                             <div className="flex items-left gap-2 mt-1">
                                                                 <Badge variant="secondary">Priority: {priority}</Badge>
-                                                                {rrule && <Badge variant="outline">Repeat</Badge>}
+                                                                {freq !== "none" && <Badge variant="outline">Repeat</Badge>}
                                                             </div>
                                                         </>
                                                     )}
                                                     {kind === "visit" && (
                                                         <>
+                                                            <p><span className="text-slate-500">Resident:</span> {familyUserId ?? "—"}</p>
                                                             <p><span className="text-slate-500">Family:</span> {familyUserId ?? "—"}</p>
                                                             <p><span className="text-slate-500">QR:</span> {createQR ? "Yes" : "No"}</p>
                                                         </>
@@ -561,7 +545,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 </div>
                                                 {!valid && (
                                                     <p className="text-xs text-amber-600">
-                                                        Fill required fields (resident, time, {kind === "care" ? "assigned staff" : "family user"}…)
+                                                        Fill required fields (time, {kind === "care" ? "assigned staff" : "family user"}…)
                                                     </p>
                                                 )}
                                             </CardContent>
