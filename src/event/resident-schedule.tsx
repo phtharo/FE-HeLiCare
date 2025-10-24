@@ -1,4 +1,4 @@
-//family & resident can register/cancel events, view calendar
+//resident's schedule : view calendar, register/cancel care event
 
 
 import React, { useEffect, useState } from "react";
@@ -15,23 +15,11 @@ import {
   Clock,
   Users,
   ChevronsUpDown,
-  Filter,
 } from "lucide-react";
-// import {
-//   Command,
-//   CommandInput,
-//   CommandList,
-//   CommandItem,
-//   CommandEmpty,
-// } from "../components/ui/command";
-import { fetchFamilyVisits, createFamilyVisit } from "../lib/api";
-import { useOutletContext } from "react-router-dom";
-import type { FamilyVisit } from "../layout/AppLayout";
 import { useNavigate } from "react-router-dom";
 
 //API function
 const fetchCareEvents = async (): Promise<any[]> => {
-
   return new Promise((resolve) => setTimeout(() => resolve(events), 200));
 };
 
@@ -118,7 +106,6 @@ function useCalendarState() {
 
 function Calendar() {
   const { view, setView, cursor, setCursor, days, label, resident, setResident } = useCalendarState();
-  const { setVisits } = useOutletContext<{ setVisits: React.Dispatch<React.SetStateAction<FamilyVisit[]>> }>();
 
   type CareEvent = {
     id: string;
@@ -136,63 +123,23 @@ function Calendar() {
   };
 
   const [eventsState, setEventsState] = useState<CareEvent[]>([]);
+  const [residentSchedule, setResidentSchedule] = useState<CareEvent[]>([]);
 
   useEffect(() => {
     // Fetch care events from API or shared state
     fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
+
+    // Fetch resident-specific schedules created by staff
+    fetchResidentSchedule().then((schedule: CareEvent[]) => setResidentSchedule(schedule));
+
+    // Fetch new visit event from family register visit
+    fetchNewVisitEvent().then((newEvent: CareEvent) => {
+      setEventsState((prevEvents) => [...prevEvents, newEvent]);
+    });
   }, []);
 
-  const handleSubmit = (newVisit: FamilyVisit) => {
-    const startStr = String(
-      (newVisit as any).start ?? (newVisit as any).time ?? (newVisit as any).startTime ?? "00:00"
-    );
-    const startHour = Number(startStr.split(":"[0]));
-    if (startHour < 8 || startHour >= 17) {
-      alert("Visits can only be scheduled between 08:00 and 17:00.");
-      return;
-    }
-
-    createFamilyVisit(newVisit)
-      .then((createdVisit) => {
-        const cv = createdVisit as any;
-        const familyVisit = {
-          id: String(cv.id ?? `e${Date.now()}`),
-          date: cv.date ?? newVisit.date,
-          start: cv.start ?? (newVisit as any).start,
-          end: cv.end ?? (newVisit as any).end,
-          resident: cv.resident ?? newVisit.resident,
-          family: cv.family ?? "Unknown",
-          qr: cv.qr ?? false,
-          notes: cv.notes ?? "",
-        } as unknown as FamilyVisit;
-
-        setVisits((prevVisits) => [...prevVisits, familyVisit]);
-        setEventsState((prevEvents) => [
-          ...prevEvents,
-          {
-            id: familyVisit.id,
-            date: familyVisit.date,
-            start: (familyVisit as any).start,
-            end: (familyVisit as any).end,
-            name: "Family visit",
-            type: "visit",
-            location: "Lobby A",
-            staff: "Frontdesk",
-            capacity: 1,
-            registered: 1,
-            note: familyVisit.notes || "",
-          } as CareEvent,
-        ]);
-        alert("New family visit added successfully!");
-      })
-      .catch((err) => {
-        console.error("Failed to create family visit:", err);
-        alert("Failed to add visit. Please try again.");
-      });
-  };
-
   return (
-    <div className="space-y-4 border border-gray-500 rounded-md">
+    <div className="space-y-4 border border-gray-500 rounded-md" style={{ width: '100%', maxWidth: '2000px', margin: '0 auto' }}>
       <Toolbar
         view={view}
         setView={setView}
@@ -203,28 +150,12 @@ function Calendar() {
         resident={resident}
         setResident={setResident}
       />
-      <div className="grid grid-cols-7 border-t border-gray-500">
+      <div className="grid grid-cols-7 border-t border-gray-500 min-w-[1100px]" style={{ gridTemplateColumns: 'repeat(7, 1fr)', width: '100%' }}>
         {days.map((d) => (
           <DayColumn
             key={d.toDateString()}
             date={d}
-            items={eventsState}
-            addEvent={(ev) => {
-
-              const fv = {
-                id: ev.id ?? `e${Date.now()}`,
-                date: ev.date,
-                start: (ev as any).start,
-                end: (ev as any).end,
-
-                resident: myResidents[0]?.id ?? "unknown",
-                family: "Unknown",
-                qr: false,
-                priority: "0",
-                notes: (ev as any).note ?? "",
-              } as unknown as FamilyVisit;
-              handleSubmit(fv);
-            }}
+            items={[...eventsState, ...residentSchedule]}
           />
         ))}
       </div>
@@ -232,10 +163,69 @@ function Calendar() {
   );
 }
 
+async function fetchResidentSchedule(): Promise<any[]> {
+  // Mock API call to fetch resident-specific schedules
+  return new Promise((resolve) =>
+    setTimeout(() =>
+      resolve([
+        {
+          id: "r1",
+          date: "2025-10-22",
+          start: "10:00",
+          end: "11:00",
+          name: "Physical Therapy",
+          type: "care",
+          location: "Therapy Room",
+          staff: "Dr. Smith",
+          capacity: 1,
+          registered: 1,
+          note: "Scheduled by staff",
+        },
+        {
+          id: "r2",
+          date: "2025-10-23",
+          start: "14:00",
+          end: "15:00",
+          name: "Speech Therapy",
+          type: "care",
+          location: "Speech Room",
+          staff: "Dr. Brown",
+          capacity: 1,
+          registered: 1,
+          note: "Scheduled by staff",
+        },
+      ]),
+      200
+    )
+  );
+}
+
+// Mock API to simulate receiving new events from family register visit
+const fetchNewVisitEvent = async (): Promise<any> => {
+  return new Promise((resolve) =>
+    setTimeout(() =>
+      resolve({
+        id: "e4",
+        date: "2025-10-24",
+        start: "16:00",
+        end: "17:00",
+        name: "Family visit",
+        type: "visit",
+        location: "Lobby B",
+        staff: "Receptionist",
+        capacity: 4,
+        registered: 2,
+        note: "Bring ID for verification",
+      }),
+      500
+    )
+  );
+};
+
 // ---------- toolbar
-function Toolbar({ view, setView, label, onPrev, onNext, onToday, resident, setResident, eventTypeFilter, setEventTypeFilter }: any) {
+function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between" style={{ width: '100%', margin: '0 auto' }}>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={onPrev}>
           <ChevronLeft className="h-4 w-4" />
@@ -258,158 +248,29 @@ function Toolbar({ view, setView, label, onPrev, onNext, onToday, resident, setR
             <SelectItem value="week">Week</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={resident} onValueChange={setResident}>
-          <SelectTrigger className="w-[190px]">
-            <SelectValue placeholder="All residents" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All residents</SelectItem>
-            <SelectItem value="john">John Doe</SelectItem>
-            <SelectItem value="jane">Jane Smith</SelectItem>
-          </SelectContent>
-        </Select>
         <div className="relative">
           <Input placeholder="Search events…" className="pl-9 w-[220px]" />
           <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         </div>
-
-        <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-          <SelectTrigger className="w-[150px] flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-400" />
-            <span>Filter</span>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="care">Care</SelectItem>
-            <SelectItem value="visit">Visit</SelectItem>
-            <SelectItem value="all">All</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );
 }
 
-const DAILY_VISIT_LIMIT = 5;
-
 function EmptySlot({
-  time, date, activeSlot, setActiveSlot, addEvent, events, disabled = false
+  time, disabled = false
 }: {
   time: string;
-  date: Date;
-  activeSlot: string | null;
-  setActiveSlot: React.Dispatch<React.SetStateAction<string | null>>;
-  addEvent: (ev: {
-    id: string; date: string; start: string; end: string; name: string;
-    type: "care" | "visit"; location: string; staff: string;
-    capacity: number; registered: number; note: string;
-  }) => void;
-  events: Array<{ id: string; date: string; start: string; end: string; type: "care" | "visit"; capacity: number; registered: number; name: string; location: string; staff: string; note: string; }>;
   disabled?: boolean;
 }) {
-  const isActive = activeSlot === time;
-  const dayISO = date.toISOString().slice(0, 10);
-
-  const dailyVisitCount = events.filter(e => e.date === dayISO && e.type === "visit").length;
-  const isVisitLimitReached = dailyVisitCount >= DAILY_VISIT_LIMIT;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isVisitLimitReached) return;
-
-    const startHour = Number(time.split(":")[0]);
-    if (startHour < 8 || startHour >= 17) {
-      alert("Visits can only be scheduled between 08:00 và 17:00.");
-      return;
-    }
-
-    addEvent({
-      id: `e${Date.now()}`,
-      date: dayISO,
-      start: time,
-      end: `${String(Number(time.split(":")[0]) + 1).padStart(2, "0")}:00`,
-      name: "Family visit",
-      type: "visit",
-      location: "Lobby A",
-      staff: "Frontdesk",
-      capacity: 1,
-      registered: 1,
-      note: "",
-    });
-    setActiveSlot(null);
-  };
-
   return (
     <div className="h-16 border-t text-[11px] text-slate-400 pl-1 flex items-start">
-      <button
-        className={`w-full h-full bg-transparent hover:bg-blue-50 ${disabled ? "pointer-events-none hover:bg-transparent" : ""}`}
-        onClick={() => !disabled && setActiveSlot(time)}
-        disabled={disabled || isVisitLimitReached}
+      <div
+        className={`w-full h-full bg-transparent ${disabled ? "pointer-events-none" : ""}`}
       >
         {time}
-      </button>
-
-      {isActive && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white shadow-lg p-6 rounded-md w-[300px] relative">
-            <button
-              type="button"
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-              onClick={() => setActiveSlot(null)}
-            >
-              ×
-            </button>
-            <h3 className="text-lg font-semibold">Schedule a Visit</h3>
-            {isVisitLimitReached ? (
-              <div className="text-red-500 text-sm">Maximum daily visits reached.</div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <Input type="date" defaultValue={dayISO} required />
-                <Input type="time" defaultValue={time} required />
-                <Select>
-                  <SelectTrigger><SelectValue placeholder="Select resident" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="john">John Doe</SelectItem>
-                    <SelectItem value="jane">Jane Smith</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex gap-2">
-                  <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-600">Submit</Button>
-                  <Button type="button" variant="ghost" onClick={() => setActiveSlot(null)}>Cancel</Button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </div>
-  );
-}
-
-function ResidentCombobox({
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  value: string | null;
-  onChange: (v: string | null) => void;
-  options: { id: string; name: string }[];
-  placeholder?: string;
-}) {
-  // Simple wrapper around the existing Select components to provide a typed combobox
-  return (
-    <Select value={value ?? ""} onValueChange={(v: string) => onChange(v || null)}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((o) => (
-          <SelectItem key={o.id} value={o.id}>
-            {o.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 
@@ -440,7 +301,6 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
 
   const [mine, setMine] = React.useState(false);
   const [count, setCount] = React.useState(ev.registered);
-  const [selectedResident, setSelectedResident] = React.useState<string | null>(null);
   const full = count >= ev.capacity;
   const remaining = Math.max(ev.capacity - count, 0);
 
@@ -448,7 +308,7 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
     ev.type === "visit" ? "bg-amber-50 ring-amber-200" : "bg-sky-50 ring-sky-200";
 
   const canRegister =
-    ev.type === "visit" ? !!selectedResident && !mine && !full : !mine && !full;
+    ev.type === "visit" ? !mine && !full : !mine && !full;
 
   const onRegister = () => {
     if (!canRegister) return;
@@ -508,19 +368,6 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
               )}
             </div>
 
-
-            {ev.type === "visit" && (
-              <div className="space-y-1">
-                <div className="text-xs text-slate-500">Resident</div>
-                <ResidentCombobox
-                  value={selectedResident}
-                  onChange={setSelectedResident}
-                  options={myResidents}
-                  placeholder="Select resident…"
-                />
-              </div>
-            )}
-
             <div className="pt-1 flex gap-2">
               <Button
                 size="sm"
@@ -545,7 +392,6 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
 function DayColumn({
   date,
   items,
-  addEvent,
 }: {
   date: Date;
   items: Array<{
@@ -561,19 +407,6 @@ function DayColumn({
     registered: number;
     note: string;
   }>;
-  addEvent: (ev: {
-    id: string;
-    date: string;
-    start: string;
-    end: string;
-    name: string;
-    type: "care" | "visit";
-    location: string;
-    staff: string;
-    capacity: number;
-    registered: number;
-    note: string;
-  }) => void;
 }) {
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const dayISO = date.toISOString().slice(0, 10);
@@ -586,15 +419,11 @@ function DayColumn({
         {date.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
       </div>
       <div className="relative">
-        {hours.map((h) => (
+        {hours.map((time) => (
           <EmptySlot
-            key={h}
-            time={h}
-            date={date}
-            activeSlot={activeSlot}
-            setActiveSlot={setActiveSlot}
-            addEvent={addEvent}
-            events={items}
+            key={time}
+            time={time}
+            disabled={false}
           />
         ))}
 
