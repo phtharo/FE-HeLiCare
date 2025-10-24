@@ -148,6 +148,9 @@ export default function StaffCreateEvent(): React.JSX.Element {
             {/* Nền gradient cố định */}
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
+            
+            
+
             <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
                 <div className="flex min-h-full gap-4 lg:gap-6">
                     <aside className="w-[240px] shrink-0 relative translate-x-3 lg:translate-x-4">

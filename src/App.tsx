@@ -16,7 +16,7 @@ import StaffCreateEvent from './event/staff-create-event';
 import StaffManageEvent from './event/staff-manage-event';
 import IssueLinkCode  from './family-resident-link/IssueLinkCode';
 import EnterInviteCode from './family-resident-link/EnterInviteCode';
-import RegisterEvent from './event/register-event';
+import RegisterVisit from './event/family-register-visit';
 import './App.css';
 import { AppLayout } from "./layout/AppLayout";
 
@@ -72,7 +72,7 @@ export default function App() {
           <Route path="/staff-manage-event" element={<StaffManageEvent />} />
           <Route path="/issue-link-code" element={<IssueLinkCode />} />
           <Route path="/enter-invite-code" element={<EnterInviteCode />} />
-          <Route path="/register-event" element={<RegisterEvent />} />
+          <Route path="/register-visit" element={<RegisterVisit />} />
         
           </Route>
         </Routes>
