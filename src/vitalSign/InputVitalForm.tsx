@@ -5,12 +5,13 @@ import type { SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle, Check, RefreshCw } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 /* -------------------- Thresholds & helpers -------------------- */
 type Level = "normal" | "warn" | "danger";
 
 const PRIMARY = "#5985D8";
-const BG = "#F4F6FB";
+const BG = "radial-gradient(120% 120% at 0% 100%, #dfe9ff 0%, #ffffff 45%, #efd8d3 100%)";
 
 const PRESET = {
   Morning: { systolic: 120, diastolic: 75, heartRate: 72, temperature: 36.6, respiration: 16, spo2: 97 },
@@ -36,13 +37,13 @@ function getShiftFromDate(d: Date) {
 }
 
 function toLocalInputValue(date: Date) {
-  // convert to local ISO without timezone offset, include seconds: YYYY-MM-DDTHH:MM:SS
+  
   const tzOffset = date.getTimezoneOffset();
   const local = new Date(date.getTime() - tzOffset * 60000);
   return local.toISOString().slice(0, 19);
 }
 function parseLocalInputValue(val: string) {
-  // input like "2025-09-27T00:51:06"
+ 
   return new Date(val);
 }
 function fmtHeader(d: Date) {
@@ -54,6 +55,9 @@ function fmtHeader(d: Date) {
 
 /* -------------------- zod schema -------------------- */
 const vitalSchema = z.object({
+  residentName: z.string().min(1, "Resident name is required"),
+  measurementBy: z.string().min(1, "Staff name is required"),
+  room: z.string().min(1, "Room is required"),
   measuredAt: z
     .string()
     .refine((s) => {
@@ -126,10 +130,10 @@ const lvl = {
 const borderFor = (l: Level) =>
   l === "danger" ? "border-red-500 ring-red-50" : l === "warn" ? "border-amber-400 ring-amber-50" : "border-gray-200";
 
-/* -------------------- Component -------------------- */
 export default function VitalInputFormHospital() {
   // realtime clock
   const [now, setNow] = useState<Date>(new Date());
+  const navigate = useNavigate();
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
@@ -200,16 +204,16 @@ export default function VitalInputFormHospital() {
     try {
       console.log("Saving vitals (hospital mode):", data);
       if (anyDanger) {
-        setToast({ text: "⚠️ Saved successfully but CRITICAL values detected — notify doctor.", color: "#dc2626" });
+        setToast({ text: "Saved successfully but CRITICAL values detected — notify doctor.", color: "#dc2626" });
       } else if (anyWarn) {
-        setToast({ text: "⚠️ Saved successfully. Some values are borderline.", color: "#f59e0b" });
+        setToast({ text: "Saved successfully. Some values are borderline.", color: "#f59e0b" });
       } else {
-        setToast({ text: "✅ Vital signs saved successfully.", color: PRIMARY });
+        setToast({ text: "Vital signs saved successfully.", color: PRIMARY });
       }
       setTimeout(() => setToast(null), 2500);
     } catch (e) {
       console.error(e);
-      setToast({ text: "❌ Error while saving, please try again.", color: "#dc2626" });
+      setToast({ text: "Error while saving, please try again.", color: "#dc2626" });
       setTimeout(() => setToast(null), 2500);
     }
   };
@@ -222,34 +226,34 @@ export default function VitalInputFormHospital() {
     if (level === "warn") {
       switch (field) {
         case "systolic":
-          return "⚠️ Systolic BP slightly abnormal — monitor.";
+          return "Systolic BP slightly abnormal — monitor.";
         case "diastolic":
-          return "⚠️ Diastolic BP slightly abnormal — monitor.";
+          return "Diastolic BP slightly abnormal — monitor.";
         case "heartRate":
-          return "⚠️ Heart rate outside normal range — monitor.";
+          return "Heart rate outside normal range — monitor.";
         case "temperature":
-          return "⚠️ Temperature slightly abnormal — monitor.";
+          return "Temperature slightly abnormal — monitor.";
         case "respiration":
-          return "⚠️ Respiration rate slightly abnormal — monitor.";
+          return "Respiration rate slightly abnormal — monitor.";
         case "spo2":
-          return "⚠️ SpO₂ slightly low — monitor.";
+          return "SpO₂ slightly low — monitor.";
         default:
           return null;
       }
     } else {
       switch (field) {
         case "systolic":
-          return "🚨 Extremely abnormal systolic BP — urgent attention!";
+          return "Extremely abnormal systolic BP — urgent attention!";
         case "diastolic":
-          return "🚨 Extremely abnormal diastolic BP — urgent attention!";
+          return "Extremely abnormal diastolic BP — urgent attention!";
         case "heartRate":
-          return "🚨 Dangerous heart rate — urgent attention!";
+          return "Dangerous heart rate — urgent attention!";
         case "temperature":
-          return "🚨 Dangerous body temperature — urgent attention!";
+          return "Dangerous body temperature — urgent attention!";
         case "respiration":
-          return "🚨 Dangerous respiration rate — urgent attention!";
+          return "Dangerous respiration rate — urgent attention!";
         case "spo2":
-          return "🚨 Critically low SpO₂ — urgent attention!";
+          return "Critically low SpO₂ — urgent attention!";
         default:
           return null;
       }
@@ -258,15 +262,16 @@ export default function VitalInputFormHospital() {
 
   /* -------------------- Render -------------------- */
   return (
-    <div className="min-h-screen p-6" style={{ background: BG }}>
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl p-6 shadow-lg">
+    <div className="w-full pt-2" style={{ background: BG }}>
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-lg mt-0">
+        
         {/* header */}
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-4 ">
           <div>
             <h1 className="text-2xl font-bold" style={{ color: PRIMARY }}>
               Enter Vital Signs
             </h1>
-            <p className="text-sm text-gray-500">Make sure to enter the actual measurement time</p>
+            {/* <p className="text-sm text-gray-500">Make sure to enter the actual measurement time</p> */}
           </div>
           <div className="text-right">
             <div className="text-sm">
@@ -281,7 +286,51 @@ export default function VitalInputFormHospital() {
 
         {/* form */}
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
+            <div>
+              <label className="text-sm font-medium">Resident Name</label>
+              <input
+                {...register("residentName")}
+                type="text"
+                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+              />
+              <div className="text-xs mt-1 text-gray-500">
+                {formState.errors.residentName && (
+                  <span className="text-red-600">{String(formState.errors.residentName.message)}</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Measurement By (Staff Name)</label>
+              <input
+                {...register("measurementBy")}
+                type="text"
+                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+              />
+              <div className="text-xs mt-1 text-gray-500">
+                {formState.errors.measurementBy && (
+                  <span className="text-red-600">{String(formState.errors.measurementBy.message)}</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Room</label>
+              <input
+                {...register("room")}
+                type="text"
+                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+              />
+              <div className="text-xs mt-1 text-gray-500">
+                {formState.errors.room && (
+                  <span className="text-red-600">{String(formState.errors.room.message)}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
             <div>
               <label className="text-sm font-medium">Measurement Time</label>
               <input
@@ -294,7 +343,7 @@ export default function VitalInputFormHospital() {
                 {formState.errors.measuredAt ? (
                   <span className="text-red-600">{String(formState.errors.measuredAt.message)}</span>
                 ) : measuredOlderThan24h ? (
-                  <span className="text-amber-700">⚠️ Measurement time is more than 24 hours old — verify carefully.</span>
+                  <span className="text-amber-700">Measurement time is more than 24 hours old — verify carefully.</span>
                 ) : null}
               </div>
             </div>
@@ -317,7 +366,7 @@ export default function VitalInputFormHospital() {
                 {!formState.errors.measuredAt && measuredDate ? (
                   getShiftFromDate(measuredDate) !== (values.shift as string) ? (
                     <span className="text-amber-700">
-                      ⚠️ Shift manually overridden and does not match measurement time ({getShiftFromDate(measuredDate)}).
+                      Shift manually overridden and does not match measurement time ({getShiftFromDate(measuredDate)}).
                     </span>
                   ) : null
                 ) : null}
@@ -332,7 +381,7 @@ export default function VitalInputFormHospital() {
                   if (!overrideShift) {
                     setValue("shift", getShiftFromDate(new Date()));
                   }
-                  setToast({ text: "⏱️ Measurement time reset to now.", color: PRIMARY });
+                  setToast({ text: "Measurement time reset to now.", color: PRIMARY });
                   setTimeout(() => setToast(null), 1800);
                 }}
                 className="px-3 py-2 rounded-lg border"
@@ -344,7 +393,7 @@ export default function VitalInputFormHospital() {
                 type="button"
                 onClick={() => {
                   setOverrideShift(false);
-                  setToast({ text: "🔁 Auto shift assignment enabled.", color: PRIMARY });
+                  setToast({ text: "Auto shift assignment enabled.", color: PRIMARY });
                   setTimeout(() => setToast(null), 1500);
                 }}
                 className="px-3 py-2 rounded-lg border"
@@ -355,12 +404,12 @@ export default function VitalInputFormHospital() {
           </div>
 
           {/* input fields */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
             <div>
-              <label className="text-sm font-medium">Systolic BP</label>
+              <label className="text-sm font-medium">Systolic Blood Pressure</label>
               <input
                 {...register("systolic")}
-                type="number"
+                type="text"
                 className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.systolic)}`}
               />
               <div className={`text-xs mt-1 ${levels.systolic === "danger" ? "text-red-600" : levels.systolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
@@ -369,10 +418,10 @@ export default function VitalInputFormHospital() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Diastolic BP</label>
+              <label className="text-sm font-medium">Diastolic Blood Pressure</label>
               <input
                 {...register("diastolic")}
-                type="number"
+                type="text"
                 className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.diastolic)}`}
               />
               <div className={`text-xs mt-1 ${levels.diastolic === "danger" ? "text-red-600" : levels.diastolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
@@ -382,7 +431,7 @@ export default function VitalInputFormHospital() {
 
             <div>
               <label className="text-sm font-medium">Heart Rate (bpm)</label>
-              <input {...register("heartRate")} type="number" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.heartRate)}`} />
+              <input {...register("heartRate")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.heartRate)}`} />
               <div className={`text-xs mt-1 ${levels.heartRate === "danger" ? "text-red-600" : levels.heartRate === "warn" ? "text-amber-600" : "text-gray-500"}`}>
                 {msgFor("heartRate", levels.heartRate) || (formState.errors.heartRate ? String(formState.errors.heartRate.message) : null)}
               </div>
@@ -390,7 +439,7 @@ export default function VitalInputFormHospital() {
 
             <div>
               <label className="text-sm font-medium">Temperature (°C)</label>
-              <input {...register("temperature")} type="number" step="0.1" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.temperature)}`} />
+              <input {...register("temperature")} type="text" step="0.1" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.temperature)}`} />
               <div className={`text-xs mt-1 ${levels.temperature === "danger" ? "text-red-600" : levels.temperature === "warn" ? "text-amber-600" : "text-gray-500"}`}>
                 {msgFor("temperature", levels.temperature) || (formState.errors.temperature ? String(formState.errors.temperature.message) : null)}
               </div>
@@ -398,7 +447,7 @@ export default function VitalInputFormHospital() {
 
             <div>
               <label className="text-sm font-medium">Respiration Rate (per min)</label>
-              <input {...register("respiration")} type="number" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.respiration)}`} />
+              <input {...register("respiration")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.respiration)}`} />
               <div className={`text-xs mt-1 ${levels.respiration === "danger" ? "text-red-600" : levels.respiration === "warn" ? "text-amber-600" : "text-gray-500"}`}>
                 {msgFor("respiration", levels.respiration) || (formState.errors.respiration ? String(formState.errors.respiration.message) : null)}
               </div>
@@ -406,7 +455,7 @@ export default function VitalInputFormHospital() {
 
             <div>
               <label className="text-sm font-medium">SpO₂ (%)</label>
-              <input {...register("spo2")} type="number" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.spo2)}`} />
+              <input {...register("spo2")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.spo2)}`} />
               <div className={`text-xs mt-1 ${levels.spo2 === "danger" ? "text-red-600" : levels.spo2 === "warn" ? "text-amber-600" : "text-gray-500"}`}>
                 {msgFor("spo2", levels.spo2) || (formState.errors.spo2 ? String(formState.errors.spo2.message) : null)}
               </div>
@@ -446,7 +495,7 @@ export default function VitalInputFormHospital() {
             </button>
 
             <div className="ml-auto text-xs text-gray-500">
-              {anyDanger ? "🚨 Critical values detected" : anyWarn ? "⚠️ Some values need monitoring" : "✔️ All values within range"}
+              {anyDanger ? "Critical values detected" : anyWarn ? "Some values need monitoring" : "All values within range"}
             </div>
           </div>
         </form>

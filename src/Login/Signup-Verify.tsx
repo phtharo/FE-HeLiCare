@@ -68,7 +68,7 @@ const SignupVerify: React.FC<SignupVerifyProps> = () => {
     <div className="relative min-h-screen w-full">
       {/* Nền hình ảnh */}
       <div
-        className="fixed inset-0 w-full h-full bg-cover bg-center z-0"
+        className="fixed inset-0 w-full h-full bg-cover bg-center -z-10"
         style={{ backgroundImage: `url(${bgImage})` }}
       ></div>
 

@@ -12,7 +12,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #ffffff;
+  background-color: transparent;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -188,21 +188,25 @@ button:focus-visible {
 }
 
 * {
-  box-sizing: border-box; /* Giữ nguyên */
+  box-sizing: border-box; 
 }
 
-html, :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; /* Giữ nguyên */
-  line-height: 1.5; /* Không ảnh hưởng đến grid */
-  background-color: #ffffff; /* Không ảnh hưởng đến grid */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.App {
+  padding: 0 !important;
 }
 
 .grid {
-  display: grid !important; /* Ghi đè thuộc tính mặc định của trình duyệt */
+  display: grid !important; 
 }
 
 .grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important; /* Đảm bảo cấu trúc cột */
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important; 
 }
 
 .custom-grid {

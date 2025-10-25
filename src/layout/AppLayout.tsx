@@ -1,68 +1,46 @@
 import { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
 export type CareEvent = {
   id: string;
   priority: string;
-  resident?: string; 
+  resident?: string;
   datetimeISO: string;
   dateISO: string;
   datetimeLabel: string;
   staffName: string;
-  location: string; 
+  location: string;
   type?: string;
-  eventName: string; 
-  quantity: number; 
-  notes?: string; // Added notes field
-  status?: "upcoming" | "ongoing" | "done" | "cancelled"; // Added status field
+  eventName: string;
+  quantity: number;
+  notes?: string;
+  status?: "upcoming" | "ongoing" | "done" | "cancelled";
 };
 
 export type FamilyVisit = {
   id: string;
   priority: string;
   resident: string;
-  date: string; 
+  date: string;
   family: string;
   qr: boolean;
-  datetime?: string; // Added datetime field
-  datetimeISO?: string; // Added datetimeISO field
-  endDatetime?: string; 
-  notes?: string; 
-};
-
-export type VisitEvent = {
-  id: string;
-  resident_id: number;
-  name: string; 
-  start_time: string; 
-  end_time: string; 
-  capacity: number; 
-  attendees: Array<{
-    family_user_id: number;
-    status: "invited" | "confirmed" | "checked_in" | "cancelled";
-    qr_code?: string; 
-  }>;
+  datetime?: string;
+  datetimeISO?: string;
+  endDatetime?: string;
   notes?: string;
-  recurrence?: string | null; 
-  created_by_staff_id: number;
 };
 
 export function AppLayout() {
+  const navigate = useNavigate();
+  const [activeButton, setActiveButton] = useState<string | null>(null);
   const [care, setCare] = useState<CareEvent[]>([]);
   const [visits, setVisits] = useState<FamilyVisit[]>([]);
 
-  // Persist care and visits data in local storage
   useEffect(() => {
     const storedCare = localStorage.getItem("careEvents");
     const storedVisits = localStorage.getItem("familyVisits");
-
-    if (storedCare) {
-      setCare(JSON.parse(storedCare));
-    }
-
-    if (storedVisits) {
-      setVisits(JSON.parse(storedVisits));
-    }
+    if (storedCare) setCare(JSON.parse(storedCare));
+    if (storedVisits) setVisits(JSON.parse(storedVisits));
   }, []);
 
   useEffect(() => {
@@ -70,7 +48,82 @@ export function AppLayout() {
     localStorage.setItem("familyVisits", JSON.stringify(visits));
   }, [care, visits]);
 
+  const handleButtonClick = (path: string) => {
+    setActiveButton(path);
+    navigate(path);
+  };
+
   return (
-    <Outlet context={{ care, setCare, visits, setVisits }} />
+    <div className="relative min-h-screen">
+      <div className="fixed inset-0 -z-10 pointer-events-none
+        bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
+
+      {/* Sidebar FIXED */}
+      <aside className="fixed left-0 top-0 rounded-3xl w-64 bg-white/70 backdrop-blur border-r">
+        <nav className="p-4 space-y-2">
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/list-resident' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/list-resident')}
+          >
+            Resident Profile Management
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/input-vital' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/input-vital')}
+          >
+            Medical & Health Record Management
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/nutrition' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/nutrition')}
+          >
+            Daily Life & Nutrition Management
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/incident' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/incident')}
+          >
+            Incident & Emergency Handling
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/room' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/room')}
+          >
+            Room & Facility Management
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/communication' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/communication')}
+          >
+            Communication & Reporting
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/visitation' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/visitation')}
+          >
+            Visitation & Access Control
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/payments' ? 'bg-[#5895d8] text-white' : ''}`}
+            onClick={() => handleButtonClick('/resident-management/payments')}
+          >
+            Payments & Additional Services
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main content pushed right */}
+      <main className="ml-64 min-h-screen p-6">
+        <Outlet context={{ care, setCare, visits, setVisits }} />
+      </main>
+    </div>
   );
 }
