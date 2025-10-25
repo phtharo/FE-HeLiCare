@@ -11,7 +11,15 @@ import Signin from './Login/Signin';
 import ForgotPasswordUpdate from './Login/forgot-password-update';
 
 import ResidentFileInformation from './ResidentFileManagement/resident-information';
+import ListResident from './ResidentFileManagement/list-resident';
+import StaffCreateEvent from './event/staff-create-event';
+import StaffManageEvent from './event/staff-manage-event';
+import IssueLinkCode  from './family-resident-link/IssueLinkCode';
+import EnterInviteCode from './family-resident-link/EnterInviteCode';
+import RegisterVisit from './event/family-register-visit';
+import ResidentSchedule from './event/resident-schedule';
 import './App.css';
+import { AppLayout } from "./layout/AppLayout";
 
 export default function App() {
   return (
@@ -59,6 +67,15 @@ export default function App() {
           />
 
           <Route path="/resident-information" element={<ResidentFileInformation />} />
+          <Route path="/list-resident" element={<ListResident />} />
+          <Route element={<AppLayout />}>
+          <Route path="/staff-create-event" element={<StaffCreateEvent />} />
+          <Route path="/staff-manage-event" element={<StaffManageEvent />} />
+          <Route path="/issue-link-code" element={<IssueLinkCode />} />
+          <Route path="/enter-invite-code" element={<EnterInviteCode />} />
+          <Route path="/register-visit" element={<RegisterVisit />} />
+          <Route path="/resident-schedule" element={<ResidentSchedule />} />
+          </Route>
         </Routes>
       </div>
     </Router>
