@@ -86,7 +86,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
     // Visit-only fields
     const [createQR, setCreateQR] = useState<boolean>(true);
-    const [familyUserId, setFamilyUserId] = useState<number | null>(null);
+    const [familyUserId, setFamilyUserId] = useState<string | null>(null); // Updated state type to string | null
 
     const valid = useMemo(() => {
         if (!scheduledAt) return false;
@@ -148,8 +148,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
             {/* Nền gradient cố định */}
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
-            
-            
+
+
 
             <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
                 <div className="flex min-h-full gap-4 lg:gap-6">
@@ -459,26 +459,36 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 <CardHeader>
                                                     <CardTitle>Family visit</CardTitle>
                                                     <CardDescription>QR will be used for check-in if enabled</CardDescription>
+                                                    {freq !== "none" && (
+                                                        <Badge variant="secondary" className="absolute top-2 left-2">
+                                                            {freq === "weekly" ? "Weekly" : "Monthly"}
+                                                        </Badge>
+                                                    )}
                                                 </CardHeader>
                                                 <CardContent className="grid gap-4 md:grid-cols-2">
                                                     <div className="flex flex-col gap-1 md:col-span-1">
-                                                        <Label>Family user</Label>
+                                                        <Label>Family's Information</Label>
+                                                        <Input
+                                                            value={familyUserId || ""} // Updated value binding to handle string
+                                                            onChange={(e) => setFamilyUserId(e.target.value || null)} // Updated onChange handler to accept string input
+                                                            placeholder="Enter family's information"
+                                                        />
+                                                    </div>
+                                                    <div className="flex flex-col gap-2 md:col-span-1">
+                                                        <Label>Repeat</Label>
                                                         <Select
-                                                            value={familyUserId?.toString() ?? ""}
-                                                            onValueChange={(v) => setFamilyUserId(Number(v))}
+                                                            value={freq}
+                                                            onValueChange={(v) => setFreq(v as Frequency)}
                                                         >
-                                                            <SelectTrigger><SelectValue placeholder="Select family account" /></SelectTrigger>
+                                                            <SelectTrigger><SelectValue placeholder="No repeat" /></SelectTrigger>
                                                             <SelectContent>
-                                                                {/*
-                                                                {residentFamilyOptions.map((option) => (
-                                                                    <SelectItem key={option.id} value={option.id.toString()}>{option.name}</SelectItem>
-                                                                ))}
-                                                                */}
+                                                                <SelectItem value="none">None</SelectItem>
+                                                                <SelectItem value="weekly">Weekly</SelectItem>
+                                                                <SelectItem value="monthly">Monthly</SelectItem>
                                                             </SelectContent>
                                                         </Select>
                                                     </div>
-
-                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 md:col-span-1">
+                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 md:col-span-2">
                                                         <div className="flex items-center gap-2">
                                                             <QrCode className="h-4 w-4 text-slate-500" />
                                                             <div>
@@ -498,10 +508,12 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                         />
 
                                                     </div>
+
+
                                                 </CardContent>
                                             </Card>
                                         )}
-                                        
+
                                     </div>
 
                                     {/* Right column – Summary & Actions */}
@@ -533,8 +545,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     )}
                                                     {kind === "visit" && (
                                                         <>
-                                                            <p><span className="text-slate-500">Resident:</span> {familyUserId ?? "—"}</p>
-                                                            <p><span className="text-slate-500">Family:</span> {familyUserId ?? "—"}</p>
+                                                            <p><span className="text-slate-500">Resident:</span> {eventName || "—"}</p> {/* Updated to use 'eventName' for Resident */}
+                                                            <p><span className="text-slate-500">Family:</span> {familyUserId || "—"}</p> {/* Updated to use 'familyUserId' for Family */}
                                                             <p><span className="text-slate-500">QR:</span> {createQR ? "Yes" : "No"}</p>
                                                         </>
                                                     )}
@@ -542,7 +554,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
                                                 <div className="flex gap-2">
                                                     <Button type="button" variant="outline" className="w-1/2">Cancel</Button>
-                                                    <Button type="submit" className="w-1/2 text-black" disabled={!valid}>
+                                                    <Button type="submit" className="w-1/2 text-white " style={{ backgroundColor: "#5985D8" }} disabled={!valid}>
                                                         Create
                                                     </Button>
                                                 </div>

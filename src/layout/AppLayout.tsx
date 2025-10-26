@@ -49,8 +49,8 @@ export function AppLayout() {
   }, [care, visits]);
 
   const handleButtonClick = (path: string) => {
-    setActiveButton(path);
-    navigate(path);
+    setActiveButton(path); 
+    navigate(path); 
   };
 
   return (
@@ -63,56 +63,63 @@ export function AppLayout() {
         <nav className="p-4 space-y-2">
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/list-resident' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/list-resident' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/list-resident')}
           >
             Resident Profile Management
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/input-vital' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/input-vital' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/input-vital')}
           >
             Medical & Health Record Management
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/nutrition' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/staff-manage-event' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
+            onClick={() => handleButtonClick('/staff-manage-event')}
+          >
+            Schedule & Events Management
+          </button>
+          <button
+            type="button"
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/nutrition' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/nutrition')}
           >
             Daily Life & Nutrition Management
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/incident' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/incident' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/incident')}
           >
             Incident & Emergency Handling
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/room' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/room' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/room')}
           >
             Room & Facility Management
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/communication' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/communication' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/communication')}
           >
             Communication & Reporting
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/visitation' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/visitation' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/visitation')}
           >
             Visitation & Access Control
           </button>
           <button
             type="button"
-            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100 ${activeButton === '/resident-management/payments' ? 'bg-[#5895d8] text-white' : ''}`}
+            className={`w-full text-left px-4 py-2 font-semibold text-gray-700 ${activeButton === '/resident-management/payments' ? 'bg-[#5895d8] text-white' : 'hover:bg-gray-100'}`}
             onClick={() => handleButtonClick('/resident-management/payments')}
           >
             Payments & Additional Services
@@ -121,7 +128,7 @@ export function AppLayout() {
       </aside>
 
       {/* Main content pushed right */}
-      <main className="ml-64 min-h-screen p-6">
+      <main className="ml-64 min-w-0 p-6">
         <Outlet context={{ care, setCare, visits, setVisits }} />
       </main>
     </div>

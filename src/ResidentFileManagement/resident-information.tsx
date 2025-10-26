@@ -35,17 +35,6 @@ type UploadItem = {
 
 const uid = () => Math.random().toString(36).slice(2);
 
-function ageFromDob(dobStr?: string): string {
-    if (!dobStr) return "";
-    const dob = new Date(dobStr);
-    if (isNaN(dob.getTime())) return "";
-    const now = new Date();
-    let age = now.getFullYear() - dob.getFullYear();
-    const m = now.getMonth() - dob.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--;
-    return String(Math.max(0, age));
-}
-
 function isValidDob(dobStr: string): boolean {
     const dob = new Date(dobStr);
     const now = new Date();
@@ -69,10 +58,25 @@ const ResidentFileInformation: React.FC = () => {
     const [fullName, setFullName] = useState<string>("");
     const [dob, setDob] = useState<string>("");
     const [gender, setGender] = useState<string>("");
-    const age = useMemo(() => ageFromDob(dob), [dob]);
 
     // Emergency contact
     const [ec, setEc] = useState<EmergencyContact>({ name: "", relation: "", phone: "" });
+
+    // Comorbidities
+    const [comorbidities, setComorbidities] = useState<string[]>([]);
+    const [comorbiditiesInput, setComorbiditiesInput] = useState<string>("");
+    const addComorbidity = (v?: string): void => {
+        const val = (v ?? comorbiditiesInput).trim();
+        if (!val) return;
+        setComorbidities((prev) => {
+            const updated = prev.includes(val) ? prev : [...prev, val];
+            console.log("Updated comorbidities:", updated);
+            return updated;
+        });
+        // if called without an explicit value, it came from the input so clear it
+        if (v === undefined) setComorbiditiesInput("");
+    };
+    const removeComorbidity = (v: string): void => setComorbidities((prev) => prev.filter((x) => x !== v));
 
     // Health
     const [allergyInput, setAllergyInput] = useState<string>("");
@@ -85,19 +89,24 @@ const ResidentFileInformation: React.FC = () => {
     const [uploading, setUploading] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    const [activeButton, setActiveButton] = useState<string | null>(null);
+    // const [activeButton, setActiveButton] = useState<string | null>(null);
     const [showNotification, setShowNotification] = useState<boolean>(false);
     const [showDialog, setShowDialog] = useState<boolean>(false);
 
     const navigate = useNavigate();
+
+    // Current date string used in the header
+    const today = useMemo(() => {
+        const d = new Date();
+        return d.toLocaleDateString();
+    }, []);
 
     const requiredOk = Boolean(
         fullName.trim() &&
         dob.trim() &&
         isValidDob(dob) &&
         ec.name.trim() &&
-        isValidPhone(ec.phone) &&
-        medications.every((m) => m.name.trim() && m.dose.trim() && m.freq.trim())
+        isValidPhone(ec.phone)
     );
 
     // Allergies
@@ -160,7 +169,6 @@ const ResidentFileInformation: React.FC = () => {
         const payload = {
             full_name: fullName,
             dob,
-            age,
             gender,
             emergency_contact: ec,
             allergies,
@@ -178,110 +186,49 @@ const ResidentFileInformation: React.FC = () => {
 
     const handleConfirm = () => {
         setShowDialog(false);
-        // Here you can handle the confirmed action, like navigating or submitting data
-        navigate("/resident-detail", { state: { residentInfo: { fullName, dob, age, gender, ec, allergies, medications, notes, uploads } } });
+
+        // Save resident info to localStorage
+        const existingResidents = JSON.parse(localStorage.getItem("residents") || "[]");
+        const newResident = {
+            id: existingResidents.length + 1,
+            fullName,
+            dob,
+            gender,
+            age: new Date().getFullYear() - new Date(dob).getFullYear(),
+            comorbidities, // Add comorbidity field
+        };
+        localStorage.setItem("residents", JSON.stringify([...existingResidents, newResident]));
+
+        // Navigate to list-resident page
+        navigate("/list-resident");
     };
 
     useEffect(() => {
+        // Remove overflow-hidden styles to allow scrolling
         const prevHtmlOverflow = document.documentElement.style.overflow;
         const prevBodyOverflow = document.body.style.overflow;
-        const prevHtmlMargin = document.documentElement.style.margin;
-        const prevBodyMargin = document.body.style.margin;
-        const prevHtmlPadding = document.documentElement.style.padding;
-        const prevBodyPadding = document.body.style.padding;
 
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
-        document.documentElement.style.margin = "0";
-        document.body.style.margin = "0";
-        document.documentElement.style.padding = "0";
-        document.body.style.padding = "0";
+        document.documentElement.style.overflow = "auto";
+        document.body.style.overflow = "auto";
 
         return () => {
             document.documentElement.style.overflow = prevHtmlOverflow;
             document.body.style.overflow = prevBodyOverflow;
-            document.documentElement.style.margin = prevHtmlMargin;
-            document.body.style.margin = prevBodyMargin;
-            document.documentElement.style.padding = prevHtmlPadding;
-            document.body.style.padding = prevBodyPadding;
         };
     }, []);
 
+    useEffect(() => {
+        console.log("Comorbidities state:", comorbidities);
+    }, [comorbidities]);
+
     return (
-        <div className="fixed inset-0 overflow-hidden">
+        <div className="w-full pt-2">
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
-            <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
+            <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0 -mt-15">
                 <div className="flex min-h-full gap-4 lg:gap-6">
-                    <aside className="w-[240px] shrink-0">
-                        <div className="h-full flex flex-col items-start">
-                            <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Medical")}
-                                >
-                                    Medical & Health Record Management
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("DailyLife")}
-                                >
-                                    Daily Life & Nutrition Management
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Incident")}
-                                >
-                                    Incident & Emergency Handling
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Room")}
-                                >
-                                    Room & Facility Management
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Communication")}
-                                >
-                                    Communication & Reporting
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Visitation")}
-                                >
-                                    Visitation & Access Control
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                        }`}
-                                    onClick={() => setActiveButton("Payments")}
-                                >
-                                    Payments & Additional Services
-                                </button>
-                            </div>
-                        </div>
-                    </aside>
-
+                    
+                    {/* main content */}
                     <div className="flex-1 pr-6">
                         <section className="w-full rounded-3xl bg-white/95 ring-1 ring-black/5 shadow-md overflow-hidden">
                             <header className="px-6 py-7 border-b border-gray-200">
@@ -291,7 +238,7 @@ const ResidentFileInformation: React.FC = () => {
                                     </div>
                                     <div className="text-left">
                                         <h1 className="text-xl font-semibold text-gray-900">Resident Information</h1>
-                                        <p className="text-sm text-gray-500">August 12, 2021</p>
+                                        <p className="text-sm text-gray-500">{today}</p>
                                     </div>
                                 </div>
                             </header>
@@ -350,10 +297,6 @@ const ResidentFileInformation: React.FC = () => {
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col gap-1">
-                                                        <Label>Age</Label>
-                                                        <Input value={age} readOnly className="bg-slate-50" />
-                                                    </div>
-                                                    <div className="flex flex-col gap-1">
                                                         <Label>Gender</Label>
                                                         <Select value={gender} onValueChange={(v) => setGender(v)}>
                                                             <SelectTrigger>
@@ -369,7 +312,7 @@ const ResidentFileInformation: React.FC = () => {
                                                 </CardContent>
                                             </Card>
                                         </div>
-
+                                        {/* family contact */}
                                         <div className="lg:col-span-1">
                                             <Card className="rounded-2xl">
                                                 <CardHeader>
@@ -402,14 +345,40 @@ const ResidentFileInformation: React.FC = () => {
                                                 </CardContent>
                                             </Card>
                                         </div>
-
+                                        {/* initial healt */}
                                         <div className="lg:col-span-2">
                                             <Card className="rounded-2xl">
                                                 <CardHeader>
                                                     <CardTitle>Initial Health Status</CardTitle>
                                                     <CardDescription>Allergies & current medications</CardDescription>
                                                 </CardHeader>
-                                                <CardContent className="space-y-6">
+                                                <CardContent className="space-y-6 text-left">
+                                                    <div>
+                                                        <Label>Comorbidity</Label>
+                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                            {comorbidities.map((c) => (
+                                                                <Badge key={c} variant="secondary" className="gap-1">
+                                                                    {c}
+                                                                    <button type="button" aria-label={`Remove ${c}`} onClick={() => removeComorbidity(c)} className="ml-1 inline-flex size-4 items-center justify-center rounded hover:bg-slate-200">
+                                                                        <X className="size-3" />
+                                                                    </button>
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                        <div className="mt-2 flex items-center gap-2">
+                                                            <Input
+                                                                value={comorbiditiesInput}
+                                                                onChange={(e) => setComorbiditiesInput(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") {
+                                                                        e.preventDefault();
+                                                                        addComorbidity();
+                                                                    }
+                                                                }}
+                                                                placeholder="Enter comorbidity and press Enter"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                     <div>
                                                         <Label>Allergies</Label>
                                                         <div className="mt-2 flex flex-wrap gap-2">
@@ -434,7 +403,13 @@ const ResidentFileInformation: React.FC = () => {
                                                                 }}
                                                                 placeholder="Enter allergy and press Enter"
                                                             />
-                                                            <Button type="button" onClick={addAllergy}>Add</Button>
+                                                            <Button
+                                                              type="button"
+                                                              onClick={addAllergy}
+                                                              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                                                            >
+                                                              Add
+                                                            </Button>
                                                         </div>
                                                     </div>
 
@@ -503,7 +478,7 @@ const ResidentFileInformation: React.FC = () => {
                                                 </CardContent>
                                             </Card>
                                         </div>
-
+                                        {/* upload documents */}
                                         <div className="lg:col-span-1">
                                             <Card className="rounded-2xl">
                                                 <CardHeader>
@@ -559,7 +534,7 @@ const ResidentFileInformation: React.FC = () => {
                                             <Button
                                                 type="button"
                                                 className="bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-md"
-                                                onClick={() => console.log("Cancel clicked")}
+                                                onClick={() => navigate('/list-resident')}
                                             >
                                                 Cancel
                                             </Button>
@@ -569,14 +544,19 @@ const ResidentFileInformation: React.FC = () => {
                                                 disabled={!requiredOk || uploading}
                                                 onClick={(e) => {
                                                     e.preventDefault();
-                                                    if (requiredOk) {
-                                                        setShowDialog(true);
-                                                    } else {
+                                                    if (!requiredOk) {
                                                         alert("Please fill in all required fields.");
+                                                        return;
                                                     }
+                                                    
+                                                    if (comorbiditiesInput.trim()) addComorbidity();
+                                                    if (allergyInput.trim()) addAllergy();
+
+                                                    
+                                                    setTimeout(() => setShowDialog(true), 0);
                                                 }}
                                             >
-                                                Save & Create
+                                                Continue
                                             </Button>
                                         </div>
                                     </form>
@@ -586,7 +566,7 @@ const ResidentFileInformation: React.FC = () => {
                     </div>
                 </div>
             </div>
-
+            {/* dialog review */}
             <Dialog open={showDialog} onOpenChange={setShowDialog}>
                 <DialogContent>
                     <DialogHeader>
@@ -595,20 +575,20 @@ const ResidentFileInformation: React.FC = () => {
                     <div className="space-y-2">
                         <p><strong>Full Name:</strong> {fullName}</p>
                         <p><strong>Date of Birth:</strong> {dob}</p>
-                        <p><strong>Age:</strong> {age}</p>
                         <p><strong>Gender:</strong> {gender}</p>
                         <p><strong>Emergency Contact:</strong> {ec.name} ({ec.relation}) - {ec.phone}</p>
+                        <p><strong>Comorbidity:</strong> {comorbidities.length > 0 ? comorbidities.join(", ") : "None"}</p>
                         <p><strong>Allergies:</strong> {allergies.join(", ") || "None"}</p>
                         <p><strong>Medications:</strong> {medications.map(m => `${m.name} (${m.dose}, ${m.freq})`).join(", ") || "None"}</p>
                         <p><strong>Notes:</strong> {notes || "None"}</p>
                         <p><strong>Documents:</strong> {uploads.filter(u => u.status === "done").map(u => u.file.name).join(", ") || "None"}</p>
                     </div>
                     <DialogFooter>
-                        <Button onClick={() => setShowDialog(false)} variant="outline">
+                        {/* <Button onClick={() => setShowDialog(false)} variant="outline">
                             Cancel
-                        </Button>
+                        </Button> */}
                         <Button onClick={handleConfirm} className="bg-blue-500 text-white hover:bg-blue-600">
-                            Confirm
+                            Save
                         </Button>
                         <Button
                             onClick={() => {
@@ -618,9 +598,9 @@ const ResidentFileInformation: React.FC = () => {
                                         residentInfo: {
                                             fullName,
                                             dob,
-                                            age,
                                             gender,
                                             ec,
+                                            comorbidities,
                                             allergies,
                                             medications,
                                             notes,

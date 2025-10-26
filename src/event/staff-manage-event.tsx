@@ -13,6 +13,7 @@ import type { FamilyVisit } from "../layout/AppLayout"; // Ensure updated type i
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { MoreVertical } from "lucide-react"; // Import the MoreVertical icon
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu"; // Import DropdownMenu components
+import { Badge } from "../components/ui/badge"; // Import Badge component
 
 type FilterState = {
   from?: string;   // YYYY-MM-DD
@@ -329,80 +330,21 @@ export default function StaffManageEvent(): React.JSX.Element {
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
+    <div className="w-full pt-2">
       {/* Background decoration */}
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
       {/* Main content */}
-      <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
-        <div className="flex min-h-full gap-4 lg:gap-6">
-          <aside className="w-[240px] shrink-0 relative translate-x-3 lg:translate-x-4">
-            {/* Sidebar with functionality buttons */}
-            <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Medical")}
-              >
-                Medical & Health Record Management
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("DailyLife")}
-              >
-                Daily Life & Nutrition Management
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Incident")}
-              >
-                Incident & Emergency Handling
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Room")}
-              >
-                Room & Facility Management
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Communication")}
-              >
-                Communication & Reporting
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Visitation")}
-              >
-                Visitation & Access Control
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Payments")}
-              >
-                Payments & Additional Services
-              </button>
-            </div>
-          </aside>
-          <main className="mx-auto w-full max-w-10xl p-4 lg:p-6">
+      <div className="relative h-full overflow-y-auto md:pt-8 lg:pt-0 w-full -mt-15">
+        <div className="w-screen min-h-screen flex justify-center items-start -ml-40">
+          
+          <main className="w-[1200px] max-w-[90vw]">
             <div className="rounded-3xl bg-white/90 backdrop-blur border border-black/5 shadow-lg h-full">
               <div className="px-6 pt-6 pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div>
-                      <h1 className="text-2xl">Manage Event</h1>
+                      <h1 className="text-2xl text-[#5985d8]">Manage Event</h1>
 
                     </div>
                   </div>
@@ -456,11 +398,11 @@ export default function StaffManageEvent(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="px-2 pb-2">
-                <div className="space-y-6">
-                  <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12 overflow-x-auto">
+              <div className="px-2 pb-2 ">
+                <div className="space-y-10 mb-4">
+                  <div className="mt-6 flex gap-12 overflow-x-auto mb-4 snap-x snap-mandatory">
                     {careSorted.map((e) => (
-                      <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative" style={{ width: '240px' }}>
+                      <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative min-w-[240px] snap-start">
                         <CardHeader>
                           <CardTitle>Care Event</CardTitle>
                           <DropdownMenu>
@@ -477,7 +419,7 @@ export default function StaffManageEvent(): React.JSX.Element {
                           </DropdownMenu>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-2 text-sm text-left">
+                          <ul className="space-y-2 text-sm text-left -mt-5">
                             <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
                             <li><span className="font-medium">Event Name:</span> {e.eventName || "N/A"}</li>
                             <li><span className="font-medium">Quantity:</span> {e.quantity || "N/A"}</li>
@@ -497,9 +439,9 @@ export default function StaffManageEvent(): React.JSX.Element {
                     )}
                   </div>
 
-                  <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12">
+                  <div className="mt-6 flex gap-5 overflow-x-auto mb-4 snap-x snap-mandatory">
                     {visitsSorted.map((v) => (
-                      <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative" style={{ width: '240px' }}>
+                      <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative min-w-[240px] snap-start">
                         <CardHeader>
                           <CardTitle>Family Visit</CardTitle>
                           <DropdownMenu>
@@ -516,7 +458,7 @@ export default function StaffManageEvent(): React.JSX.Element {
                           </DropdownMenu>
                         </CardHeader>
                         <CardContent>
-                          <ul className="space-y-2 text-sm text-left">
+                          <ul className="space-y-2 text-sm text-left -mt-5">
                             <li><span className="font-medium">Resident:</span> {v.resident || "N/A"}</li>
                             <li><span className="font-medium">Date:</span> {v.datetime || v.date || "N/A"}</li>
                             <li><span className="font-medium">Family:</span> {v.family || "N/A"}</li>
@@ -539,18 +481,7 @@ export default function StaffManageEvent(): React.JSX.Element {
 
       
       <div className="relative flex justify-end items-center mt-4" style={{ visibility: 'visible', position: 'relative', zIndex: 10 }}>
-        <button
-          className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
-          aria-label="Scroll Right"
-          onClick={() => {
-            const container = document.querySelector('.grid');
-            if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 7.5-6 7.5" />
-          </svg>
-        </button>
+        {/* Removed the scroll right button */}
       </div>
     </div>
   );

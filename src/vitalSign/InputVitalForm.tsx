@@ -263,7 +263,7 @@ export default function VitalInputFormHospital() {
   /* -------------------- Render -------------------- */
   return (
     <div className="w-full pt-2" style={{ background: BG }}>
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-lg mt-0">
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-lg -mt-15">
         
         {/* header */}
         <div className="flex items-start justify-between mb-4 ">

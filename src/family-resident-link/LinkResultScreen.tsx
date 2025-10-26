@@ -32,13 +32,13 @@ export default function LinkResultScreen({ success = true }: Props) {
         )}
 
         <h1 className={`text-2xl font-semibold ${textColor}`}>
-          {success ? "Liên kết thành công 🎉" : "Liên kết thất bại ❌"}
+          {success ? "Connection successful" : "Connection failed"}
         </h1>
 
         <p className="text-gray-600">
           {success
-            ? "Thông tin đã được xác nhận"
-            : "Vui lòng kiểm tra lại mã liên kết hoặc thử lại sau."}
+            ? "The information has been confirmed"
+            : "Please check the link code again or try again later."}
         </p>
       </div>
     </div>

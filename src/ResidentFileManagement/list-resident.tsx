@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 
@@ -8,6 +8,12 @@ type Resident = {
   dob: string;
   age: number;
   gender: string;
+  comorbidities: string[] | string;
+  ec?: {
+    name: string;
+    relation: string;
+    phone: string;
+  };
 };
 
 export default function ListResident(): React.JSX.Element {
@@ -15,13 +21,19 @@ export default function ListResident(): React.JSX.Element {
   const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
   const [showDialog, setShowDialog] = useState(false);
 
-  // Mock data
-  const [data] = useState<Resident[]>([
-    { id: 1, fullName: "John Doe", dob: "1965-08-12", age: 60, gender: "Male" },
-    { id: 2, fullName: "Jane Smith", dob: "1958-03-22", age: 67, gender: "Female" },
-    { id: 3, fullName: "Nguyen Van A", dob: "1951-12-04", age: 73, gender: "Male" },
-    { id: 4, fullName: "Tran Thi B", dob: "1956-07-19", age: 69, gender: "Female" },
-  ]);
+  const [data, setData] = useState<Resident[]>(() => {
+    // Load residents from localStorage
+    return JSON.parse(localStorage.getItem("residents") || "[]");
+  });
+
+  useEffect(() => {
+    // Update data when localStorage changes
+    const handleStorageChange = () => {
+      setData(JSON.parse(localStorage.getItem("residents") || "[]"));
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const slice = data; // Simplified for demonstration
 
@@ -30,26 +42,39 @@ export default function ListResident(): React.JSX.Element {
     setShowDialog(true);
   };
 
+  const today = new Date().toLocaleDateString();
+
   return (
     <div className="w-full pt-2">
       {/* Nền radial */}
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
       <div className="relative">
-        <div className="flex gap-2 lg:gap-4">
+        <div className="flex gap-2 lg:gap-4 -mt-10 -ml-10">
           
 
           <div className="flex-1 pr-4">
             <section className="w-full rounded-3xl bg-white/95 ring-1 ring-black/5 shadow-md">
-              <header className="px-4 py-5 border-b border-gray-200">
+              <header className="px-4 py-5 rounded-3xl border-b border-gray-200 sticky top-0 bg-white z-10">
                 <div className="relative">
-                  <div className="flex-col  items-center gap-2 text-left">
+                  <div className="flex-col items-center gap-2 text-left">
                     <div className="flex justify-between items-center">
                       <h1 className="text-2xl font-bold" style={{ color: '#5985d8' }}>Resident List</h1>
-                      <div className="text-sm text-gray-500 text-right">
-                        Note: BP (Blood Pressure), HR (Heart Rate)
+                      <div className="flex items-center gap-4">
+                        <div className="text-sm text-gray-500 text-right">
+                          Note: BP (Blood Pressure), HR (Heart Rate), Temp (Temperature), RR (Respiration Rate), SpO₂ (Oxygen Saturation)
+                        </div>
+                        <button
+                          onClick={() => navigate("/resident-information")}
+                          className="w-5 h-6 flex items-center justify-center bg-white text-black p-0 rounded-md hover:bg-gray-300"
+                          style={{fontSize:"24px"}}
+                          aria-label="Add Resident"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
+                    <p className="text-sm text-gray-500 mt-2">{today}</p>
                   </div>
                 </div>
               </header>
@@ -58,16 +83,17 @@ export default function ListResident(): React.JSX.Element {
                 <div className="w-full">
                   <div className="rounded-2xl bg-white/90 ring-1 ring-black/5 shadow p-4">
                     <div>
-                      <table className="w-full min-w-[1100px]">
+                      <table className="w-full min-w-[1120px]">
                         <thead>
                           <tr className="text-slate-600">
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[100px]">Full name</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[100px]">Date of Birth</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[50px]">Age</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[120px]">Room/Bed</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[180px]">Last vital sign</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[100px]">Diet group</th>
-                            <th className="text-left px-6 py-3 whitespace-nowrap min-w-[120px]">Last alert</th>
+                            <th className="text-left px-6 py-3 black min-w-[100px]">Full name</th>
+                            <th className="text-left px-6 py-3 black min-w-[100px]">Date of Birth</th>
+                            <th className="text-left px-6 py-3 black min-w-[120px]">Room/Bed</th>
+                            <th className="text-left px-6 py-3 black min-w-[150px]">Comorbidity</th>
+                            <th className="text-left px-6 py-3 black min-w-[200px]">Last vital sign</th>
+                            <th className="text-left px-6 py-3 black min-w-[100px]">Diet group</th>
+                            <th className="text-left px-6 py-3 black min-w-[120px]">Last alert</th>
+                            <th className="text-left px-6 py-3 black min-w-[150px]">Family's Contact</th> {/* Added column header for family's contact */}
                           </tr>
                         </thead>
                         <tbody>
@@ -77,19 +103,27 @@ export default function ListResident(): React.JSX.Element {
                               className="hover:bg-slate-50 rounded-xl cursor-pointer"
                               onDoubleClick={() => handleRowDoubleClick(r)}
                             >
-                              <td className="px-6 py-4 whitespace-nowrap font-medium text-left">{r.fullName}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left">{r.dob}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left">{r.age}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left relative" style={{ minWidth: '120px' }}>
+                              <td className="px-6 py-4 text-gray-800 font-medium text-left">{r.fullName}</td>
+                              <td className="px-6 py-4 text-gray-800 text-left">{r.dob}</td>
+                              
+                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
                                 Room 101 / Bed 1
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left relative" style={{ minWidth: '180px' }}>
-                                BP: 120/80, HR: 72
+                              <td className="px-6 py-4 text-gray-800 text-left">
+                                {Array.isArray(r.comorbidities) ? r.comorbidities.join(", ") : r.comorbidities || "None"}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left">Diabetes</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-left relative" style={{ minWidth: '120px' }}>
+                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '180px' }}>
+                                BP: 120/80, HR: 72<br />
+                                Temp: 36.6°C<br />
+                                RR: 16, SpO₂: 97%
+                              </td>
+                              <td className="px-6 py-4 text-gray-800 text-left">Diabetes</td>
+                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
                                 Last alert: 2 recent
                               </td>
+                              <td className="px-6 py-4 text-gray-800 text-left">
+                                {r.ec?.name} ({r.ec?.relation}) - {r.ec?.phone || "N/A"}
+                              </td> {/* Added family's contact column data */}
                             </tr>
                           ))}
                         </tbody>
@@ -117,7 +151,7 @@ export default function ListResident(): React.JSX.Element {
               <p><strong>Gender:</strong> {selectedResident.gender}</p>
               <p><strong>Room/bed:</strong> Room 101 / Bed 1</p>
               <p><strong>Diet group:</strong> Diabetes</p>
-              <p><strong>Last vital sign:</strong> BP: 120/80, HR: 72</p>
+              <p><strong>Last vital sign:</strong> BP: 120/80, HR: 72, Temp: 36.6°C, RR: 16, SpO₂: 97%</p>
               <p><strong>Notes:</strong> None</p>
             </div>
           )}
