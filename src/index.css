@@ -63,6 +63,7 @@ a:hover {
 
 body {
   margin: 0;
+  padding: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
@@ -191,10 +192,14 @@ button:focus-visible {
   box-sizing: border-box; 
 }
 
-html, body, #root {
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
-  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .App {

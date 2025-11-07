@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Clock,
   Users,
-  ChevronsUpDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -27,7 +26,7 @@ const fetchCareEvents = async (): Promise<any[]> => {
 const events = [
   {
     id: "e1",
-    date: "2025-10-22",
+    date: "2025-11-08",
     start: "09:00",
     end: "10:00",
     name: "Vital check",
@@ -40,7 +39,7 @@ const events = [
   },
   {
     id: "e2",
-    date: "2025-10-22",
+    date: "2025-11-05",
     start: "15:00",
     end: "15:30",
     name: "Family visit",
@@ -52,8 +51,21 @@ const events = [
     note: "",
   },
   {
+    id: "e4",
+    date: "2025-11-06",
+    start: "15:00",
+    end: "16:30",
+    name: "Family visit",
+    type: "visit" as const,
+    location: "Lobby A",
+    staff: "Frontdesk",
+    capacity: 1,
+    registered: 0,
+    note: "",
+  },
+  {
     id: "e3",
-    date: "2025-10-23",
+    date: "2025-11-04",
     start: "11:00",
     end: "12:00",
     name: "Therapy session",
@@ -67,10 +79,23 @@ const events = [
 ];
 
 
-const myResidents = [
-  { id: "r1", name: "John Doe" },
-  { id: "r2", name: "Jane Smith" },
-];
+type CareEvent = {
+  id: string;
+  date: string;
+  start: string;
+  end: string;
+  name: string;
+  type: "care" | "visit";
+  location: string;
+  staff: string;
+  capacity: number;
+  registered: number;
+  note: string;
+  time: string; // Added
+  seats: number; // Added
+  maxSeats: number; // Added
+  description: string; // Added
+};
 
 // ---------- state lịch
 function useCalendarState() {
@@ -107,39 +132,30 @@ function useCalendarState() {
 function Calendar() {
   const { view, setView, cursor, setCursor, days, label, resident, setResident } = useCalendarState();
 
-  type CareEvent = {
-    id: string;
-    date: string;
-    start: string;
-    end: string;
-    name: string;
-    type: "care" | "visit";
-    location: string;
-    staff: string;
-    capacity: number;
-    registered: number;
-    note: string;
-    remainingSeats?: number;
-  };
-
   const [eventsState, setEventsState] = useState<CareEvent[]>([]);
   const [residentSchedule, setResidentSchedule] = useState<CareEvent[]>([]);
 
   useEffect(() => {
-    // Fetch care events from API or shared state
     fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
-
-    // Fetch resident-specific schedules created by staff
     fetchResidentSchedule().then((schedule: CareEvent[]) => setResidentSchedule(schedule));
-
-    // Fetch new visit event from family register visit
-    fetchNewVisitEvent().then((newEvent: CareEvent) => {
-      setEventsState((prevEvents) => [...prevEvents, newEvent]);
-    });
   }, []);
 
+  useEffect(() => {
+    if (view === "day") {
+      setCursor(new Date()); // Automatically set the cursor to the current date when switching to daily view
+    }
+  }, [view]);
+
+  const filteredEvents = React.useMemo(() => {
+    if (view === "day") {
+      const selectedDate = days[0].toISOString().slice(0, 10);
+      return [...eventsState, ...residentSchedule].filter((event) => event.date === selectedDate);
+    }
+    return [...eventsState, ...residentSchedule];
+  }, [view, days, eventsState, residentSchedule]);
+
   return (
-    <div className="space-y-4 border border-gray-500 rounded-md" style={{ width: '100%', maxWidth: '2000px', margin: '0 auto' }}>
+    <div className="space-y-4 border border-gray-500 rounded-md mx-auto" style={{ width: '100%', maxWidth: '2000px', margin: '0 auto' }}>
       <Toolbar
         view={view}
         setView={setView}
@@ -150,12 +166,15 @@ function Calendar() {
         resident={resident}
         setResident={setResident}
       />
-      <div className="grid grid-cols-7 border-t border-gray-500 min-w-[1100px]" style={{ gridTemplateColumns: 'repeat(7, 1fr)', width: '100%' }}>
+      <div
+        className={`grid ${view === "day" ? "grid-cols-1" : "grid-cols-7"} border-t border-gray-500 min-w-[1400px] mx-auto`}
+        style={{ gridTemplateColumns: view === "day" ? "1fr" : "repeat(7, 1fr)", width: '100%' }}
+      >
         {days.map((d) => (
           <DayColumn
             key={d.toDateString()}
             date={d}
-            items={[...eventsState, ...residentSchedule]}
+            items={filteredEvents}
           />
         ))}
       </div>
@@ -170,7 +189,7 @@ async function fetchResidentSchedule(): Promise<any[]> {
       resolve([
         {
           id: "r1",
-          date: "2025-10-22",
+          date: "2025-11-06",
           start: "10:00",
           end: "11:00",
           name: "Physical Therapy",
@@ -183,7 +202,7 @@ async function fetchResidentSchedule(): Promise<any[]> {
         },
         {
           id: "r2",
-          date: "2025-10-23",
+          date: "2025-11-07",
           start: "14:00",
           end: "15:00",
           name: "Speech Therapy",
@@ -199,28 +218,6 @@ async function fetchResidentSchedule(): Promise<any[]> {
     )
   );
 }
-
-// Mock API to simulate receiving new events from family register visit
-const fetchNewVisitEvent = async (): Promise<any> => {
-  return new Promise((resolve) =>
-    setTimeout(() =>
-      resolve({
-        id: "e4",
-        date: "2025-10-24",
-        start: "16:00",
-        end: "17:00",
-        name: "Family visit",
-        type: "visit",
-        location: "Lobby B",
-        staff: "Receptionist",
-        capacity: 4,
-        registered: 2,
-        note: "Bring ID for verification",
-      }),
-      500
-    )
-  );
-};
 
 // ---------- toolbar
 function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
@@ -264,7 +261,7 @@ function EmptySlot({
   disabled?: boolean;
 }) {
   return (
-    <div className="h-16 border-t text-[11px] text-slate-400 pl-1 flex items-start">
+    <div className="h-30 border-t text-[14px] text-slate-400 pl-1 flex items-center">
       <div
         className={`w-full h-full bg-transparent ${disabled ? "pointer-events-none" : ""}`}
       >
@@ -275,37 +272,26 @@ function EmptySlot({
 }
 
 function EventBlock({ ev }: { ev: typeof events[number] }) {
-  const SLOT_PX = 64;
-  const BORDER_PX = 1;
-  const PX_PER_MIN = SLOT_PX / 60;
+  const SLOT_PX = 80; 
+  const PX_PER_MIN = SLOT_PX / 60; 
+  const DAY_START_MIN = 8 * 60; 
 
-  const startMin = toMinutes(ev.start);
+  const navigate = useNavigate();
+
+  const startMin = toMinutes(ev.start); 
   const endMin = toMinutes(ev.end);
   const durMin = Math.max(0, endMin - startMin);
 
-  const startHour = Math.floor(startMin / 60);
-  const startMinute = startMin % 60;
+  const top = (startMin - DAY_START_MIN) * PX_PER_MIN; 
 
-  const hourBoundariesCrossed =
-    Math.max(0, Math.floor((endMin - 1) / 60) - Math.floor(startMin / 60));
-
-  const top =
-    startHour * SLOT_PX +
-    startHour * BORDER_PX +
-    startMinute * PX_PER_MIN;
-
-  const height = Math.max(
-    36,
-    durMin * PX_PER_MIN + hourBoundariesCrossed * BORDER_PX
-  );
-
+  const height = durMin * PX_PER_MIN; 
   const [mine, setMine] = React.useState(false);
   const [count, setCount] = React.useState(ev.registered);
   const full = count >= ev.capacity;
   const remaining = Math.max(ev.capacity - count, 0);
 
   const color =
-    ev.type === "visit" ? "bg-amber-50 ring-amber-200" : "bg-sky-50 ring-sky-200";
+    ev.type === "visit" ? mine ? "bg-amber-100 ring-amber-300" : "bg-amber-50 ring-amber-200" : mine ? "bg-sky-100 ring-sky-300" : "bg-sky-50 ring-sky-200";
 
   const canRegister =
     ev.type === "visit" ? !mine && !full : !mine && !full;
@@ -321,15 +307,28 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
     setCount((c) => Math.max(0, c - 1));
   };
 
+  const handleOpenQR = () => {
+    if (!mine) return; // Ensure only registered users can access QR
+
+    navigate("/booking-status-qr", {
+      state: {
+        bookingId: ev.id, // Use event ID as bookingId
+        residentName: "Nguyễn Văn A", // Placeholder, replace with actual data
+        time: `${ev.date}T${ev.start}`, // Format as ISO string
+        status: "CONFIRMED" as const, // Assume confirmed for registered
+      },
+    });
+  };
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`absolute left-1 right-1 rounded-xl ring-1 text-left p-2 shadow-sm hover:shadow ${color} z-20`}
+          className={`absolute left-[2px] right-1 rounded-xl ring-1 text-center p-2 shadow-sm hover:shadow ${color} z-20`}
           style={{ top, height }}
         >
-          <div className="flex items-center justify-between">
-            <div className="font-medium text-sm truncate">{ev.name}</div>
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="font-medium text-sm text-center truncate">{ev.name}</div>
             <Badge variant={full ? "destructive" : "secondary"}>
               <Users className="h-3.5 w-3.5 mr-1" />
               {count}/{ev.capacity}
@@ -337,7 +336,7 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
           </div>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-90">
         <Card className="shadow-none border-0">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -380,8 +379,17 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
               <Button size="sm" variant="ghost" onClick={onCancel} disabled={!mine}>
                 Cancel
               </Button>
+              {ev.type === "visit" && (
+                <Button
+                  size="sm"
+                  className="bg-sky-500 text-white hover:bg-sky-600"
+                  onClick={handleOpenQR}
+                  disabled={!mine}
+                >
+                  QR Code
+                </Button>
+              )}
             </div>
-
           </CardContent>
         </Card>
       </PopoverContent>
@@ -408,14 +416,11 @@ function DayColumn({
     note: string;
   }>;
 }) {
-  const [activeSlot, setActiveSlot] = useState<string | null>(null);
-  const dayISO = date.toISOString().slice(0, 10);
-  const dayEvents = items.filter((e) => e.date === dayISO);
-  const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
+  const hours = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`); // Adjusted to show hours from 8:00 to 20:00
 
   return (
-    <div className="col-span-1 border-r min-h-[1024px] relative">
-      <div className="h-10 flex items-center justify-center text-xs border-b">
+    <div className="col-span-1 border-r min-h-[800px] relative">
+      <div className="h-10 flex items-center justify-center text-base border-b">
         {date.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
       </div>
       <div className="relative">
@@ -427,7 +432,7 @@ function DayColumn({
           />
         ))}
 
-        {dayEvents.map((ev) => (
+        {items.filter((e) => e.date === date.toISOString().slice(0, 10)).map((ev) => (
           <EventBlock key={ev.id} ev={ev as any} />
         ))}
       </div>

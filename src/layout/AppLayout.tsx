@@ -128,7 +128,7 @@ export function AppLayout() {
       </aside>
 
       {/* Main content pushed right */}
-      <main className="ml-64 min-w-0 p-6">
+      <main className="ml-64 w-[calc(100vw-16rem)] min-w-0 p-0">
         <Outlet context={{ care, setCare, visits, setVisits }} />
       </main>
     </div>

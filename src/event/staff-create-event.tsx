@@ -86,7 +86,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
     // Visit-only fields
     const [createQR, setCreateQR] = useState<boolean>(true);
-    const [familyUserId, setFamilyUserId] = useState<string | null>(null); // Updated state type to string | null
+    const [familyUserId, setFamilyUserId] = useState<number | null>(null);
 
     const valid = useMemo(() => {
         if (!scheduledAt) return false;
@@ -144,85 +144,16 @@ export default function StaffCreateEvent(): React.JSX.Element {
     }
 
     return (
-        <div className="fixed inset-0 overflow-hidden">
+        <div className="w-full pt-2">
             {/* Nền gradient cố định */}
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
-
-
-
-            <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
+            <div className="relative h-full overflow-y-auto -mt-10 ">
                 <div className="flex min-h-full gap-4 lg:gap-6">
-                    <aside className="w-[240px] shrink-0 relative translate-x-3 lg:translate-x-4">
-                        {/* Sidebar with functionality buttons */}
-                        <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Medical")}
-                            >
-                                Medical & Health Record Management
-                            </button>
 
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("DailyLife")}
-                            >
-                                Daily Life & Nutrition Management
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Incident")}
-                            >
-                                Incident & Emergency Handling
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Room")}
-                            >
-                                Room & Facility Management
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Communication")}
-                            >
-                                Communication & Reporting
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Visitation")}
-                            >
-                                Visitation & Access Control
-                            </button>
-
-                            <button
-                                type="button"
-                                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"
-                                    }`}
-                                onClick={() => setActiveButton("Payments")}
-                            >
-                                Payments & Additional Services
-                            </button>
-                        </div>
-                    </aside>
-                    <main className="mx-auto w-full max-w-10xl p-4 lg:p-6">
-                        <div className="rounded-3xl bg-white/90 backdrop-blur border border-black/5 shadow-lg">
-                            <CardHeader className="px-6 pt-6 pb-3">
+                    <main className="w-full max-w-8xl p-4 lg:p-6 -ml-6 ">
+                        <div className="rounded-3xl bg-white/90 backdrop-blur border border-black/5 shadow-lg px-0 pb-6 -pt-10">
+                            <CardHeader className="px-6 pt-1 pb-3">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-center gap-3">
                                         <ArrowLeft
@@ -281,8 +212,11 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Resident name *</Label>
                                                         <Input
-                                                            value={eventName}
-                                                            onChange={(e) => setEventName(e.target.value)}
+                                                            value={familyUserId !== null ? String(familyUserId) : ""}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setFamilyUserId(val === "" ? null : Number(val));
+                                                            }}
                                                             placeholder="Enter resident name"
                                                         />
                                                     </div>
@@ -348,7 +282,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     </div>
                                                 </div>
 
-                                                {/* Row 4: Notes (full width) */}
+                                                {/* Row 4: Notes */}
                                                 <div className="flex flex-col gap-1 md:col-span-2">
                                                     <Label>Notes</Label>
                                                     <Textarea
@@ -459,36 +393,22 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                 <CardHeader>
                                                     <CardTitle>Family visit</CardTitle>
                                                     <CardDescription>QR will be used for check-in if enabled</CardDescription>
-                                                    {freq !== "none" && (
-                                                        <Badge variant="secondary" className="absolute top-2 left-2">
-                                                            {freq === "weekly" ? "Weekly" : "Monthly"}
-                                                        </Badge>
-                                                    )}
                                                 </CardHeader>
                                                 <CardContent className="grid gap-4 md:grid-cols-2">
                                                     <div className="flex flex-col gap-1 md:col-span-1">
-                                                        <Label>Family's Information</Label>
+                                                        <Label>Family's information</Label>
                                                         <Input
-                                                            value={familyUserId || ""} // Updated value binding to handle string
-                                                            onChange={(e) => setFamilyUserId(e.target.value || null)} // Updated onChange handler to accept string input
-                                                            placeholder="Enter family's information"
+                                                            type="text"
+                                                            value={familyUserId !== null ? String(familyUserId) : ""}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setFamilyUserId(val === "" ? null : Number(val));
+                                                            }}
+                                                            placeholder="Enter family information"
                                                         />
                                                     </div>
-                                                    <div className="flex flex-col gap-2 md:col-span-1">
-                                                        <Label>Repeat</Label>
-                                                        <Select
-                                                            value={freq}
-                                                            onValueChange={(v) => setFreq(v as Frequency)}
-                                                        >
-                                                            <SelectTrigger><SelectValue placeholder="No repeat" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                <SelectItem value="none">None</SelectItem>
-                                                                <SelectItem value="weekly">Weekly</SelectItem>
-                                                                <SelectItem value="monthly">Monthly</SelectItem>
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 md:col-span-2">
+
+                                                    <div className="flex items-center justify-between rounded-lg border px-3 py-2 md:col-span-1">
                                                         <div className="flex items-center gap-2">
                                                             <QrCode className="h-4 w-4 text-slate-500" />
                                                             <div>
@@ -508,8 +428,6 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                         />
 
                                                     </div>
-
-
                                                 </CardContent>
                                             </Card>
                                         )}
@@ -545,8 +463,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     )}
                                                     {kind === "visit" && (
                                                         <>
-                                                            <p><span className="text-slate-500">Resident:</span> {eventName || "—"}</p> {/* Updated to use 'eventName' for Resident */}
-                                                            <p><span className="text-slate-500">Family:</span> {familyUserId || "—"}</p> {/* Updated to use 'familyUserId' for Family */}
+                                                            <p><span className="text-slate-500">Resident:</span> {familyUserId ?? "—"}</p>
+                                                            <p><span className="text-slate-500">Family:</span> {familyUserId ?? "—"}</p>
                                                             <p><span className="text-slate-500">QR:</span> {createQR ? "Yes" : "No"}</p>
                                                         </>
                                                     )}
@@ -554,7 +472,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
 
                                                 <div className="flex gap-2">
                                                     <Button type="button" variant="outline" className="w-1/2">Cancel</Button>
-                                                    <Button type="submit" className="w-1/2 text-white " style={{ backgroundColor: "#5985D8" }} disabled={!valid}>
+                                                    <Button type="submit" className="w-1/2" style={{ backgroundColor: "#5985d8", color: "white" }} disabled={!valid}>
                                                         Create
                                                     </Button>
                                                 </div>

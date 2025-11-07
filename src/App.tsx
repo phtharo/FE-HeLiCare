@@ -1,5 +1,5 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
-
+import { Toaster } from "sonner";
 
 import SignupEmail from './Login/Signup-Email';
 import SignupVerify from './Login/Signup-Verify';
@@ -21,10 +21,14 @@ import ResidentSchedule from './event/resident-schedule';
 import InputVital from './vitalSign/InputVitalForm'
 import './App.css';
 import { AppLayout } from "./layout/AppLayout";
+import Demo from './event/demo';
+import BookingStatusQR from './event/BookingStatusQR';
+import Diary from './diary/newsfeed';
 
 export default function App() {
   return (
     <div className="App">
+      <Toaster richColors position="top-right" />
       <Routes>
         <Route
           path="/"
@@ -82,7 +86,9 @@ export default function App() {
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/register-visit" element={<RegisterVisit />} />
         <Route path="/resident-schedule" element={<ResidentSchedule />} />
-
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/booking-status-qr" element={<BookingStatusQR />} />
+        <Route path="/diary" element={<Diary />} />
       </Routes>
     </div>
   );
