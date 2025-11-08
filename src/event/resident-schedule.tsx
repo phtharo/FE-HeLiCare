@@ -451,66 +451,7 @@ export function WeeklyDailyCalendar() {
 
   return (
     <div className="p-4 md:p-6 space-y-4" style={{ width: '100%', overflowX: 'auto', maxWidth: '100vw' }}>
-      {/* Top horizontal sidebar (fixed) */}
-      <div className="fixed top-0 left-0 w-full bg-[#5985D8] text-white shadow-md z-50">
-        <div className="flex justify-around items-center py-4">
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Schedule" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Schedule");
-              navigate("/resident-schedule");
-            }}
-          >
-            Schedule
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Notification" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Notification");
-              navigate("/resident-notification");
-            }}
-          >
-            Notification
-          </button>
-
-          {/* <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "RegisterEvent" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("RegisterEvent");
-              navigate("/register-event");
-            }}
-          >
-            Register Event
-          </button> */}
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "VideoCall" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("VideoCall");
-              navigate("/video-call");
-            }}
-          >
-            Video Call
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "SOS" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("SOS");
-              navigate("/sos");
-            }}
-          >
-            SOS
-          </button>
-        </div>
-      </div>
-
+    
       {/* spacer to offset fixed top bar height */}
       <div style={{ height: 64 }} />
 

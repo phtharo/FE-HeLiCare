@@ -26,7 +26,7 @@ import {
 // } from "../components/ui/command";
 import { fetchFamilyVisits, createFamilyVisit } from "../lib/api";
 import { useOutletContext } from "react-router-dom";
-import type { FamilyVisit } from "../layout/AppLayout";
+import type { FamilyVisit } from "../layout/staff-sidebar";
 import { useNavigate } from "react-router-dom";
 
 //API function

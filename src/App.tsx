@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { Toaster } from "sonner";
 
 import SignupEmail from './Login/Signup-Email';
@@ -20,10 +20,10 @@ import RegisterVisit from './event/family-register-visit';
 import ResidentSchedule from './event/resident-schedule';
 import InputVital from './vitalSign/InputVitalForm'
 import './App.css';
-import { AppLayout } from "./layout/AppLayout";
-import Demo from './event/demo';
+import { AppLayout } from "./layout/staff-sidebar";
+import {Sidebar} from './layout/sidebar';
 import BookingStatusQR from './event/BookingStatusQR';
-import Diary from './diary/newsfeed';
+import Newsfeed from './diary/newsfeed';
 
 export default function App() {
   return (
@@ -69,7 +69,7 @@ export default function App() {
           path="/forgotpassword-update"
           element={<ForgotPasswordUpdateWrapper />}
         />
-        {/* side bar */}
+        {/* side bar staff */}
         <Route element={<AppLayout />}>
           {/* homepage */}
           <Route index element={<ListResident />} /> 
@@ -80,15 +80,22 @@ export default function App() {
           <Route path="staff-create-event" element={<StaffCreateEvent />} />
           <Route path="staff-manage-event" element={<StaffManageEvent />} />
         </Route>
+        {/* resident */}
+        <Route element={<Sidebar />}>
+        {/* homepage */}
+        <Route index element={<Navigate to="/home" replace />} />
 
+        <Route path="/newsfeed" element={<Newsfeed />} />
+        </Route>
         {/* no side bar */}
         <Route path="/issue-link-code" element={<IssueLinkCode />} />
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/register-visit" element={<RegisterVisit />} />
         <Route path="/resident-schedule" element={<ResidentSchedule />} />
-        <Route path="/demo" element={<Demo />} />
+        <Route path="/sidebar" element={<Sidebar />} />
         <Route path="/booking-status-qr" element={<BookingStatusQR />} />
-        <Route path="/diary" element={<Diary />} />
+        
+        
       </Routes>
     </div>
   );

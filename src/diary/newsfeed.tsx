@@ -99,45 +99,12 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen w-[1550px] flex flex-col bg-gray-50 overflow-x-hidden -mt-8 -ml-10">
-      {/* Header */}
-      <header className="flex-shrink-0 bg-[#5985d8] text-white py-4 flex justify-between items-center shadow-md px-4 md:px-8 w-full">
-        <div className="text-2xl font-bold">HeLiCare</div>
-
-        <nav className="flex gap-4 text-sm">
-          <a href="#" className="hover:underline">
-            Home
-          </a>
-          <a href="#" className="hover:underline">
-            Personal Diary
-          </a>
-          <a href="#" className="hover:underline">
-            Group Activities
-          </a>
-          <a href="#" className="hover:underline">
-            Notifications
-          </a>
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <Avatar>
-            <AvatarImage src="https://via.placeholder.com/40" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
-
-          <Button
-            variant="outline"
-            className="border-white text-gray-800 hover:bg-white/10 h-9 px-3 text-xs"
-          >
-            Log Out
-          </Button>
-        </div>
-      </header>
+    <div className="flex-1 flex flex-col w-[1200px] bg-white overflow-x-hidden rounded-xl -mt-13 -ml-5">
 
       {/* Main Area */}
-      <div className="flex-1 flex overflow-hidden w-[1300px]">
+      <div className="flex-1 flex overflow-x-hidden mx-auto rounded-lg">
         {/* Sidebar */}
-        <aside className="flex-shrink-0 w-72 bg-white p-4 border-r overflow-y-auto min-h-screen">
+        <aside className="flex-shrink-0 w-72 bg-white p-4 border overflow-y-auto min-h-screen">
           <h3 className="text-lg font-semibold mb-4">Filters</h3>
 
           <Select value={filter} onValueChange={setFilter}>
@@ -193,7 +160,7 @@ const App: React.FC = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto bg-white border border-gray-300 rounded-lg">
+        <main className="flex-1 w-[800px] p-6 overflow-y-auto border border-gray-300 rounded-lg">
           {filteredPosts.map((post) => (
             <Card key={post.id} className="mb-4">
               <CardHeader className="pb-2">

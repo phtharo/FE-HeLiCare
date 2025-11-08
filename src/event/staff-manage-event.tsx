@@ -6,8 +6,8 @@ import { Label } from "../components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
 import { Funnel } from "lucide-react";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-import type { CareEvent } from "../layout/AppLayout";
-import type { FamilyVisit } from "../layout/AppLayout"; 
+import type { CareEvent } from "../layout/staff-sidebar";
+import type { FamilyVisit } from "../layout/staff-sidebar"; 
 
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { MoreVertical } from "lucide-react"; 

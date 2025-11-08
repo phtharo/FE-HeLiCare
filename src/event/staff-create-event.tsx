@@ -23,7 +23,7 @@ import { Badge } from "../components/ui/badge";
 import { ArrowLeft, Calendar, Clock, QrCode } from "lucide-react";
 // import { SearchIcon } from "@heroicons/react/solid";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import type { FamilyVisit } from "../layout/AppLayout";
+import type { FamilyVisit } from "../layout/staff-sidebar";
 import MultiSelect from "react-select";
 
 /** Extend CareEvent type to include staffId */
