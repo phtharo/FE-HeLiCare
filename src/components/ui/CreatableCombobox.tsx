@@ -1,15 +1,15 @@
 import * as React from "react";
 import { ChevronsUpDown, Check } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover";
+import { Button } from "./button";
+import { Popover, PopoverTrigger, PopoverContent } from "./popover";
 import {
   Command,
   CommandInput,
   CommandGroup,
   CommandItem,
   CommandEmpty,
-} from "../components/ui/command"; 
-import { cn } from "../lib/utils"; 
+} from "./command"; 
+import { cn } from "../../lib/utils"; 
 
 export type Option = { id: string; label: string; meta?: string };
 

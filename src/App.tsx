@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { Toaster } from "sonner";
 
 import SignupEmail from './Login/Signup-Email';
 import SignupVerify from './Login/Signup-Verify';
@@ -14,71 +14,90 @@ import ResidentFileInformation from './ResidentFileManagement/resident-informati
 import ListResident from './ResidentFileManagement/list-resident';
 import StaffCreateEvent from './event/staff-create-event';
 import StaffManageEvent from './event/staff-manage-event';
-import IssueLinkCode  from './family-resident-link/IssueLinkCode';
+import IssueLinkCode from './family-resident-link/IssueLinkCode';
 import EnterInviteCode from './family-resident-link/EnterInviteCode';
 import RegisterVisit from './event/family-register-visit';
 import ResidentSchedule from './event/resident-schedule';
+import InputVital from './vitalSign/InputVitalForm'
 import './App.css';
-import { AppLayout } from "./layout/AppLayout";
+import { AppLayout } from "./layout/staff-sidebar";
+import {Sidebar} from './layout/sidebar';
+import BookingStatusQR from './event/BookingStatusQR';
+import Newsfeed from './diary/newsfeed';
 
 export default function App() {
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route
-            path="/"
-            element={<SigninWrapper />}
-          />
+    <div className="App">
+      <Toaster richColors position="top-right" />
+      <Routes>
+        <Route
+          path="/"
+          element={<SigninWrapper />}
+        />
 
-          <Route
-            path="/forgotpassword-email"
-            element={<ForgotPasswordEmailWrapper />}
-          />
+        <Route
+          path="/forgotpassword-email"
+          element={<ForgotPasswordEmailWrapper />}
+        />
 
-          <Route
-            path="/forgotpassword-otp"
-            element={<ForgotPasswordOTPWrapper />}
-          />
+        <Route
+          path="/forgotpassword-otp"
+          element={<ForgotPasswordOTPWrapper />}
+        />
 
-          <Route
-            path="/forgotpassword-reset"
-            element={<ForgotPasswordResetWrapper />}
-          />
+        <Route
+          path="/forgotpassword-reset"
+          element={<ForgotPasswordResetWrapper />}
+        />
 
-          <Route
-            path="/signup-email"
-            element={<SignupEmailWrapper />}
-          />
+        <Route
+          path="/signup-email"
+          element={<SignupEmailWrapper />}
+        />
 
-          <Route
-            path="/signup-verify"
-            element={<SignupVerifyWrapper />}
-          />
+        <Route
+          path="/signup-verify"
+          element={<SignupVerifyWrapper />}
+        />
 
-          <Route
-            path="/signup-setpassword"
-            element={<SignupSetPasswordWrapper />}
-          />
+        <Route
+          path="/signup-setpassword"
+          element={<SignupSetPasswordWrapper />}
+        />
 
-          <Route
-            path="/forgotpassword-update"
-            element={<ForgotPasswordUpdateWrapper />}
-          />
+        <Route
+          path="/forgotpassword-update"
+          element={<ForgotPasswordUpdateWrapper />}
+        />
+        {/* side bar staff */}
+        <Route element={<AppLayout />}>
+          {/* homepage */}
+          <Route index element={<ListResident />} /> 
+          
+          <Route path="resident-information" element={<ResidentFileInformation />} />
+          <Route path="list-resident" element={<ListResident />} />
+          <Route path="input-vital" element={<InputVital />} />
+          <Route path="staff-create-event" element={<StaffCreateEvent />} />
+          <Route path="staff-manage-event" element={<StaffManageEvent />} />
+        </Route>
+        {/* resident */}
+        <Route element={<Sidebar />}>
+        {/* homepage */}
+        <Route index element={<Navigate to="/home" replace />} />
 
-          <Route path="/resident-information" element={<ResidentFileInformation />} />
-          <Route path="/list-resident" element={<ListResident />} />
-          <Route element={<AppLayout />}>
-          <Route path="/staff-create-event" element={<StaffCreateEvent />} />
-          <Route path="/staff-manage-event" element={<StaffManageEvent />} />
-          <Route path="/issue-link-code" element={<IssueLinkCode />} />
-          <Route path="/enter-invite-code" element={<EnterInviteCode />} />
-          <Route path="/register-visit" element={<RegisterVisit />} />
-          <Route path="/resident-schedule" element={<ResidentSchedule />} />
-          </Route>
-        </Routes>
-      </div>
-    </Router>
+        <Route path="/newsfeed" element={<Newsfeed />} />
+        </Route>
+        {/* no side bar */}
+        <Route path="/issue-link-code" element={<IssueLinkCode />} />
+        <Route path="/enter-invite-code" element={<EnterInviteCode />} />
+        <Route path="/register-visit" element={<RegisterVisit />} />
+        <Route path="/resident-schedule" element={<ResidentSchedule />} />
+        <Route path="/sidebar" element={<Sidebar />} />
+        <Route path="/booking-status-qr" element={<BookingStatusQR />} />
+        
+        
+      </Routes>
+    </div>
   );
 }
 

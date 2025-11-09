@@ -1,4 +1,3 @@
-//lỗi bộ lọc so sánh staff id và tên => hiển thị new event sai 
 import React, { useState, useEffect } from "react";
 import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover";
 import { Button } from "../components/ui/button";
@@ -7,12 +6,14 @@ import { Label } from "../components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
 import { Funnel } from "lucide-react";
 import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-import type { CareEvent } from "../layout/AppLayout";
-import type { FamilyVisit } from "../layout/AppLayout"; // Ensure updated type is imported
+import type { CareEvent } from "../layout/staff-sidebar";
+import type { FamilyVisit } from "../layout/staff-sidebar"; 
 
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
-import { MoreVertical } from "lucide-react"; // Import the MoreVertical icon
+import { MoreVertical } from "lucide-react"; 
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu"; // Import DropdownMenu components
+// import { Badge } from "../components/ui/badge"; 
+// import { twMerge } from 'tailwind-merge';
 
 type FilterState = {
   from?: string;   // YYYY-MM-DD
@@ -153,7 +154,6 @@ export default function StaffManageEvent(): React.JSX.Element {
     visits: FamilyVisit[];
   }>();
 
-  const [activeButton, setActiveButton] = useState<string>("Medical");
   const [filters, setFilters] = useState<FilterState>({ priority: "all", staff: "all" });
   const [careEvents, setCareEvents] = useState<CareEvent[]>(initialCare);
   const [familyVisits, setFamilyVisits] = useState<FamilyVisit[]>(initialVisits);
@@ -329,228 +329,153 @@ export default function StaffManageEvent(): React.JSX.Element {
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden">
-      {/* Background decoration */}
+    <div className="relative min-h-screen">
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
-      {/* Main content */}
       <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0">
-        <div className="flex min-h-full gap-4 lg:gap-6">
-          <aside className="w-[240px] shrink-0 relative translate-x-3 lg:translate-x-4">
-            {/* Sidebar with functionality buttons */}
-            <div className="mt-4 w-full rounded-2xl bg-white/90 backdrop-blur-md ring-1 ring-black/5 shadow-md flex flex-col py-4 gap-5">
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Medical" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Medical")}
-              >
-                Medical & Health Record Management
-              </button>
+        <main className="flex min-h-full gap-4 lg:gap-6">
+          <div className="w-full max-w-6xl rounded-xl bg-white/95 backdrop-blur border border-black/10 shadow-lg flex flex-col p-4 overflow-auto">
+            
+            {/* HEADER */}
+            <div className="pt-6 pb-3 relative z-50 pointer-events-auto">
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-2xl text-[#5985d8]">Manage Event</h1>
 
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "DailyLife" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("DailyLife")}
-              >
-                Daily Life & Nutrition Management
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Incident" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Incident")}
-              >
-                Incident & Emergency Handling
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Room" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Room")}
-              >
-                Room & Facility Management
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Communication" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Communication")}
-              >
-                Communication & Reporting
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Visitation" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Visitation")}
-              >
-                Visitation & Access Control
-              </button>
-
-              <button
-                type="button"
-                className={`w-full text-left px-4 py-2 font-semibold ${activeButton === "Payments" ? "bg-[#5985D8] text-white" : "text-gray-700 hover:bg-gray-100"}`}
-                onClick={() => setActiveButton("Payments")}
-              >
-                Payments & Additional Services
-              </button>
-            </div>
-          </aside>
-          <main className="mx-auto w-full max-w-10xl p-4 lg:p-6">
-            <div className="rounded-3xl bg-white/90 backdrop-blur border border-black/5 shadow-lg h-full">
-              <div className="px-6 pt-6 pb-3">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <h1 className="text-2xl">Manage Event</h1>
-
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    {/* Add Event Button */}
-                    <button
-                      type="button"
-                      className="h-10 w-10 inline-flex items-center justify-center rounded-full bg-white text-black shadow-md hover:bg-gray-100 focus:outline-none"
-                      aria-label="Add Event"
-                      onClick={() => navigate("/staff-create-event")}
+                <div className="flex items-center gap-4">
+                  {/* Add Event Button */}
+                  <button
+                    type="button"
+                    className="relative z-50 h-10 w-10 inline-flex items-center justify-center rounded-full bg-white text-black shadow-md hover:bg-gray-100 focus:outline-none"
+                    onClick={() => navigate('/staff-create-event')}
+                    onMouseDown={(e) => e.stopPropagation()}   
+                    aria-label="Add Event"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className="h-6 w-6 flex-none"
+                      aria-hidden="true"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        className="h-6 w-6 flex-none"
-                        aria-hidden="true"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                    </button>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </button>
 
-                    {/* Filter Button */}
+                  {/* Filter Button */}
+                  <div className="relative z-50">
                     <FilterButton
                       value={{ ...filters }}
-                      onChange={(next) => {
-                        setFilters(next);
-                      }}
+                      onChange={(next) => setFilters(next)}
                       staffOptions={staffOptions}
-                      eventTypeOptions={["all", "care", "visit"]} // Added event type options
+                      eventTypeOptions={["all", "care", "visit"]}
                     />
-                    {/* Notification Icon */}
-                    <button
-                      className="rounded-full p-2 hover:bg-gray-100 relative"
-                      aria-label="Notification"
-                      onClick={() => setShowNotifications((prev) => !prev)}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 22.5c1.5 0 2.25-.75 2.25-2.25h-4.5c0 1.5.75 2.25 2.25 2.25zm6.75-6.75v-4.5c0-3.75-2.25-6-6-6s-6 2.25-6 6v4.5l-1.5 1.5v.75h15v-.75l-1.5-1.5z" />
-                      </svg>
-                      {notifications.length > 0 && (
-                        <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">
-                          {notifications.length}
-                        </span>
-                      )}
-                    </button>
-                    {showNotifications && renderNotifications()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="px-2 pb-2">
-                <div className="space-y-6">
-                  <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12 overflow-x-auto">
-                    {careSorted.map((e) => (
-                      <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative" style={{ width: '240px' }}>
-                        <CardHeader>
-                          <CardTitle>Care Event</CardTitle>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
-                                <MoreVertical className="h-5 w-5" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => console.log('Edit clicked', e.id)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => console.log('Delete clicked', e.id)}>Delete</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMarkAsDone(e.id, "Care Event", e.eventName || "N/A", e.datetimeLabel || "N/A", e.datetimeLabel || "N/A")}>Mark as Done</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2 text-sm text-left">
-                            <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
-                            <li><span className="font-medium">Event Name:</span> {e.eventName || "N/A"}</li>
-                            <li><span className="font-medium">Quantity:</span> {e.quantity || "N/A"}</li>
-                            <li><span className="font-medium">Remaining Seat:</span> {calculateRemainingSeats(e)}</li>
-                            <li className="flex items-center gap-1">
-                              <span className="font-medium">Date:</span> {e.datetimeLabel}
-                            </li>
-                            <li><span className="font-medium">Location:</span> {e.location}</li>
-                            <li><span className="font-medium">Staff:</span> {e.staffName || "N/A"}</li>
-                            <li><span className="font-medium">Notes:</span> {e.notes || "N/A"}</li>
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {careSorted.length === 0 && (
-                      <p className="text-center text-gray-500">No care events available.</p>
-                    )}
                   </div>
 
-                  <div className="mt-6 grid grid-cols-5 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 gap-12">
-                    {visitsSorted.map((v) => (
-                      <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative" style={{ width: '240px' }}>
-                        <CardHeader>
-                          <CardTitle>Family Visit</CardTitle>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
-                                <MoreVertical className="h-5 w-5" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => console.log('Edit clicked', v.id)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => console.log('Delete clicked', v.id)}>Delete</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleMarkAsDone(v.id, "Family Visit", v.resident || "N/A", v.datetime || "N/A", v.datetime || "N/A")}>Mark as Done</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </CardHeader>
-                        <CardContent>
-                          <ul className="space-y-2 text-sm text-left">
-                            <li><span className="font-medium">Resident:</span> {v.resident || "N/A"}</li>
-                            <li><span className="font-medium">Date:</span> {v.datetime || v.date || "N/A"}</li>
-                            <li><span className="font-medium">Family:</span> {v.family || "N/A"}</li>
-                            <li><span className="font-medium">QR:</span> {v.qr ? "Enabled" : "Disabled"}</li>
-                            <li><span className="font-medium">Notes:</span> {v.notes || "No notes available"}</li>
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {visitsSorted.length === 0 && (
-                      <p className="text-center text-gray-500">No family visits available.</p>
+                  {/* Notification Icon */}
+                  <button
+                    className="relative z-50 rounded-full p-2 hover:bg-gray-100"
+                    onClick={() => setShowNotifications((p) => !p)}
+                    aria-label="Notification"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 22.5c1.5 0 2.25-.75 2.25-2.25h-4.5c0 1.5.75 2.25 2.25 2.25zm6.75-6.75v-4.5c0-3.75-2.25-6-6-6s-6 2.25-6 6v4.5l-1.5 1.5v.75h15v-.75l-1.5-1.5z" />
+                    </svg>
+                    {notifications.length > 0 && (
+                      <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">
+                        {notifications.length}
+                      </span>
                     )}
-                  </div>
+                  </button>
+                  {showNotifications && renderNotifications()}
                 </div>
               </div>
             </div>
-          </main>
-        </div>
-      </div>
 
-      
-      <div className="relative flex justify-end items-center mt-4" style={{ visibility: 'visible', position: 'relative', zIndex: 10 }}>
-        <button
-          className="p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
-          aria-label="Scroll Right"
-          onClick={() => {
-            const container = document.querySelector('.grid');
-            if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 7.5-6 7.5" />
-          </svg>
-        </button>
+            {/* CONTENT */}
+            <div className="pb-2 flex-grow">
+              <div className="space-y-10 mb-4">
+                {/* Care Events */}
+                <div className="mt-6 flex gap-6 overflow-x-auto mb-4 snap-x snap-mandatory
+                                relative z-0 pointer-events-auto">
+                  {careSorted.map((e) => (
+                    <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative min-w-[240px] snap-start">
+                      <CardHeader>
+                        <CardTitle>Care Event</CardTitle>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => console.log('Edit clicked', e.id)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => console.log('Delete clicked', e.id)}>Delete</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleMarkAsDone(e.id, "Care Event", e.eventName || "N/A", e.datetimeLabel || "N/A", e.datetimeLabel || "N/A")}>Mark as Done</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2 text-sm text-left -mt-5">
+                          <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
+                          <li><span className="font-medium">Event Name:</span> {e.eventName || "N/A"}</li>
+                          <li><span className="font-medium">Quantity:</span> {e.quantity || "N/A"}</li>
+                          <li><span className="font-medium">Remaining Seat:</span> {calculateRemainingSeats(e)}</li>
+                          <li className="flex items-center gap-1">
+                            <span className="font-medium">Date:</span> {e.datetimeLabel}
+                          </li>
+                          <li><span className="font-medium">Location:</span> {e.location}</li>
+                          <li><span className="font-medium">Staff:</span> {e.staffName || "N/A"}</li>
+                          <li><span className="font-medium">Notes:</span> {e.notes || "N/A"}</li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {careSorted.length === 0 && (
+                    <p className="text-center text-gray-500">No care events available.</p>
+                  )}
+                </div>
+
+                {/* Family Visits */}
+                <div className="mt-6 flex gap-6 overflow-x-auto mb-4 snap-x snap-mandatory
+                                relative z-0 pointer-events-auto">
+                  {visitsSorted.map((v) => (
+                    <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative min-w-[240px] snap-start">
+                      <CardHeader>
+                        <CardTitle>Family Visit</CardTitle>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
+                              <MoreVertical className="h-5 w-5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => console.log('Edit clicked', v.id)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => console.log('Delete clicked', v.id)}>Delete</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleMarkAsDone(v.id, "Family Visit", v.resident || "N/A", v.datetime || "N/A", v.datetime || "N/A")}>Mark as Done</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2 text-sm text-left -mt-5">
+                          <li><span className="font-medium">Resident:</span> {v.resident || "N/A"}</li>
+                          <li><span className="font-medium">Date:</span> {v.datetime || v.date || "N/A"}</li>
+                          <li><span className="font-medium">Family:</span> {v.family || "N/A"}</li>
+                          <li><span className="font-medium">QR:</span> {v.qr ? "Enabled" : "Disabled"}</li>
+                          <li><span className="font-medium">Notes:</span> {v.notes || "No notes available"}</li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {visitsSorted.length === 0 && (
+                    <p className="text-center text-gray-500">No family visits available.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
