@@ -62,7 +62,7 @@ const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>(samplePosts);
   const [filter, setFilter] = useState<string>("Day");
   const [search, setSearch] = useState<string>("");
-  const [userRole, setUserRole] = useState<UserRole>("Family");
+  const [userRole] = useState<UserRole>("Family");
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
 
   const handleLike = (id: number) => {

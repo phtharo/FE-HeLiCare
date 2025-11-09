@@ -72,7 +72,7 @@ export default function App() {
         {/* side bar staff */}
         <Route element={<AppLayout />}>
           {/* homepage */}
-          <Route index element={<ListResident />} /> 
+          <Route index element={<ListResident />} />
           
           <Route path="resident-information" element={<ResidentFileInformation />} />
           <Route path="list-resident" element={<ListResident />} />
@@ -86,12 +86,13 @@ export default function App() {
         <Route index element={<Navigate to="/home" replace />} />
 
         <Route path="/newsfeed" element={<Newsfeed />} />
+        <Route path="/resident-schedule" element={<ResidentSchedule />} />
         </Route>
         {/* no side bar */}
         <Route path="/issue-link-code" element={<IssueLinkCode />} />
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/register-visit" element={<RegisterVisit />} />
-        <Route path="/resident-schedule" element={<ResidentSchedule />} />
+        
         <Route path="/sidebar" element={<Sidebar />} />
         <Route path="/booking-status-qr" element={<BookingStatusQR />} />
         
@@ -102,7 +103,7 @@ export default function App() {
 }
 
 // Wrapper cho Signin
-const SigninWrapper = () => {
+function SigninWrapper() {
   const navigate = useNavigate();
   return (
     <Signin
@@ -110,7 +111,7 @@ const SigninWrapper = () => {
       onForgotPasswordClick={() => navigate('/forgotpassword-email')}
     />
   );
-};
+}
 
 // Wrapper cho ForgotPasswordEmail
 const ForgotPasswordEmailWrapper = () => {

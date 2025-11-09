@@ -94,7 +94,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
     setPasswordError(null);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const emailValidation = validateEmail(email);
@@ -104,7 +104,29 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
     setPasswordError(passwordValidation.error || null);
 
     if (emailValidation.valid && passwordValidation.valid) {
-      alert("Sign in successful!");
+      try {
+        // Mock API call to fetch user role
+        const response = await fetch("https://mockapi.example.com/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (data.role === "Staff") {
+          navigate("/list-resident");
+        } else if (data.role === "Resident") {
+          navigate("/home");
+        } else {
+          alert("Invalid role");
+        }
+      } catch (error) {
+        console.error("Error during login:", error);
+        alert("Login failed. Please try again.");
+      }
     }
   };
 
