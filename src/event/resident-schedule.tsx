@@ -101,7 +101,6 @@ type CareEvent = {
 function useCalendarState() {
   const [view, setView] = React.useState<"day" | "week">("week");
   const [cursor, setCursor] = React.useState<Date>(new Date());
-  const [resident, setResident] = React.useState<string>("all");
   const startOfWeek = (d: Date) => {
     const copy = new Date(d);
     const day = (copy.getDay() + 6) % 7; // Mon=0
@@ -109,6 +108,7 @@ function useCalendarState() {
     copy.setHours(0, 0, 0, 0);
     return copy;
   };
+  // Ensure the `days` array includes all seven days of the week
   const days = React.useMemo(() => {
     if (view === "day") return [new Date(cursor)];
     const start = startOfWeek(cursor);
@@ -126,14 +126,15 @@ function useCalendarState() {
     const last = days[6];
     return `${first.toLocaleDateString(undefined, { day: "2-digit", month: "short" })} – ${last.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })}`;
   }, [cursor, view, days]);
-  return { view, setView, cursor, setCursor, days, label, resident, setResident };
+  return { view, setView, cursor, setCursor, days, label };
 }
 
 function Calendar() {
-  const { view, setView, cursor, setCursor, days, label, resident, setResident } = useCalendarState();
+  const { view, setView, cursor, setCursor, days, label } = useCalendarState();
 
   const [eventsState, setEventsState] = useState<CareEvent[]>([]);
   const [residentSchedule, setResidentSchedule] = useState<CareEvent[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
@@ -147,12 +148,18 @@ function Calendar() {
   }, [view]);
 
   const filteredEvents = React.useMemo(() => {
-    if (view === "day") {
+    const all = [...eventsState, ...residentSchedule];
+    const term = searchTerm.toLowerCase();
+    let res = all.filter((event) =>
+      event.name.toLowerCase().includes(term) ||
+      event.note.toLowerCase().includes(term)
+    );
+    if (view === "day" && days.length > 0) {
       const selectedDate = days[0].toISOString().slice(0, 10);
-      return [...eventsState, ...residentSchedule].filter((event) => event.date === selectedDate);
+      res = res.filter((event) => event.date === selectedDate);
     }
-    return [...eventsState, ...residentSchedule];
-  }, [view, days, eventsState, residentSchedule]);
+    return res;
+  }, [eventsState, residentSchedule, searchTerm, view, days]);
 
   return (
     <div className="space-y-4 border border-gray-500 rounded-md mx-auto" style={{ width: '100%', maxWidth: '2000px', margin: '0 auto' }}>
@@ -163,11 +170,11 @@ function Calendar() {
         onPrev={() => setCursor(new Date(cursor.getTime() - (view === "day" ? 1 : 7) * 86400000))}
         onNext={() => setCursor(new Date(cursor.getTime() + (view === "day" ? 1 : 7) * 86400000))}
         onToday={() => setCursor(new Date())}
-        resident={resident}
-        setResident={setResident}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
       />
       <div
-        className={`grid ${view === "day" ? "grid-cols-1" : "grid-cols-7"} border-t border-gray-500 min-w-[1400px] mx-auto`}
+        className={`grid ${view === "day" ? "grid-cols-1" : "grid-cols-7"} border-t border-gray-500 min-w-[1200px] mx-auto`}
         style={{ gridTemplateColumns: view === "day" ? "1fr" : "repeat(7, 1fr)", width: '100%' }}
       >
         {days.map((d) => (
@@ -220,9 +227,9 @@ async function fetchResidentSchedule(): Promise<any[]> {
 }
 
 // ---------- toolbar
-function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
+function Toolbar({ view, setView, label, onPrev, onNext, onToday, searchTerm, setSearchTerm }: any) {
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between" style={{ width: '100%', margin: '0 auto' }}>
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between " style={{ width: '100%', margin: '0 auto' }}>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={onPrev}>
           <ChevronLeft className="h-4 w-4" />
@@ -230,7 +237,7 @@ function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
         <Button variant="outline" size="icon" onClick={onNext}>
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button variant="secondary" onClick={onToday}>
+        <Button variant="secondary" className="bg-gray-400 hover:bg-gray-400 text-white" onClick={onToday}>
           Today
         </Button>
         <div className="text-lg font-semibold ml-2">{label}</div>
@@ -246,7 +253,12 @@ function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
           </SelectContent>
         </Select>
         <div className="relative">
-          <Input placeholder="Search events…" className="pl-9 w-[220px]" />
+          <Input
+            placeholder="Search events…"
+            className="pl-9 w-[220px]"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
           <CalendarIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         </div>
       </div>
@@ -255,13 +267,14 @@ function Toolbar({ view, setView, label, onPrev, onNext, onToday }: any) {
 }
 
 function EmptySlot({
-  time, disabled = false
+  time, disabled = false, style
 }: {
   time: string;
   disabled?: boolean;
+  style?: React.CSSProperties;
 }) {
   return (
-    <div className="h-30 border-t text-[14px] text-slate-400 pl-1 flex items-center">
+    <div className="h-[60px] border-t text-[14px] text-slate-400 pl-1 flex items-center" style={style}>
       <div
         className={`w-full h-full bg-transparent ${disabled ? "pointer-events-none" : ""}`}
       >
@@ -272,131 +285,211 @@ function EmptySlot({
 }
 
 function EventBlock({ ev }: { ev: typeof events[number] }) {
-  const SLOT_PX = 80; 
-  const PX_PER_MIN = SLOT_PX / 60; 
-  const DAY_START_MIN = 8 * 60; 
+  const SLOT_PX = 80;
+  const PX_PER_MIN = SLOT_PX / 60;
+  const DAY_START_MIN = 8 * 60;
 
   const navigate = useNavigate();
 
-  const startMin = toMinutes(ev.start); 
+  const startMin = toMinutes(ev.start);
   const endMin = toMinutes(ev.end);
   const durMin = Math.max(0, endMin - startMin);
 
-  const top = (startMin - DAY_START_MIN) * PX_PER_MIN; 
+  const top = (startMin - DAY_START_MIN) * PX_PER_MIN;
 
-  const height = durMin * PX_PER_MIN; 
+  const height = durMin * PX_PER_MIN;
   const [mine, setMine] = React.useState(false);
   const [count, setCount] = React.useState(ev.registered);
+  const [showConfirmModal, setShowConfirmModal] = React.useState(false);
+  const [showCancelModal, setShowCancelModal] = React.useState(false);
   const full = count >= ev.capacity;
   const remaining = Math.max(ev.capacity - count, 0);
 
+  // card color
   const color =
-    ev.type === "visit" ? mine ? "bg-amber-100 ring-amber-300" : "bg-amber-50 ring-amber-200" : mine ? "bg-sky-100 ring-sky-300" : "bg-sky-50 ring-sky-200";
+    ev.type === "visit"
+      ? mine
+        ? "bg-amber-200 ring-amber-300" // Darker color
+        : "bg-amber-50 ring-amber-200"
+      : mine
+        ? "bg-sky-300 ring-sky-400"
+        : "bg-sky-50 ring-sky-200";
 
   const canRegister =
     ev.type === "visit" ? !mine && !full : !mine && !full;
 
   const onRegister = () => {
     if (!canRegister) return;
-    setMine(true);
-    setCount((c) => Math.min(ev.capacity, c + 1));
+    setShowConfirmModal(true);
   };
   const onCancel = () => {
     if (!mine) return;
+    setShowCancelModal(true);
+  };
+
+  const handleConfirmRegistration = () => {
+    setMine(true);
+    setCount((c) => Math.min(ev.capacity, c + 1));
+    setShowConfirmModal(false);
+  };
+
+  const handleConfirmCancel = () => {
     setMine(false);
     setCount((c) => Math.max(0, c - 1));
+    setShowCancelModal(false);
   };
 
   const handleOpenQR = () => {
-    if (!mine) return; // Ensure only registered users can access QR
-
+    if (!mine) return;
     navigate("/booking-status-qr", {
       state: {
-        bookingId: ev.id, // Use event ID as bookingId
-        residentName: "Nguyễn Văn A", // Placeholder, replace with actual data
-        time: `${ev.date}T${ev.start}`, // Format as ISO string
-        status: "CONFIRMED" as const, // Assume confirmed for registered
+        bookingId: ev.id,
+        residentName: "Nguyễn Văn A",
+        time: `${ev.date}T${ev.start}`,
+        status: "CONFIRMED" as const,
       },
     });
   };
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          className={`absolute left-[2px] right-1 rounded-xl ring-1 text-center p-2 shadow-sm hover:shadow ${color} z-20`}
-          style={{ top, height }}
-        >
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="font-medium text-sm text-center truncate">{ev.name}</div>
-            <Badge variant={full ? "destructive" : "secondary"}>
-              <Users className="h-3.5 w-3.5 mr-1" />
-              {count}/{ev.capacity}
-            </Badge>
-          </div>
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-90">
-        <Card className="shadow-none border-0">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base flex items-center gap-2">
-              {ev.name}
-              <Badge variant="outline">{ev.type}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center gap-2 text-slate-600">
-              <Clock className="h-4 w-4" /> {ev.start}–{ev.end}
-            </div>
-            <div className="text-slate-600">Loc: {ev.location}</div>
-            <div className="text-slate-600">Staff: {ev.staff}</div>
-            <div className="text-slate-600">
-              Note: {ev.note || "No notes available"}
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            className={`absolute inset-x-1 rounded-xl border border-gray-200 ring-1 text-center p-2 shadow-sm hover:shadow ${color} z-20`}
+            style={{ top, height }}
+          >
+            <div className="flex flex-col items-center justify-center h-full">
+              <div className="font-medium text-xs text-left truncate">{ev.name}</div>
+              <Badge variant={full ? "destructive" : "secondary"}>
                 <Users className="h-3.5 w-3.5 mr-1" />
                 {count}/{ev.capacity}
               </Badge>
-              {full ? (
-                <Badge variant="destructive">Full</Badge>
-              ) : (
-                <span className="text-slate-500 text-xs">
-                  Remaining: <b>{remaining}</b>
-                </span>
-              )}
             </div>
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-90">
+          <Card className="shadow-none border-0">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                {ev.name}
+                <Badge variant="outline">{ev.type}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex items-center gap-2 text-slate-600">
+                <Clock className="h-4 w-4" /> {ev.start}–{ev.end}
+              </div>
+              <div className="text-slate-600">Loc: {ev.location}</div>
+              <div className="text-slate-600">Staff: {ev.staff}</div>
+              <div className="text-slate-600">
+                Note: {ev.note || "No notes available"}
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  {count}/{ev.capacity}
+                </Badge>
+                {full ? (
+                  <Badge variant="destructive">Full</Badge>
+                ) : (
+                  <span className="text-slate-500 text-xs">
+                    Remaining: <b>{remaining}</b>
+                  </span>
+                )}
+              </div>
 
-            <div className="pt-1 flex gap-2">
-              <Button
-                size="sm"
-                className="bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
-                onClick={onRegister}
-                disabled={!canRegister}
-              >
-                {mine ? "Registered" : "Register"}
-              </Button>
-              <Button size="sm" variant="ghost" onClick={onCancel} disabled={!mine}>
-                Cancel
-              </Button>
-              {ev.type === "visit" && (
+              <div className="pt-1 flex gap-2">
                 <Button
                   size="sm"
-                  className="bg-sky-500 text-white hover:bg-sky-600"
-                  onClick={handleOpenQR}
-                  disabled={!mine}
+                  className="bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
+                  onClick={onRegister}
+                  disabled={!canRegister}
                 >
-                  QR Code
+                  {mine ? "Registered" : "Register"}
                 </Button>
-              )}
+                <Button size="sm" variant="ghost" onClick={onCancel} disabled={!mine}>
+                  Cancel
+                </Button>
+                {ev.type === "visit" && (
+                  <Button
+                    size="sm"
+                    className="bg-sky-500 text-white hover:bg-sky-600"
+                    onClick={handleOpenQR}
+                    disabled={!mine}
+                  >
+                    QR Code
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </PopoverContent>
+      </Popover>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowConfirmModal(false)}
+          />
+
+          
+          <div className="relative bg-white rounded-lg shadow-lg p-6 w-[400px]">
+            <h2 className="text-lg font-semibold mb-4">
+              Confirm Registration
+            </h2>
+            <p className="text-sm mb-4">
+              Are you sure you want to register for the event "{ev.name}" on{" "}
+              {ev.date} from {ev.start} to {ev.end}?
+            </p>
+            <div className="flex justify-end gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-blue-500 text-white hover:bg-blue-600"
+                onClick={handleConfirmRegistration}
+              >
+                Confirm
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </PopoverContent>
-    </Popover>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[400px]">
+            <h2 className="text-lg font-semibold mb-4">Confirm Cancellation</h2>
+            <p className="text-sm mb-4">
+              Are you sure you want to cancel your registration for the event "{ev.name}" on {ev.date} from {ev.start} to {ev.end}?
+            </p>
+            <div className="flex justify-end gap-4">
+              <Button variant="ghost" onClick={() => setShowCancelModal(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-red-500 text-white hover:bg-red-600" onClick={handleConfirmCancel}>
+                Confirm
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </>
   );
 }
-
 function DayColumn({
   date,
   items,
@@ -416,19 +509,21 @@ function DayColumn({
     note: string;
   }>;
 }) {
-  const hours = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`); // Adjusted to show hours from 8:00 to 20:00
+  const SLOT_PX = 80;
+  const hours = Array.from({ length: 13 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`); // from 8:00 to 20:00
 
   return (
-    <div className="col-span-1 border-r min-h-[800px] relative">
-      <div className="h-10 flex items-center justify-center text-base border-b">
+    <div className="col-span-1 border-r min-h-[800px] ">
+      <div className="h-15 flex items-center justify-center text-base border-b">
         {date.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
       </div>
-      <div className="relative">
+      <div className="relative w-full overflow-hidden">
         {hours.map((time) => (
           <EmptySlot
             key={time}
             time={time}
             disabled={false}
+            style={{ height: SLOT_PX }}
           />
         ))}
 
@@ -440,39 +535,36 @@ function DayColumn({
   );
 }
 
+
 function toMinutes(hhmm: string) {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
 }
 
 export function WeeklyDailyCalendar() {
-  const [activeButton, setActiveButton] = useState<string>("Event");
-  const navigate = useNavigate();
-
   return (
-    <div className="p-4 md:p-6 space-y-4" style={{ width: '100%', overflowX: 'auto', maxWidth: '100vw' }}>
-    
-      {/* spacer to offset fixed top bar height */}
-      <div style={{ height: 64 }} />
+    <div className="bg-white px-6 py-6 rounded-2xl shadow-sm w-[1250px] -mt-13 -ml-10">
+      <div className="flex-1  flex flex-col w-[1200px] bg-white overflow-x-hidden rounded-xl border border-gray-200">
 
-      {/* Toolbar */}
-      <Calendar />
+        {/* Toolbar */}
+        <Calendar />
 
-      {/* Legend for event types */}
-      <div className="mt-6 border-t pt-4">
-        <h3 className="text-lg font-semibold mb-2 text-left">Event Type Legend</h3>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-sky-100 border border-sky-200 rounded"></div>
-            <span>Care Event</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-amber-100 border border-amber-200 rounded"></div>
-            <span>Family Visit</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-500 border border-red-500 rounded"></div>
-            <span>No Seat</span>
+        {/* Legend for event types */}
+        <div className="mt-6 border-t  p-6">
+          <h3 className="text-lg font-semibold mb-2 text-left">Event Type Legend</h3>
+          <div className="flex gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-sky-100 border border-sky-200 rounded"></div>
+              <span>Care Event</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-amber-100 border border-amber-200 rounded"></div>
+              <span>Family Visit</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-500 border border-red-500 rounded"></div>
+              <span>No Seat</span>
+            </div>
           </div>
         </div>
       </div>

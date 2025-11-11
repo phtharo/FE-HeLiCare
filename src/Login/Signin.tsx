@@ -53,9 +53,10 @@ function validatePassword(password: string): { valid: boolean; error?: string } 
 interface SigninProps {
   onSignupClick: () => void;
   onForgotPasswordClick: () => void;
+  onLogin: (email: string, password: string) => void;
 }
 
-const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
+const Signin: React.FC<SigninProps> = ({ onSignupClick, onForgotPasswordClick, onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -94,7 +95,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
     setPasswordError(null);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const emailValidation = validateEmail(email);
@@ -104,7 +105,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
     setPasswordError(passwordValidation.error || null);
 
     if (emailValidation.valid && passwordValidation.valid) {
-      alert("Sign in successful!");
+      onLogin(email, password);
     }
   };
 
@@ -151,7 +152,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            objectPosition: '20% center', // Thay đổi từ 'left center' thành '20% center'
+            objectPosition: '20% center', 
             border: 'none',
             outline: 'none',
             margin: 0,
@@ -184,30 +185,30 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
               border: 'none',
               outline: 'none',
               margin: 0,
-              textAlign: 'left' // Thêm căn lề trái
+              textAlign: 'left' 
             }}
           >
             <h1 
               style={{
-                fontSize: '3rem', // Tăng kích thước font
+                fontSize: '3rem', 
                 fontWeight: 'bold',
                 color: 'white',
                 marginBottom: '1rem',
                 lineHeight: '1.2',
                 margin: '0 0 1rem 0',
-                textAlign: 'left' // Căn lề trái cho title
+                textAlign: 'left' 
               }}
             >
               HeLiCare
             </h1>
             <p 
               style={{
-                fontSize: '1.125rem', // Tăng kích thước font cho paragraph
+                fontSize: '1.125rem',
                 color: 'white',
                 maxWidth: '32rem',
                 lineHeight: '1.5',
                 margin: 0,
-                textAlign: 'left' // Căn lề trái cho text
+                textAlign: 'left' 
               }}
             >
               Helps you keep track of and stay connected with your loved ones in
@@ -226,7 +227,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           width: '100%',
           height: '100%',
           backgroundColor: 'white',
-          padding: '2rem', // Tăng padding
+          padding: '2rem', 
           border: 'none',
           outline: 'none',
           margin: 0,
@@ -238,10 +239,10 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           onSubmit={handleSubmit}
           style={{
             width: '100%',
-            maxWidth: '28rem', // Tăng kích thước form từ 20rem lên 28rem
-            padding: '2rem', // Tăng padding
+            maxWidth: '28rem', 
+            padding: '2rem', 
             backgroundColor: 'white',
-            borderRadius: '0.75rem', // Tăng border radius
+            borderRadius: '0.75rem', 
             boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
             border: 'none',
             outline: 'none',
@@ -250,9 +251,9 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           }}
         >
           <h2 style={{ 
-            fontSize: '1.875rem', // Tăng kích thước từ 1.25rem lên 1.875rem
+            fontSize: '1.875rem', 
             fontWeight: '600', 
-            marginBottom: '2rem', // Tăng margin bottom
+            marginBottom: '2rem', 
             textAlign: 'center', 
             color: '#1f2937',
             margin: '0 0 2rem 0'
@@ -261,12 +262,12 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           </h2>
 
           {/* Email */}
-          <div style={{ marginBottom: '1.5rem' }}> {/* Tăng margin bottom */}
+          <div style={{ marginBottom: '1.5rem' }}> 
             <label
               htmlFor="email"
               style={{ 
                 display: 'block', 
-                fontSize: '1rem', // Tăng kích thước font
+                fontSize: '1rem', 
                 fontWeight: '500', 
                 color: '#374151', 
                 textAlign: 'left', 
@@ -281,10 +282,10 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
               type="email"
               style={{
                 width: '100%',
-                padding: '0.875rem', // Tăng padding
+                padding: '0.875rem',
                 border: emailError ? '1px solid #ef4444' : '1px solid #d1d5db',
-                borderRadius: '0.5rem', // Tăng border radius
-                fontSize: '1rem', // Tăng font size
+                borderRadius: '0.5rem',
+                fontSize: '1rem',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
@@ -299,7 +300,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
             />
             {emailError && (
               <p style={{ 
-                fontSize: '0.875rem', // Tăng font size cho error message
+                fontSize: '0.875rem', 
                 color: '#ef4444', 
                 marginTop: '0.5rem', 
                 margin: '0.5rem 0 0 0' 
@@ -310,7 +311,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           </div>
 
           {/* Password */}
-          <div style={{ marginBottom: '1.5rem' }}> {/* Tăng margin bottom */}
+          <div style={{ marginBottom: '1.5rem' }}> 
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
@@ -321,7 +322,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
                 htmlFor="password"
                 style={{ 
                   display: 'block', 
-                  fontSize: '1rem', // Tăng font size
+                  fontSize: '1rem', 
                   fontWeight: '500', 
                   color: '#374151', 
                   textAlign: 'left' 
@@ -340,7 +341,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
                 }}
                 onClick={() => setShowPassword((prev) => !prev)}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />} {/* Tăng icon size */}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />} 
               </button>
             </div>
             <input
@@ -348,10 +349,10 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
               type={showPassword ? "text" : "password"}
               style={{
                 width: '100%',
-                padding: '0.875rem', // Tăng padding
+                padding: '0.875rem', 
                 border: passwordError ? '1px solid #ef4444' : '1px solid #d1d5db',
-                borderRadius: '0.5rem', // Tăng border radius
-                fontSize: '1rem', // Tăng font size
+                borderRadius: '0.5rem', 
+                fontSize: '1rem', 
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
@@ -366,7 +367,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
             />
             {passwordError && (
               <p style={{ 
-                fontSize: '0.875rem', // Tăng font size
+                fontSize: '0.875rem',
                 color: '#ef4444', 
                 marginTop: '0.5rem', 
                 margin: '0.5rem 0 0 0' 
@@ -383,7 +384,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                fontSize: '0.875rem', // Tăng font size
+                fontSize: '0.875rem', 
                 color: '#5985d8', 
                 cursor: 'pointer', 
                 textDecoration: 'none' 
@@ -400,8 +401,8 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           <div style={{ display: 'flex', alignItems: 'center', margin: '1.5rem 0' }}>
             <div style={{ flexGrow: 1, height: '1px', backgroundColor: '#d1d5db' }}></div>
             <span style={{ 
-              margin: '0 1rem', // Tăng margin
-              fontSize: '0.875rem', // Tăng font size
+              margin: '0 1rem', 
+              fontSize: '0.875rem', 
               color: '#6b7280', 
               fontWeight: '500' 
             }}>OR</span>
@@ -416,16 +417,16 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '0.75rem', // Tăng gap
-              padding: '0.875rem 1rem', // Tăng padding
+              gap: '0.75rem',
+              padding: '0.875rem 1rem', 
               border: '1px solid #d1d5db',
-              borderRadius: '0.5rem', // Tăng border radius
-              fontSize: '1rem', // Tăng font size
+              borderRadius: '0.5rem', 
+              fontSize: '1rem', 
               fontWeight: '500',
               color: '#374151',
               backgroundColor: 'white',
               cursor: 'pointer',
-              marginBottom: '1.5rem', // Tăng margin bottom
+              marginBottom: '1.5rem', 
               boxSizing: 'border-box'
             }}
             onMouseOver={(e) => ((e.target as HTMLButtonElement).style.backgroundColor = '#f9fafb')}
@@ -434,7 +435,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
             <img
               src={googleIcon}
               alt="Google"
-              style={{ width: '1.25rem', height: '1.25rem' }} // Tăng icon size
+              style={{ width: '1.25rem', height: '1.25rem' }} 
             />
             Continue with Google
           </button>
@@ -444,15 +445,15 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
             type="submit"
             style={{
               width: '100%',
-              padding: '0.875rem', // Tăng padding
+              padding: '0.875rem',
               backgroundColor: '#5985d8',
               color: 'white',
-              borderRadius: '0.5rem', // Tăng border radius
-              fontSize: '1rem', // Tăng font size
+              borderRadius: '0.5rem',
+              fontSize: '1rem',
               fontWeight: '600',
               border: 'none',
               cursor: 'pointer',
-              marginBottom: '1.5rem', // Tăng margin bottom
+              marginBottom: '1.5rem',
               boxSizing: 'border-box'
             }}
             onMouseOver={(e) => ((e.target as HTMLButtonElement).style.backgroundColor = '#466bb3')}
@@ -462,7 +463,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
           </button>
 
           {/* Sign up */}
-          <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}> {/* Tăng font size */}
+          <div style={{ textAlign: 'center', fontSize: '0.875rem', color: '#6b7280' }}> 
             Don't have an account?{" "}
             <button
               type="button"
@@ -473,7 +474,7 @@ const Signin: React.FC<SigninProps> = ({ onSignupClick }) => {
                 cursor: 'pointer', 
                 fontWeight: '500', 
                 textDecoration: 'none',
-                fontSize: '0.875rem' // Tăng font size
+                fontSize: '0.875rem'
               }}
               onClick={onSignupClick}
               onMouseOver={(e) => ((e.target as HTMLButtonElement).style.textDecoration = 'underline')}

@@ -50,9 +50,7 @@ export default function ListResident(): React.JSX.Element {
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
       <div className="relative">
-        <div className="flex gap-2 lg:gap-4 -mt-10 -ml-10">
-          
-
+        <div className="flex gap-2 lg:gap-4 -ml-10 overflow-x: auto">
           <div className="flex-1 pr-4">
             <section className="w-full rounded-3xl bg-white/95 ring-1 ring-black/5 shadow-md">
               <header className="px-4 py-5 rounded-3xl border-b border-gray-200 sticky top-0 bg-white z-10">
@@ -83,17 +81,17 @@ export default function ListResident(): React.JSX.Element {
                 <div className="w-full">
                   <div className="rounded-2xl bg-white/90 ring-1 ring-black/5 shadow p-4">
                     <div>
-                      <table className="w-full min-w-[1120px]">
+                      <table className="w-full min-w-[1150px]">
                         <thead>
                           <tr className="text-slate-600">
-                            <th className="text-left px-6 py-3 black min-w-[100px]">Full name</th>
-                            <th className="text-left px-6 py-3 black min-w-[100px]">Date of Birth</th>
-                            <th className="text-left px-6 py-3 black min-w-[120px]">Room/Bed</th>
-                            <th className="text-left px-6 py-3 black min-w-[150px]">Comorbidity</th>
-                            <th className="text-left px-6 py-3 black min-w-[200px]">Last vital sign</th>
-                            <th className="text-left px-6 py-3 black min-w-[100px]">Diet group</th>
-                            <th className="text-left px-6 py-3 black min-w-[120px]">Last alert</th>
-                            <th className="text-left px-6 py-3 black min-w-[150px]">Family's Contact</th> {/* Added column header for family's contact */}
+                            <th className="text-left px-0 py-3 black min-w-[100px]">Full name</th>
+                            <th className="text-left px-0 py-3 black min-w-[150px]">Date of Birth</th>
+                            <th className="text-left px-0 py-3 black min-w-[120px]">Room/Bed</th>
+                            <th className="text-left px-0 py-3 black min-w-[130px]">Comorbidity</th>
+                            <th className="text-left px-0 py-3 black min-w-[200px]">Last vital sign</th>
+                            <th className="text-left px-0 py-3 black min-w-[100px]">Diet group</th>
+                            <th className="text-left px-0 py-3 black min-w-[120px]">Last alert</th>
+                            <th className="text-left px-0 py-3 black min-w-[150px]">Family's Contact</th> {/* Added column header for family's contact */}
                           </tr>
                         </thead>
                         <tbody>
@@ -103,25 +101,26 @@ export default function ListResident(): React.JSX.Element {
                               className="hover:bg-slate-50 rounded-xl cursor-pointer"
                               onDoubleClick={() => handleRowDoubleClick(r)}
                             >
-                              <td className="px-6 py-4 text-gray-800 font-medium text-left">{r.fullName}</td>
-                              <td className="px-6 py-4 text-gray-800 text-left">{r.dob}</td>
-                              
-                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
+                              <td className="px-0 py-4 text-gray-800 font-medium text-left">{r.fullName}</td>
+                              <td className="px-0 py-4 text-gray-800 text-left">{r.dob}</td>
+
+                              {/* chưa map với room/bed data */}
+                              <td className="px-0 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
                                 Room 101 / Bed 1
                               </td>
-                              <td className="px-6 py-4 text-gray-800 text-left">
+                              <td className="px-0 py-4 text-gray-800 text-left">
                                 {Array.isArray(r.comorbidities) ? r.comorbidities.join(", ") : r.comorbidities || "None"}
                               </td>
-                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '180px' }}>
+                              <td className="px-0 py-4 text-gray-800 text-left relative" style={{ minWidth: '180px' }}>
                                 BP: 120/80, HR: 72<br />
                                 Temp: 36.6°C<br />
                                 RR: 16, SpO₂: 97%
                               </td>
-                              <td className="px-6 py-4 text-gray-800 text-left">Diabetes</td>
-                              <td className="px-6 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
+                              <td className="px-0 py-4 text-gray-800 text-left">Diabetes</td>
+                              <td className="px-0 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
                                 Last alert: 2 recent
                               </td>
-                              <td className="px-6 py-4 text-gray-800 text-left">
+                              <td className="px-0 py-4 text-gray-800 text-left">
                                 {r.ec?.name} ({r.ec?.relation}) - {r.ec?.phone || "N/A"}
                               </td> {/* Added family's contact column data */}
                             </tr>

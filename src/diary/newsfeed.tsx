@@ -1,3 +1,4 @@
+//những logic đã thêm : userlogin(xác định role), fetch list post(/lib),filter,render feed, like, comment, create post, edit post, delete post, report post
 import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
   SelectContent,
   SelectItem,
 } from "../components/ui/select";
+import { useNavigate, useLocation } from "react-router-dom";
+import ResidentSelector from "../components/ui/ResidentSelector";
 
 type UserRole = "Resident" | "Family" | "Staff" | "Admin";
 
@@ -32,6 +35,8 @@ interface Post {
   time: string;
   likes: number;
   comments: string[];
+  residentIds: number[]; // IDs of residents associated with the post
+  visibility: "STAFF_ONLY" | "STAFF_AND_FAMILY_OF_RESIDENTS" | "PUBLIC"; // Visibility rules
 }
 
 // Sample data
@@ -45,6 +50,8 @@ const samplePosts: Post[] = [
     time: "08:00, 15/10/2023",
     likes: 5,
     comments: ["So happy!"],
+    residentIds: [1, 2],
+    visibility: "PUBLIC",
   },
   {
     id: 2,
@@ -55,28 +62,173 @@ const samplePosts: Post[] = [
     time: "12:00, 15/10/2023",
     likes: 3,
     comments: ["Good!"],
+    residentIds: [2],
+    visibility: "STAFF_AND_FAMILY_OF_RESIDENTS",
   },
 ];
 
 const App: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>(samplePosts);
+  const initialPosts = (): Post[] => {
+    try {
+      const raw = localStorage.getItem("newsfeedPosts");
+      if (raw) return JSON.parse(raw) as Post[];
+    } catch (e) {
+      console.error("Failed to parse saved posts:", e);
+    }
+    return samplePosts;
+  };
+
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [filter, setFilter] = useState<string>("Day");
   const [search, setSearch] = useState<string>("");
-  const [userRole, setUserRole] = useState<UserRole>("Family");
+  const [userRole] = useState<UserRole>("Staff");
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
+  const [showMenu, setShowMenu] = useState<number | null>(null);
+  const [selectedResidentIds, setSelectedResidentIds] = React.useState<string[]>([]);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLike = (id: number) => {
-    setPosts((prev) =>
-      prev.map((post) =>
+  // Receive new post from create-post page (via navigate state) and persist to localStorage
+  React.useEffect(() => {
+    const state = location.state as { newPost?: Post } | null;
+    if (state?.newPost) {
+      const newPost = state.newPost;
+      setPosts((prev) => {
+        if (prev.some((p) => p.id === newPost.id)) return prev;
+        const updated = [newPost!, ...prev];
+        try {
+          localStorage.setItem("newsfeedPosts", JSON.stringify(updated));
+        } catch (e) {
+          console.error("Failed to save posts:", e);
+        }
+        return updated;
+      });
+      // clear state to avoid duplicate on refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
+  const syncLocalStorage = (updatedPosts: Post[]) => {
+    try {
+      localStorage.setItem("newsfeedPosts", JSON.stringify(updatedPosts));
+    } catch (e) {
+      console.error("Failed to sync posts to localStorage:", e);
+    }
+  };
+
+  const fetchPosts = async (): Promise<Post[]> => {
+    try {
+      const response = await fetch("https://api.example.com/posts");
+      if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+      return [];
+    }
+  };
+
+  const savePost = async (post: Post) => {
+    try {
+      const response = await fetch("https://api.example.com/posts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(post),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to save post");
+      }
+    } catch (error) {
+      console.error("Error saving post:", error);
+    }
+  };
+
+  const updatePost = async (post: Post) => {
+    try {
+      const response = await fetch(`https://api.example.com/posts/${post.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(post),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update post");
+      }
+    } catch (error) {
+      console.error("Error updating post:", error);
+    }
+  };
+
+  const deletePost = async (id: number) => {
+    try {
+      const response = await fetch(`https://api.example.com/posts/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete post");
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    }
+  };
+
+  const likePost = async (id: number) => {
+    try {
+      const response = await fetch(`https://api.example.com/posts/${id}/like`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to like post");
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+    }
+  };
+
+  const commentOnPost = async (id: number, comment: string) => {
+    try {
+      const response = await fetch(`https://api.example.com/posts/${id}/comment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ comment }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to comment on post");
+      }
+    } catch (error) {
+      console.error("Error commenting on post:", error);
+    }
+  };
+
+  React.useEffect(() => {
+    const loadPosts = async () => {
+      const posts = await fetchPosts();
+      setPosts(posts);
+    };
+    loadPosts();
+  }, []);
+
+  const handleLike = async (id: number) => {
+    await likePost(id);
+    setPosts((prev) => {
+      const updatedPosts = prev.map((post) =>
         post.id === id
           ? {
               ...post,
               likes: likedPosts.includes(id) ? post.likes - 1 : post.likes + 1,
             }
           : post
-      )
-    );
-
+      );
+      syncLocalStorage(updatedPosts);
+      return updatedPosts;
+    });
     setLikedPosts((prev) =>
       prev.includes(id)
         ? prev.filter((pid) => pid !== id) 
@@ -84,28 +236,131 @@ const App: React.FC = () => {
     );
   };
 
-  const handleComment = (id: number, comment: string) => {
-    setPosts((prev) =>
-      prev.map((post) =>
+  const handleComment = async (id: number, comment: string) => {
+    await commentOnPost(id, comment);
+    setPosts((prev) => {
+      const updatedPosts = prev.map((post) =>
         post.id === id
           ? { ...post, comments: [...post.comments, comment] }
           : post
-      )
-    );
+      );
+      syncLocalStorage(updatedPosts);
+      return updatedPosts;
+    });
   };
 
-  const filteredPosts = posts.filter((post) =>
-    post.title.toLowerCase().includes(search.toLowerCase())
+  const handleEdit = (id: number) => {
+    const post = posts.find((p) => p.id === id);
+    // pass the post in navigation state as a fallback source
+    navigate(`/create-post/${id}`, { state: { post } });
+  };
+
+  const handleDelete = async (id: number) => {
+    await deletePost(id);
+    setPosts((prev) => {
+      const updatedPosts = prev.filter((post) => post.id !== id);
+      syncLocalStorage(updatedPosts);
+      return updatedPosts;
+    });
+    setShowMenu(null);
+  };
+
+  const handleReport = async (id: number) => {
+    try {
+      const response = await fetch("https://api.example.com/report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ postId: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to report post");
+      }
+
+      console.log("Post reported successfully");
+    } catch (error) {
+      console.error("Error reporting post:", error);
+    }
+
+    setShowMenu(null);
+  };
+
+  React.useEffect(() => {
+    const state = location.state as { newPost?: Post; updatedPostId?: number } | null;
+
+    if (state?.newPost) {
+      const newPost = state.newPost;
+      setPosts((prev) => {
+        if (prev.some((p) => p.id === newPost.id)) return prev;
+        const updated = [newPost, ...prev];
+        syncLocalStorage(updated);
+        return updated;
+      });
+    }
+
+    if (state?.updatedPostId) {
+      const updated = JSON.parse(localStorage.getItem("newsfeedPosts") || "[]");
+      setPosts(updated);
+    }
+
+    if (state) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate]);
+
+  const filterPostsByTime = (posts: Post[], filter: string): Post[] => {
+    const now = new Date();
+    return posts.filter((post) => {
+      const postDate = new Date(post.time);
+      switch (filter) {
+        case "Day":
+          return now.toDateString() === postDate.toDateString();
+        case "Week": {
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(now.getDate() - 7);
+          return postDate >= oneWeekAgo && postDate <= now;
+        }
+        case "Month": {
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(now.getMonth() - 1);
+          return postDate >= oneMonthAgo && postDate <= now;
+        }
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredPosts = filterPostsByTime(
+    posts.filter((post) =>
+      post.title.toLowerCase().includes(search.toLowerCase())
+    ),
+    filter
   );
 
-  return (
-    <div className="flex-1 flex flex-col w-[1200px] bg-white overflow-x-hidden rounded-xl -mt-13 -ml-5">
+  const visiblePosts = filteredPosts.filter((post) => {
+    if (userRole === "Staff") return true;
+    if (userRole === "Family")
+      return (
+        post.visibility !== "STAFF_ONLY" &&
+        post.residentIds.some((id) => selectedResidentIds.includes(String(id)))
+      );
+    if (userRole === "Resident")
+      return post.residentIds.some((id) => selectedResidentIds.includes(String(id)));
+    return post.visibility === "PUBLIC";
+  });
 
+  return (
+    <div className="flex-1 flex flex-col w-[1200px] overflow-x-hidden rounded-xl ">
+      <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
       {/* Main Area */}
-      <div className="flex-1 flex overflow-x-hidden mx-auto rounded-lg">
+      <div className="flex-1 flex overflow-x-hidden bg-white mx-auto rounded-xl">
         {/* Sidebar */}
         <aside className="flex-shrink-0 w-72 bg-white p-4 border overflow-y-auto min-h-screen">
-          <h3 className="text-lg font-semibold mb-4">Filters</h3>
+          <h2 className="text-lg font-semibold mb-4">Toolbar</h2>
+          <h3 className="text-sm font-medium text-left mb-4">Filters</h3>
 
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-full h-9">
@@ -127,10 +382,19 @@ const App: React.FC = () => {
             className="mt-4 w-full h-9 text-sm"
           />
 
-          {(userRole === "Staff" || userRole === "Admin") && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium text-left mb-2">Filter by Resident</h3>
+            <ResidentSelector
+              selectedResidentIds={selectedResidentIds}
+              onChange={(ids) => setSelectedResidentIds(ids)}
+            />
+          </div>
+
+          {(userRole === "Staff" || userRole === "Resident") && (
             <Button
               className="mt-4 w-full h-9 text-sm"
               style={{ backgroundColor: "#5985d8" }}
+              onClick={() => navigate("/create-post")}
             >
               Create New Post
             </Button>
@@ -161,7 +425,7 @@ const App: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 w-[800px] p-6 overflow-y-auto border border-gray-300 rounded-lg">
-          {filteredPosts.map((post) => (
+          {visiblePosts.map((post) => (
             <Card key={post.id} className="mb-4">
               <CardHeader className="pb-2">
                 <div className="flex items-center gap-4 mb-4">
@@ -180,6 +444,53 @@ const App: React.FC = () => {
                       </Badge>
                     ))}
                   </div>
+                  {(userRole === "Staff" || userRole === "Resident") && (
+                    <div className="ml-auto relative">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setShowMenu((prev) => (prev === post.id ? null : post.id))}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5zm0 6a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                          />
+                        </svg>
+                      </Button>
+                      {showMenu === post.id && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-300 rounded-lg shadow-lg">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleEdit(post.id)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleDelete(post.id)}
+                          >
+                            Delete
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleReport(post.id)}
+                          >
+                            Report
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <CardTitle className="text-lg font-semibold text-left">
                   {post.title}
@@ -243,13 +554,13 @@ const App: React.FC = () => {
                         <AvatarFallback>{userRole[0]}</AvatarFallback>
                       </Avatar>
                       <div className="bg-gray-100 border border-gray-300 rounded-lg p-1 text-xs text-gray-600 leading-snug text-left max-w-xs">
-                        <p className="font-semibold text-gray-800 flex items-center gap-2">
+                        <div className="font-semibold text-gray-800 flex items-center gap-2">
                           {userRole}
                           <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
                             {userRole}
                           </Badge>
-                        </p>
-                        {comment}
+                        </div>
+                        <p>{comment}</p>
                       </div>
                     </div>
                   ))}
@@ -282,7 +593,7 @@ const App: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 bg-[#5985d8] text-white text-center py-4 text-xs">
+      {/* <footer className="flex-shrink-0 bg-[#5985d8] text-white text-center py-4 text-xs">
         <p>
           © 2025 HeLiCare. Protecting the health of the elderly. {" "}
           <span className="mx-1">|</span>
@@ -290,7 +601,7 @@ const App: React.FC = () => {
             Contact Us
           </a>
         </p>
-      </footer>
+      </footer> */}
     </div>
   );
 };

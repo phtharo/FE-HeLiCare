@@ -26,7 +26,17 @@ import {
 // } from "../components/ui/command";
 import { fetchFamilyVisits, createFamilyVisit } from "../lib/api";
 import { useOutletContext } from "react-router-dom";
-import type { FamilyVisit } from "../layout/staff-sidebar";
+type FamilyVisit = {
+  id: string;
+  date: string;
+  start?: string;
+  end?: string;
+  resident?: string;
+  family?: string;
+  qr?: boolean;
+  notes?: string;
+  [key: string]: any;
+};
 import { useNavigate } from "react-router-dom";
 
 //API function
@@ -235,7 +245,7 @@ function Calendar() {
 // ---------- toolbar
 function Toolbar({ view, setView, label, onPrev, onNext, onToday, resident, setResident, eventTypeFilter, setEventTypeFilter }: any) {
   return (
-    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between " style={{ width: '100%', margin: '0 auto' }}>
       <div className="flex items-center gap-2">
         <Button variant="outline" size="icon" onClick={onPrev}>
           <ChevronLeft className="h-4 w-4" />

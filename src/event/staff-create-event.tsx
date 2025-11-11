@@ -20,28 +20,42 @@ import {
 //import { Switch } from "../components/ui/switch";
 //import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { Badge } from "../components/ui/badge";
-import { ArrowLeft, Calendar, Clock, QrCode } from "lucide-react";
+import { Calendar, Clock, QrCode } from "lucide-react";
 // import { SearchIcon } from "@heroicons/react/solid";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import type { FamilyVisit } from "../layout/staff-sidebar";
 import MultiSelect from "react-select";
+import { Modal, ModalHeader, ModalContent, ModalFooter } from "../components/ui/modal";
 
 /** Extend CareEvent type to include staffId */
 export type CareEvent = {
-    id: string;
-    priority: "low" | "normal" | "high";
-    datetimeISO: string;
-    dateISO: string;
-    datetimeLabel: string;
-    staffId: string;
-    staffName: string;
-    location: string;
-    type?: string;
-    resident?: string;
-    quantity?: number; // Added quantity field
+  id: string;
+  priority: "low" | "normal" | "high";
+  datetimeISO: string;
+  dateISO: string;
+  datetimeLabel: string;
+  staffId: string;
+  staffName: string;
+  location: string;
+  type?: string;
+  resident?: string;
+  quantity?: number;
 };
 
-// import { Checkbox } from "../components/ui/checkbox";
+// Define FamilyVisit inline to resolve missing type error
+type FamilyVisit = {
+  id: string;
+  priority: string;
+  resident: string;
+  family: string;
+  qr: boolean;
+  date: string;
+  datetimeISO: string;
+  datetime: string;
+  endDatetime?: string;
+  notes: string;
+};
+
+// import { ArrowLeft } from "lucide-react";
 import { Checkbox } from "../components/ui/checkbox";
 
 
@@ -60,19 +74,19 @@ const STAFFS: StaffOption[] = [
 
 export default function StaffCreateEvent(): React.JSX.Element {
     const navigate = useNavigate();
-    const { setCare, setVisits, addNotification } = useOutletContext<{
-        setCare: React.Dispatch<React.SetStateAction<CareEvent[]>>;
-        visits: FamilyVisit[];
-        setVisits: React.Dispatch<React.SetStateAction<FamilyVisit[]>>;
-        addNotification: (type: "new" | "update" | "delete", message: string) => void;
-    }>();
+    const outletContext = useOutletContext<{ setCare?: React.Dispatch<React.SetStateAction<CareEvent[]>>; setVisits?: React.Dispatch<React.SetStateAction<FamilyVisit[]>>; addNotification?: (type: string, message: string) => void; }>() || {};
+    const setCare = outletContext.setCare || (() => {});
+    const setVisits = outletContext.setVisits || (() => {});
+    const addNotification = outletContext.addNotification || (() => {});
 
     const [kind, setKind] = useState<EventKind>("care");
     const [scheduledAt, setScheduledAt] = useState<string>("");
     const [endAt, setEndAt] = useState<string>("");
     const [notes, setNotes] = useState<string>("");
     const [eventName, setEventName] = useState<string>("");
-    const [activeButton, setActiveButton] = useState<string | null>(null);
+    const [createQR, setCreateQR] = useState<boolean>(true);
+    const [residentName, setResidentName] = useState<string>("");
+    const [familyInfo, setFamilyInfo] = useState<string>("");
 
     // Care-only fields
     const [careType, setCareType] = useState<CareType>("vital_check");
@@ -84,9 +98,12 @@ export default function StaffCreateEvent(): React.JSX.Element {
     const [medName, setMedName] = useState<string>("");
     const [medDose, setMedDose] = useState<string>("");
 
-    // Visit-only fields
-    const [createQR, setCreateQR] = useState<boolean>(true);
-    const [familyUserId, setFamilyUserId] = useState<number | null>(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [modalAction, setModalAction] = useState<"delete" | "done" | null>(null);
+    const [showCreateConfirmModal, setShowCreateConfirmModal] = useState(false);
+
+    // Add state for success message
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
     const valid = useMemo(() => {
         if (!scheduledAt) return false;
@@ -94,16 +111,22 @@ export default function StaffCreateEvent(): React.JSX.Element {
             if (!assignedStaffIds.length) return false;
             if (careType === "medication" && (!medName.trim() || !medDose.trim())) return false;
         } else {
-            if (!familyUserId) return false;
+            if (!residentName) return false;
         }
         return true;
-    }, [scheduledAt, kind, assignedStaffIds, careType, medName, medDose, familyUserId]);
+    }, [scheduledAt, kind, assignedStaffIds, careType, medName, medDose, residentName]);
 
     function onCreate(e: React.FormEvent) {
         e.preventDefault();
 
         const startISO = new Date(scheduledAt).toISOString();
         const label = new Date(scheduledAt).toLocaleString();
+
+        console.log("Creating event...");
+        console.log("Event kind:", kind);
+        console.log("Scheduled at:", scheduledAt);
+        console.log("End at:", endAt);
+        console.log("Notes:", notes);
 
         if (kind === "care") {
             const newEventCare: CareEvent = {
@@ -119,7 +142,13 @@ export default function StaffCreateEvent(): React.JSX.Element {
                 quantity, // Added quantity field
             };
 
-            setCare((prev) => [newEventCare, ...prev]);
+            console.log("New care event:", newEventCare);
+
+            setCare((prev) => {
+                const updatedCare = [newEventCare, ...prev];
+                console.log("Updated care events:", updatedCare);
+                return updatedCare;
+            });
             navigate("/staff-manage-event", { state: { newEvent: newEventCare } });
             addNotification("new", `New care event '${newEventCare.type}' added.`); // Add notification
             return;
@@ -128,8 +157,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
         const newEventVisit: FamilyVisit = {
             id: crypto.randomUUID(),
             priority: "Normal",
-            resident: "",
-            family: "Pham T. (Father)",
+            resident: residentName,
+            family: familyInfo,
             qr: createQR,
             date: startISO.split("T")[0],
             datetimeISO: startISO,
@@ -138,10 +167,124 @@ export default function StaffCreateEvent(): React.JSX.Element {
             notes,
         };
 
-        setVisits((prev) => [newEventVisit, ...prev]);
+        console.log("New family visit event:", newEventVisit);
+
+        setVisits((prev) => {
+            const updatedVisits = [newEventVisit, ...prev];
+            console.log("Updated family visits:", updatedVisits);
+            return updatedVisits;
+        });
         navigate("/staff-manage-event", { state: { newEvent: newEventVisit } });
         addNotification("new", `New family visit for '${newEventVisit.resident}' added.`); // Add notification
     }
+
+    // function handleActionConfirm(action: "delete" | "done") {
+    //     setModalAction(action);
+    //     setShowConfirmModal(true);
+    // }
+
+    // function confirmAction() {
+    //     if (modalAction === "delete") {
+    //         console.log("Event deleted.");
+    //         // Add delete logic here
+    //     } else if (modalAction === "done") {
+    //         console.log("Event marked as done.");
+    //         // Add mark as done logic here
+    //     }
+    //     setShowConfirmModal(false);
+    // }
+
+    const handleCreateEvent = () => {
+        setShowCreateConfirmModal(true);
+    };
+
+    
+    // Update confirmCreateEvent to include kind in navigation
+    const confirmCreateEvent = async () => {
+        console.log("Creating event...", {
+            kind,
+            scheduledAt,
+            endAt,
+            notes,
+            eventName,
+            createQR,
+            residentName,
+            familyInfo,
+            careType,
+            quantity,
+            assignedStaffIds,
+            priority,
+            location,
+            freq,
+            medName,
+            medDose,
+        });
+
+        // Close modal and show success message
+        setShowCreateConfirmModal(false);
+        setShowSuccessMessage(true);
+
+        // Automatically hide success message after 3 seconds
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+
+        const startISO = new Date(scheduledAt).toISOString();
+        const label = new Date(scheduledAt).toLocaleString();
+
+        if (kind === "care") {
+            const newEventCare: CareEvent = {
+                id: crypto.randomUUID(),
+                priority,
+                datetimeISO: startISO,
+                dateISO: startISO.split("T")[0],
+                datetimeLabel: label,
+                staffId: assignedStaffIds.join(","),
+                staffName: STAFFS.filter(s => assignedStaffIds.includes(s.id)).map(s => s.name).join(", "),
+                location,
+                type: careType,
+                quantity,
+            };
+
+            setCare(prev => [newEventCare, ...prev]);
+
+            navigate("/staff-manage-event", {
+                state: {
+                    newEvent: {
+                        kind: "care" as const,
+                        ...newEventCare,
+                    },
+                },
+            });
+
+            addNotification("new", `New care event '${newEventCare.type}' added.`);
+            return;
+        }
+
+        const newEventVisit: FamilyVisit = {
+            id: crypto.randomUUID(),
+            priority: "Normal",
+            resident: residentName,
+            family: familyInfo,
+            qr: createQR,
+            date: startISO.split("T")[0],
+            datetimeISO: startISO,
+            datetime: label,
+            endDatetime: endAt ? new Date(endAt).toISOString() : undefined,
+            notes,
+        };
+
+        setVisits(prev => [newEventVisit, ...prev]);
+
+        navigate("/staff-manage-event", {
+            state: {
+                newEvent: {
+                    kind: "visit" as const,
+                    ...newEventVisit,
+                },
+            },
+        });
+
+        addNotification("new", `New family visit for '${newEventVisit.resident}' added.`);
+    };
 
     return (
         <div className="w-full pt-2">
@@ -151,17 +294,17 @@ export default function StaffCreateEvent(): React.JSX.Element {
             <div className="relative h-full overflow-y-auto -mt-10 ">
                 <div className="flex min-h-full gap-4 lg:gap-6">
 
-                    <main className="w-full max-w-8xl p-4 lg:p-6 -ml-6 ">
+                    <main className="w-full max-w-8xl p-4 lg:p-6  ">
                         <div className="rounded-3xl bg-white/90 backdrop-blur border border-black/5 shadow-lg px-0 pb-6 -pt-10">
                             <CardHeader className="px-6 pt-1 pb-3">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex items-center gap-3">
-                                        <ArrowLeft
+                                        {/* <ArrowLeft
                                             className="h-5 w-5 text-slate-700 cursor-pointer"
                                             onClick={() => navigate("/staff-manage-event")}
-                                        />
+                                        /> */}
                                         <div>
-                                            <CardTitle className="text-xl">Create Event</CardTitle>
+                                            <CardTitle className="text-2xl text-[#5985d8]">Create Event</CardTitle>
                                             <CardDescription>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</CardDescription>
                                         </div>
                                     </div>
@@ -170,7 +313,7 @@ export default function StaffCreateEvent(): React.JSX.Element {
                             </CardHeader>
 
                             <CardContent className="px-6 pb-6">
-                                <form onSubmit={onCreate} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                                <form onSubmit={(e) => e.preventDefault()} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                                     {/* Left column */}
                                     <div className="lg:col-span-2 space-y-6">
                                         <Card className="rounded-2xl">
@@ -212,11 +355,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     <div className="flex flex-col gap-1">
                                                         <Label>Resident name *</Label>
                                                         <Input
-                                                            value={familyUserId !== null ? String(familyUserId) : ""}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setFamilyUserId(val === "" ? null : Number(val));
-                                                            }}
+                                                            value={residentName}
+                                                            onChange={(e) => setResidentName(e.target.value)}
                                                             placeholder="Enter resident name"
                                                         />
                                                     </div>
@@ -399,11 +539,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                         <Label>Family's information</Label>
                                                         <Input
                                                             type="text"
-                                                            value={familyUserId !== null ? String(familyUserId) : ""}
-                                                            onChange={(e) => {
-                                                                const val = e.target.value;
-                                                                setFamilyUserId(val === "" ? null : Number(val));
-                                                            }}
+                                                            value={familyInfo}
+                                                            onChange={(e) => setFamilyInfo(e.target.value)}
                                                             placeholder="Enter family information"
                                                         />
                                                     </div>
@@ -454,7 +591,8 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                             <p><span className="text-left text-slate-500">Quantity:</span> {quantity || "—"}</p>
                                                             <p><span className="text-left text-slate-500">Care type:</span> {careType}</p>
                                                             <p><span className="text-left text-slate-500">Staff:</span> {STAFFS.filter(s => assignedStaffIds.includes(s.id)).map(s => s.name).join(", ")}</p>
-                                                            <p><span className="text-left text-slate-500">Loc:</span> Room {location} / Bed 1</p>
+                                                            <p><span className="text-left text-slate-500">Loc:</span>{location} </p>
+                                                            <p><span className="text-left text-slate-500">Notes:</span> {notes || "—"}</p>
                                                             <div className="flex items-left gap-2 mt-1">
                                                                 <Badge variant="secondary">Priority: {priority}</Badge>
                                                                 {freq !== "none" && <Badge variant="outline">Repeat</Badge>}
@@ -463,17 +601,24 @@ export default function StaffCreateEvent(): React.JSX.Element {
                                                     )}
                                                     {kind === "visit" && (
                                                         <>
-                                                            <p><span className="text-slate-500">Resident:</span> {familyUserId ?? "—"}</p>
-                                                            <p><span className="text-slate-500">Family:</span> {familyUserId ?? "—"}</p>
+                                                            <p><span className="text-slate-500">Resident:</span> {residentName || "—"}</p>
+                                                            <p><span className="text-slate-500">Family:</span> {familyInfo || "—"}</p>
                                                             <p><span className="text-slate-500">QR:</span> {createQR ? "Yes" : "No"}</p>
+                                                            <p><span className="text-slate-500">Notes:</span> {notes || "—"}</p>
                                                         </>
                                                     )}
                                                 </div>
 
                                                 <div className="flex gap-2">
                                                     <Button type="button" variant="outline" className="w-1/2">Cancel</Button>
-                                                    <Button type="submit" className="w-1/2" style={{ backgroundColor: "#5985d8", color: "white" }} disabled={!valid}>
-                                                        Create
+                                                    <Button
+                                                      type="button"
+                                                      onClick={() => setShowCreateConfirmModal(true)}
+                                                      className="w-1/2"
+                                                      style={{ backgroundColor: "#5985d8", color: "white" }}
+                                                      disabled={!valid}
+                                                    >
+                                                      Create
                                                     </Button>
                                                 </div>
                                                 {!valid && (
@@ -490,6 +635,67 @@ export default function StaffCreateEvent(): React.JSX.Element {
                     </main>
                 </div>
             </div>
+
+            {/* Modal for confirmation */}
+            {/* {showConfirmModal && (
+                <Modal>
+                    <ModalHeader>
+                        <h2>Confirm Action</h2>
+                    </ModalHeader>
+                    <ModalContent>
+                        <p>Are you sure you want to {modalAction === "delete" ? "delete this event" : "mark this event as done"}?</p>
+                    </ModalContent>
+                    <ModalFooter>
+                        <button onClick={() => setShowConfirmModal(false)}>Cancel</button>
+                        <button onClick={confirmAction}>Confirm</button>
+                    </ModalFooter>
+                </Modal>
+            )} */}
+
+            {/* Modal for create event confirmation */}
+            {showCreateConfirmModal && (
+                <Modal>
+                    <ModalHeader>
+                        <h2>Confirm Create Event</h2>
+                    </ModalHeader>
+                    <ModalContent>
+                        <p>Are you sure you want to create this event?</p>
+                    </ModalContent>
+                    <ModalFooter>
+                        <button
+                          className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          onClick={() => setShowCreateConfirmModal(false)}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          onClick={() => {
+                            setShowCreateConfirmModal(false);
+                            confirmCreateEvent();
+                          }}
+                        >
+                          Confirm
+                        </button>
+                    </ModalFooter>
+                </Modal>
+            )}
+
+            {/* Success message */}
+            {showSuccessMessage && (
+                <div className="fixed bottom-5 right-5 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in">
+                    Event created successfully!
+                </div>
+            )}
         </div>
     );
 }
+
+// Add Tailwind animation for fade-in effect
+// @keyframes fade-in {
+//     from { opacity: 0; transform: translateY(10px); }
+//     to { opacity: 1; transform: translateY(0); }
+// }
+// .animate-fade-in {
+//     animation: fade-in 0.3s ease-out;
+// }

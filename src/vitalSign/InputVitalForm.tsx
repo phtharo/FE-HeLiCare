@@ -37,13 +37,13 @@ function getShiftFromDate(d: Date) {
 }
 
 function toLocalInputValue(date: Date) {
-  
+
   const tzOffset = date.getTimezoneOffset();
   const local = new Date(date.getTime() - tzOffset * 60000);
   return local.toISOString().slice(0, 19);
 }
 function parseLocalInputValue(val: string) {
- 
+
   return new Date(val);
 }
 function fmtHeader(d: Date) {
@@ -262,251 +262,253 @@ export default function VitalInputFormHospital() {
 
   /* -------------------- Render -------------------- */
   return (
-    <div className="w-full pt-2" style={{ background: BG }}>
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl p-6 shadow-lg -mt-15">
-        
-        {/* header */}
-        <div className="flex items-start justify-between mb-4 ">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: PRIMARY }}>
-              Enter Vital Signs
-            </h1>
-            {/* <p className="text-sm text-gray-500">Make sure to enter the actual measurement time</p> */}
-          </div>
-          <div className="text-right">
-            <div className="text-sm">
-              Current Shift:{" "}
-              <span className="px-2 py-1 rounded" style={{ background: "#eef4ff", color: PRIMARY }}>
-                {getShiftFromDate(now)}
-              </span>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">{fmtHeader(now)}</div>
-          </div>
-        </div>
+    <div className="relative min-h-screen w-full overflow-hidden -pt-5">
+      <div className="fixed inset-0 -z-10 pointer-events-none" style={{ background: BG }}></div>
+        <div className="max-w-[1400px] mx-auto bg-white rounded-2xl shadow-lg p-6 lg:p-8 mt-0 ">
 
-        {/* form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
+          {/* header */}
+          <div className="flex items-start justify-between mb-4 ">
             <div>
-              <label className="text-sm font-medium">Resident Name</label>
-              <input
-                {...register("residentName")}
-                type="text"
-                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
-              />
-              <div className="text-xs mt-1 text-gray-500">
-                {formState.errors.residentName && (
-                  <span className="text-red-600">{String(formState.errors.residentName.message)}</span>
-                )}
-              </div>
+              <h1 className="text-2xl font-bold" style={{ color: PRIMARY }}>
+                Enter Vital Signs
+              </h1>
+              {/* <p className="text-sm text-gray-500">Make sure to enter the actual measurement time</p> */}
             </div>
-
-            <div>
-              <label className="text-sm font-medium">Measurement By (Staff Name)</label>
-              <input
-                {...register("measurementBy")}
-                type="text"
-                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
-              />
-              <div className="text-xs mt-1 text-gray-500">
-                {formState.errors.measurementBy && (
-                  <span className="text-red-600">{String(formState.errors.measurementBy.message)}</span>
-                )}
+            <div className="text-right">
+              <div className="text-sm">
+                Current Shift:{" "}
+                <span className="px-2 py-1 rounded" style={{ background: "#eef4ff", color: PRIMARY }}>
+                  {getShiftFromDate(now)}
+                </span>
               </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Room</label>
-              <input
-                {...register("room")}
-                type="text"
-                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
-              />
-              <div className="text-xs mt-1 text-gray-500">
-                {formState.errors.room && (
-                  <span className="text-red-600">{String(formState.errors.room.message)}</span>
-                )}
-              </div>
+              <div className="text-xs text-gray-500 mt-1">{fmtHeader(now)}</div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
-            <div>
-              <label className="text-sm font-medium">Measurement Time</label>
-              <input
-                {...register("measuredAt")}
-                type="datetime-local"
-                step={1}
-                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
-              />
-              <div className="text-xs mt-1 text-gray-500">
-                {formState.errors.measuredAt ? (
-                  <span className="text-red-600">{String(formState.errors.measuredAt.message)}</span>
-                ) : measuredOlderThan24h ? (
-                  <span className="text-amber-700">Measurement time is more than 24 hours old — verify carefully.</span>
-                ) : null}
+          {/* form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
+              <div>
+                <label className="text-sm font-medium">Resident Name</label>
+                <input
+                  {...register("residentName")}
+                  type="text"
+                  className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+                />
+                <div className="text-xs mt-1 text-gray-500">
+                  {formState.errors.residentName && (
+                    <span className="text-red-600">{String(formState.errors.residentName.message)}</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Measurement By (Staff Name)</label>
+                <input
+                  {...register("measurementBy")}
+                  type="text"
+                  className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+                />
+                <div className="text-xs mt-1 text-gray-500">
+                  {formState.errors.measurementBy && (
+                    <span className="text-red-600">{String(formState.errors.measurementBy.message)}</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Room</label>
+                <input
+                  {...register("room")}
+                  type="text"
+                  className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+                />
+                <div className="text-xs mt-1 text-gray-500">
+                  {formState.errors.room && (
+                    <span className="text-red-600">{String(formState.errors.room.message)}</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium">Shift (auto from measurement time)</label>
-              <select
-                {...register("shift")}
-                className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
-                onChange={(e) => {
-                  setValue("shift", e.target.value as "Morning" | "Afternoon" | "Night");
-                  setOverrideShift(true);
-                }}
-              >
-                <option value="Morning">Morning</option>
-                <option value="Afternoon">Afternoon</option>
-                <option value="Night">Night</option>
-              </select>
-              <div className="text-xs mt-1">
-                {!formState.errors.measuredAt && measuredDate ? (
-                  getShiftFromDate(measuredDate) !== (values.shift as string) ? (
-                    <span className="text-amber-700">
-                      Shift manually overridden and does not match measurement time ({getShiftFromDate(measuredDate)}).
-                    </span>
-                  ) : null
-                ) : null}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end text-left">
+              <div>
+                <label className="text-sm font-medium">Measurement Time</label>
+                <input
+                  {...register("measuredAt")}
+                  type="datetime-local"
+                  step={1}
+                  className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+                />
+                <div className="text-xs mt-1 text-gray-500">
+                  {formState.errors.measuredAt ? (
+                    <span className="text-red-600">{String(formState.errors.measuredAt.message)}</span>
+                  ) : measuredOlderThan24h ? (
+                    <span className="text-amber-700">Measurement time is more than 24 hours old — verify carefully.</span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Shift (auto from measurement time)</label>
+                <select
+                  {...register("shift")}
+                  className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200"
+                  onChange={(e) => {
+                    setValue("shift", e.target.value as "Morning" | "Afternoon" | "Night");
+                    setOverrideShift(true);
+                  }}
+                >
+                  <option value="Morning">Morning</option>
+                  <option value="Afternoon">Afternoon</option>
+                  <option value="Night">Night</option>
+                </select>
+                <div className="text-xs mt-1">
+                  {!formState.errors.measuredAt && measuredDate ? (
+                    getShiftFromDate(measuredDate) !== (values.shift as string) ? (
+                      <span className="text-amber-700">
+                        Shift manually overridden and does not match measurement time ({getShiftFromDate(measuredDate)}).
+                      </span>
+                    ) : null
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setValue("measuredAt", toLocalInputValue(new Date()));
+                    if (!overrideShift) {
+                      setValue("shift", getShiftFromDate(new Date()));
+                    }
+                    setToast({ text: "Measurement time reset to now.", color: PRIMARY });
+                    setTimeout(() => setToast(null), 1800);
+                  }}
+                  className="px-3 py-2 rounded-lg border"
+                >
+                  Set Current Time
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOverrideShift(false);
+                    setToast({ text: "Auto shift assignment enabled.", color: PRIMARY });
+                    setTimeout(() => setToast(null), 1500);
+                  }}
+                  className="px-3 py-2 rounded-lg border"
+                >
+                  Auto-assign Shift
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* input fields */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              <div>
+                <label className="text-sm font-medium">Systolic Blood Pressure</label>
+                <input
+                  {...register("systolic")}
+                  type="text"
+                  className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.systolic)}`}
+                />
+                <div className={`text-xs mt-1 ${levels.systolic === "danger" ? "text-red-600" : levels.systolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("systolic", levels.systolic) || (formState.errors.systolic ? String(formState.errors.systolic.message) : null)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Diastolic Blood Pressure</label>
+                <input
+                  {...register("diastolic")}
+                  type="text"
+                  className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.diastolic)}`}
+                />
+                <div className={`text-xs mt-1 ${levels.diastolic === "danger" ? "text-red-600" : levels.diastolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("diastolic", levels.diastolic) || (formState.errors.diastolic ? String(formState.errors.diastolic.message) : null)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Heart Rate (bpm)</label>
+                <input {...register("heartRate")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.heartRate)}`} />
+                <div className={`text-xs mt-1 ${levels.heartRate === "danger" ? "text-red-600" : levels.heartRate === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("heartRate", levels.heartRate) || (formState.errors.heartRate ? String(formState.errors.heartRate.message) : null)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Temperature (°C)</label>
+                <input {...register("temperature")} type="text" step="0.1" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.temperature)}`} />
+                <div className={`text-xs mt-1 ${levels.temperature === "danger" ? "text-red-600" : levels.temperature === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("temperature", levels.temperature) || (formState.errors.temperature ? String(formState.errors.temperature.message) : null)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Respiration Rate (per min)</label>
+                <input {...register("respiration")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.respiration)}`} />
+                <div className={`text-xs mt-1 ${levels.respiration === "danger" ? "text-red-600" : levels.respiration === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("respiration", levels.respiration) || (formState.errors.respiration ? String(formState.errors.respiration.message) : null)}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">SpO₂ (%)</label>
+                <input {...register("spo2")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.spo2)}`} />
+                <div className={`text-xs mt-1 ${levels.spo2 === "danger" ? "text-red-600" : levels.spo2 === "warn" ? "text-amber-600" : "text-gray-500"}`}>
+                  {msgFor("spo2", levels.spo2) || (formState.errors.spo2 ? String(formState.errors.spo2.message) : null)}
+                </div>
+              </div>
+
+              <div className="md:col-span-3">
+                <label className="text-sm font-medium">Note</label>
+                <textarea {...register("note")} rows={3} className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200" />
+              </div>
+            </div>
+
+            {/* summary & actions */}
+            <div className="mt-3 flex items-center gap-3">
               <button
-                type="button"
-                onClick={() => {
-                  setValue("measuredAt", toLocalInputValue(new Date()));
-                  if (!overrideShift) {
-                    setValue("shift", getShiftFromDate(new Date()));
-                  }
-                  setToast({ text: "Measurement time reset to now.", color: PRIMARY });
-                  setTimeout(() => setToast(null), 1800);
-                }}
-                className="px-3 py-2 rounded-lg border"
+                type="submit"
+                disabled={Object.keys(formState.errors).length > 0 || formState.isSubmitting}
+                className={`px-5 py-2 rounded-lg text-white ${Object.keys(formState.errors).length > 0 || formState.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
+                style={{ background: PRIMARY }}
               >
-                Set Current Time
+                {formState.isSubmitting ? "Saving..." : "💾 Save"}
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  setOverrideShift(false);
-                  setToast({ text: "Auto shift assignment enabled.", color: PRIMARY });
-                  setTimeout(() => setToast(null), 1500);
-                }}
-                className="px-3 py-2 rounded-lg border"
+                onClick={() =>
+                  reset({
+                    measuredAt: toLocalInputValue(new Date()),
+                    ...PRESET.Morning,
+                    shift: getShiftFromDate(new Date()),
+                    note: "",
+                  })
+                }
+                className="px-4 py-2 rounded-lg border border-[#5985D8] text-[#5985D8]"
               >
-                Auto-assign Shift
+                <RefreshCw size={16} className="inline-block mr-2" />
+                Reset Form
               </button>
-            </div>
-          </div>
 
-          {/* input fields */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-            <div>
-              <label className="text-sm font-medium">Systolic Blood Pressure</label>
-              <input
-                {...register("systolic")}
-                type="text"
-                className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.systolic)}`}
-              />
-              <div className={`text-xs mt-1 ${levels.systolic === "danger" ? "text-red-600" : levels.systolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("systolic", levels.systolic) || (formState.errors.systolic ? String(formState.errors.systolic.message) : null)}
+              <div className="ml-auto text-xs text-gray-500">
+                {anyDanger ? "Critical values detected" : anyWarn ? "Some values need monitoring" : "All values within range"}
               </div>
             </div>
-
-            <div>
-              <label className="text-sm font-medium">Diastolic Blood Pressure</label>
-              <input
-                {...register("diastolic")}
-                type="text"
-                className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.diastolic)}`}
-              />
-              <div className={`text-xs mt-1 ${levels.diastolic === "danger" ? "text-red-600" : levels.diastolic === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("diastolic", levels.diastolic) || (formState.errors.diastolic ? String(formState.errors.diastolic.message) : null)}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Heart Rate (bpm)</label>
-              <input {...register("heartRate")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.heartRate)}`} />
-              <div className={`text-xs mt-1 ${levels.heartRate === "danger" ? "text-red-600" : levels.heartRate === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("heartRate", levels.heartRate) || (formState.errors.heartRate ? String(formState.errors.heartRate.message) : null)}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Temperature (°C)</label>
-              <input {...register("temperature")} type="text" step="0.1" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.temperature)}`} />
-              <div className={`text-xs mt-1 ${levels.temperature === "danger" ? "text-red-600" : levels.temperature === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("temperature", levels.temperature) || (formState.errors.temperature ? String(formState.errors.temperature.message) : null)}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Respiration Rate (per min)</label>
-              <input {...register("respiration")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.respiration)}`} />
-              <div className={`text-xs mt-1 ${levels.respiration === "danger" ? "text-red-600" : levels.respiration === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("respiration", levels.respiration) || (formState.errors.respiration ? String(formState.errors.respiration.message) : null)}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">SpO₂ (%)</label>
-              <input {...register("spo2")} type="text" className={`mt-2 w-full rounded-lg px-3 py-2 border ${borderFor(levels.spo2)}`} />
-              <div className={`text-xs mt-1 ${levels.spo2 === "danger" ? "text-red-600" : levels.spo2 === "warn" ? "text-amber-600" : "text-gray-500"}`}>
-                {msgFor("spo2", levels.spo2) || (formState.errors.spo2 ? String(formState.errors.spo2.message) : null)}
-              </div>
-            </div>
-
-            <div className="md:col-span-3">
-              <label className="text-sm font-medium">Note</label>
-              <textarea {...register("note")} rows={3} className="mt-2 w-full rounded-lg px-3 py-2 border border-gray-200" />
-            </div>
-          </div>
-
-          {/* summary & actions */}
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="submit"
-              disabled={Object.keys(formState.errors).length > 0 || formState.isSubmitting}
-              className={`px-5 py-2 rounded-lg text-white ${Object.keys(formState.errors).length > 0 || formState.isSubmitting ? "opacity-50 cursor-not-allowed" : ""}`}
-              style={{ background: PRIMARY }}
-            >
-              {formState.isSubmitting ? "Saving..." : "💾 Save"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                reset({
-                  measuredAt: toLocalInputValue(new Date()),
-                  ...PRESET.Morning,
-                  shift: getShiftFromDate(new Date()),
-                  note: "",
-                })
-              }
-              className="px-4 py-2 rounded-lg border border-[#5985D8] text-[#5985D8]"
-            >
-              <RefreshCw size={16} className="inline-block mr-2" />
-              Reset Form
-            </button>
-
-            <div className="ml-auto text-xs text-gray-500">
-              {anyDanger ? "Critical values detected" : anyWarn ? "Some values need monitoring" : "All values within range"}
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {/* toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md text-white shadow-md" style={{ background: toast.color || PRIMARY }}>
-          {toast.text}
+          </form>
         </div>
-      )}
+
+        {/* toast */}
+        {toast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md text-white shadow-md" style={{ background: toast.color || PRIMARY }}>
+            {toast.text}
+          </div>
+        )}
+      
     </div>
   );
 }

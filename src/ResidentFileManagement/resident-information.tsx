@@ -225,7 +225,7 @@ const ResidentFileInformation: React.FC = () => {
         <div className="w-full pt-2">
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
-            <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0 -mt-15">
+            <div className="relative h-full overflow-y-auto pt-4 md:pt-8 lg:pt-0 -mt-10 -ml-5">
                 <div className="flex min-h-full gap-4 lg:gap-6">
                     
                     {/* main content */}
@@ -237,7 +237,7 @@ const ResidentFileInformation: React.FC = () => {
                                         <span className="font-medium">Audit:</span> staff & timestamp will be recorded on create.
                                     </div>
                                     <div className="text-left">
-                                        <h1 className="text-xl font-semibold text-gray-900">Resident Information</h1>
+                                        <h1 className="text-base font-bold text-[#5985d8]">Resident Information</h1>
                                         <p className="text-sm text-gray-500">{today}</p>
                                     </div>
                                 </div>
