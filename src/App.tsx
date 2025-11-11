@@ -16,87 +16,81 @@ import StaffCreateEvent from './event/staff-create-event';
 import StaffManageEvent from './event/staff-manage-event';
 import IssueLinkCode from './family-resident-link/IssueLinkCode';
 import EnterInviteCode from './family-resident-link/EnterInviteCode';
-import RegisterVisit from './event/family-register-visit';
+import FamilySchedule from './family/family-schedule';
 import ResidentSchedule from './event/resident-schedule';
 import InputVital from './vitalSign/InputVitalForm'
 import './App.css';
-import { AppLayout } from "./layout/staff-sidebar";
-import {Sidebar} from './layout/sidebar';
+import StaffSidebar from "./layout/staff-sidebar";
+import { Sidebar } from './layout/resident-sidebar';
+import FamilySidebar from './layout/family-sidebar';
+
 import BookingStatusQR from './event/BookingStatusQR';
 import Newsfeed from './diary/newsfeed';
+import Demo from './layout/demo';
+import DemoN from './diary/demo-N';
+import CreatePost from './diary/post';
+
+// Mock API for login
+const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      if (email === "staff@gmail.com") {
+        resolve({ role: "staff" });
+      } else if (email === "resident@gmail.com") {
+        resolve({ role: "resident" });
+      } else if (email === "family@gmail.com") {
+        resolve({ role: "family" });
+      } else {
+        resolve({ role: "unknown" });
+      }
+    }, 500);
+  });
+};
 
 export default function App() {
   return (
     <div className="App">
       <Toaster richColors position="top-right" />
       <Routes>
-        <Route
-          path="/"
-          element={<SigninWrapper />}
-        />
-
-        <Route
-          path="/forgotpassword-email"
-          element={<ForgotPasswordEmailWrapper />}
-        />
-
-        <Route
-          path="/forgotpassword-otp"
-          element={<ForgotPasswordOTPWrapper />}
-        />
-
-        <Route
-          path="/forgotpassword-reset"
-          element={<ForgotPasswordResetWrapper />}
-        />
-
-        <Route
-          path="/signup-email"
-          element={<SignupEmailWrapper />}
-        />
-
-        <Route
-          path="/signup-verify"
-          element={<SignupVerifyWrapper />}
-        />
-
-        <Route
-          path="/signup-setpassword"
-          element={<SignupSetPasswordWrapper />}
-        />
-
-        <Route
-          path="/forgotpassword-update"
-          element={<ForgotPasswordUpdateWrapper />}
-        />
-        {/* side bar staff */}
-        <Route element={<AppLayout />}>
-          {/* homepage */}
-          <Route index element={<ListResident />} />
-          
-          <Route path="resident-information" element={<ResidentFileInformation />} />
-          <Route path="list-resident" element={<ListResident />} />
-          <Route path="input-vital" element={<InputVital />} />
-          <Route path="staff-create-event" element={<StaffCreateEvent />} />
-          <Route path="staff-manage-event" element={<StaffManageEvent />} />
+        <Route path="/" element={<SigninWrapper />} />
+        <Route path="/forgotpassword-email" element={<ForgotPasswordEmailWrapper />} />
+        <Route path="/forgotpassword-otp" element={<ForgotPasswordOTPWrapper />} />
+        <Route path="/forgotpassword-reset" element={<ForgotPasswordResetWrapper />} />
+        <Route path="/signup-email" element={<SignupEmailWrapper />} />
+        <Route path="/signup-verify" element={<SignupVerifyWrapper />} />
+        <Route path="/signup-setpassword" element={<SignupSetPasswordWrapper />} />
+        <Route path="/forgotpassword-update" element={<ForgotPasswordUpdateWrapper />} />
+        {/* staff */}
+        <Route element={<StaffSidebar />}>
+          <Route path="/list-resident" element={<ListResident />} />
+          <Route path="/resident-information" element={<ResidentFileInformation />} />
+          <Route path="/input-vital" element={<InputVital />} />
+          <Route path="/staff-create-event" element={<StaffCreateEvent />} />
+          <Route path="/staff-manage-event" element={<StaffManageEvent />} />
+          <Route path="/newsfeed" element={<Newsfeed />} />
+          <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/create-post/:postId" element={<CreatePost />} />
         </Route>
-        {/* resident */}
-        <Route element={<Sidebar />}>
-        {/* homepage */}
-        <Route index element={<Navigate to="/home" replace />} />
-
-        <Route path="/newsfeed" element={<Newsfeed />} />
-        <Route path="/resident-schedule" element={<ResidentSchedule />} />
+        <Route path="/resident" element={<Sidebar />}>
+          <Route index element={<Navigate to="newsfeed" replace />} />
+          <Route path="newsfeed" element={<Newsfeed />} />
+          <Route path="resident-schedule" element={<ResidentSchedule />} />
+        </Route>
+        <Route path="/family" element={<FamilySidebar />}>
+          <Route index element={<Navigate to="newsfeed" replace />} />
+          <Route path="newsfeed" element={<Newsfeed />} />
+          <Route path="family-schedule" element={<FamilySchedule />} />
         </Route>
         {/* no side bar */}
         <Route path="/issue-link-code" element={<IssueLinkCode />} />
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
-        <Route path="/register-visit" element={<RegisterVisit />} />
-        
-        <Route path="/sidebar" element={<Sidebar />} />
+        <Route path="/resident-sidebar" element={<Sidebar />} />
         <Route path="/booking-status-qr" element={<BookingStatusQR />} />
-        
-        
+        <Route path="/family-sidebar" element={<FamilySidebar />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/demoN" element={<DemoN />} />
+        {/* Set the default route to Signin*/}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
@@ -105,10 +99,26 @@ export default function App() {
 // Wrapper cho Signin
 function SigninWrapper() {
   const navigate = useNavigate();
+
+  const handleLogin = async (email: string, password: string): Promise<void> => {
+    const response = await mockLogin(email, password);
+    localStorage.setItem("userRole", response.role);
+    if (response.role === "staff") {
+      navigate("/list-resident");
+    } else if (response.role === "resident") {
+      navigate("/resident/newsfeed");
+    } else if (response.role === "family") {
+      navigate("/family/newsfeed");
+    } else {
+      alert("Invalid credentials");
+    }
+  };
+
   return (
     <Signin
-      onSignupClick={() => navigate('/signup-email')}
-      onForgotPasswordClick={() => navigate('/forgotpassword-email')}
+      onLogin={(email: string, password: string) => handleLogin(email, password)}
+      onSignupClick={() => navigate("/signup-email")}
+      onForgotPasswordClick={() => navigate("/forgotpassword-email")}
     />
   );
 }

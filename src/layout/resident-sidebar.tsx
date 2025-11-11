@@ -32,6 +32,7 @@ const navItems: NavItem[] = [
   { label: "Family",            icon: MessageCircle, path: "/family" },
   { label: "My Room",           icon: Bed,           path: "/room" },
   { label: "Notifications",     icon: Bell,          path: "/notifications" },
+  { label: "Settings",          icon: Settings,      path: "/settings" },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -44,7 +45,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div className="relative min-h-screen">
-      {/* background giống AppLayout */}
+      
       <div
         className="fixed inset-0 -z-10 pointer-events-none
         bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"
@@ -59,7 +60,7 @@ export const Sidebar: React.FC = () => {
             <Avatar className="w-12 h-12">
               <AvatarImage src={undefined} alt="Resident avatar" />
               <AvatarFallback className="bg-blue-200 text-blue-800 text-lg">
-                😊
+                User
               </AvatarFallback>
             </Avatar>
             <p className="text-xl text-gray-800">Hello, Unknown Resident</p>
@@ -102,14 +103,14 @@ export const Sidebar: React.FC = () => {
             <AlertTriangle className="w-6 h-6 mr-3" />
             SOS Help
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             className="w-full justify-start text-left text-lg py-3 px-4 rounded-lg border-gray-300 text-gray-700 hover:bg-gray-100"
             onClick={() => handleNavClick("/settings")}
           >
             <Settings className="w-6 h-6 mr-3" />
             Settings
-          </Button>
+          </Button> */}
         </div>
       </aside>
 
