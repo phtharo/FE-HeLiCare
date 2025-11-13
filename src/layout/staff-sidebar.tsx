@@ -54,7 +54,7 @@ const staffMenu: StaffMenuItem[] = [
     label: "Schedule & Activities",
     children: [
       { label: "Daily Schedule", path: "/staff-manage-event", icon: <Calendar size={20} /> },
-      { label: "Create Event", path: "/staff-create-event", icon: <Plus size={20} /> },
+      // { label: "Create Event", path: "/staff-create-event", icon: <Plus size={20} /> },
       // { label: "Manage Events", path: "/setting-event", icon: <Settings size={20} /> },
     ],
   },
@@ -77,7 +77,7 @@ const staffMenu: StaffMenuItem[] = [
     label: "Rooms & Beds",
     children: [
       { label: "Room Allocation", path: "/staff/rooms", icon: <Bed size={20} /> },
-      { label: "Maintenance Tickets", path: "/staff/maintenance", icon: <Wrench size={20} /> },
+      // { label: "Maintenance Tickets", path: "/staff/maintenance", icon: <Wrench size={20} /> },
     ],
   },
   {
@@ -112,7 +112,7 @@ const MenuItem: React.FC<{ item: StaffMenuItem; isCollapsed: boolean }> = ({ ite
       <div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+          className={`w-full flex items-center px-4 py-1 text-left hover:bg-gray-100 transition-colors ${
             isCollapsed ? 'justify-center' : ''
           }`}
           title={isCollapsed ? item.label : undefined}
@@ -132,7 +132,7 @@ const MenuItem: React.FC<{ item: StaffMenuItem; isCollapsed: boolean }> = ({ ite
                 key={index}
                 to={child.path || '#'}
                 className={({ isActive }) =>
-                  `flex items-center px-4 py-2 hover:bg-gray-100 transition-colors ${
+                  `flex items-center px-4 py-1 hover:bg-gray-100 transition-colors ${
                     isActive ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700'
                   }`
                 }
@@ -151,7 +151,7 @@ const MenuItem: React.FC<{ item: StaffMenuItem; isCollapsed: boolean }> = ({ ite
     <NavLink
       to={item.path || '#'}
       className={({ isActive }) =>
-        `flex items-center px-4 py-2 hover:bg-gray-100 transition-colors ${
+        `flex items-center px-4 py-1 hover:bg-gray-100 transition-colors ${
           isCollapsed ? 'justify-center' : ''
         } ${isActive ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-700'}`
       }
@@ -181,11 +181,11 @@ const StaffLayout: React.FC = () => {
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 z-40 h-screen bg-white shadow-lg rounded-r-3xl transition-all duration-300 ${
-          isCollapsed ? 'w-16' : 'w-64'
+          isCollapsed ? 'w-10' : 'w-64'
         }`}
       >
         {/* Branding */}
-        <div className="flex items-center justify-center px-4 py-6 border-b border-gray-200">
+        <div className="flex items-center justify-center px-4 py-4 border-b border-gray-200">
           {!isCollapsed && (
             <>
               <div className="text-3xl font-bold text-[#5985d8]">HeLiCare</div>
@@ -199,11 +199,11 @@ const StaffLayout: React.FC = () => {
         <nav className="mt-4">
           {staffMenu.map((section, index) => (
             <div key={index} className="mb-4">
-              {!isCollapsed && (
+              {/* {!isCollapsed && (
                 <h3 className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   {section.label}
                 </h3>
-              )}
+              )} */}
               {section.children ? (
                 <div>
                   {section.children.map((item, idx) => (
@@ -226,9 +226,9 @@ const StaffLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-72'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
         {/* Header với nút hamburger */}
-        <header className="flex items-center justify-between px-4 py-4 shadow-sm md:hidden">
+        <header className="flex items-center justify-between px-4 py-1 shadow-sm md:hidden">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded"

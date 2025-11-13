@@ -50,7 +50,7 @@ export default function ListResident(): React.JSX.Element {
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
 
       <div className="relative">
-        <div className="flex gap-2 lg:gap-4 -ml-10 overflow-x: auto">
+        <div className="flex gap-2 lg:gap-4 overflow-x: auto">
           <div className="flex-1 pr-4">
             <section className="w-full rounded-3xl bg-white/95 ring-1 ring-black/5 shadow-md">
               <header className="px-4 py-5 rounded-3xl border-b border-gray-200 sticky top-0 bg-white z-10">
