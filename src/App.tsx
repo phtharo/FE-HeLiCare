@@ -26,7 +26,7 @@ import FamilySidebar from './layout/family-sidebar';
 
 import BookingStatusQR from './event/BookingStatusQR';
 import Newsfeed from './diary/newsfeed';
-import Demo from './layout/demo';
+import Demo from './event/staff-manage-event';
 import DemoN from './diary/demo-N';
 import CreatePost from './diary/post';
 
@@ -70,6 +70,8 @@ export default function App() {
           <Route path="/newsfeed" element={<Newsfeed />} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/create-post/:postId" element={<CreatePost />} />
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} />
         </Route>
         <Route path="/resident" element={<Sidebar />}>
           <Route index element={<Navigate to="newsfeed" replace />} />
@@ -85,10 +87,11 @@ export default function App() {
         <Route path="/issue-link-code" element={<IssueLinkCode />} />
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/resident-sidebar" element={<Sidebar />} />
-        <Route path="/booking-status-qr" element={<BookingStatusQR />} />
+        
         <Route path="/family-sidebar" element={<FamilySidebar />} />
-        <Route path="/demo" element={<Demo />} />
+        
         <Route path="/demoN" element={<DemoN />} />
+        {/* <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} /> */}
         {/* Set the default route to Signin*/}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

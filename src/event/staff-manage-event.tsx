@@ -1,561 +1,708 @@
-import React, { useState, useEffect } from "react";
-import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
-import { Funnel } from "lucide-react";
-import { useNavigate, useLocation, useOutletContext } from "react-router-dom";
-// Local CareEvent type (staff-sidebar does not export CareEvent)
-type CareEvent = {
-  id?: string;
-  priority?: "low" | "normal" | "high" | "urgent";
-  eventName?: string;
-  datetimeISO?: string;
-  dateISO?: string;
-  datetimeLabel?: string;
-  staffName?: string;
-  location?: string;
-  type?: string;
-  quantity?: number;
-  notes?: string;
-  attendees?: any[];
-};
+import React, { useEffect, useState } from 'react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Badge } from '../components/ui/badge';
+// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
+// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+// import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover";
+// import { Calendar } from "../components/ui/calendar";
+// import { CalendarIcon, Clock } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Calendar as CalendarIcon } from "lucide-react";
 
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
-import { MoreVertical } from "lucide-react";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu"; // Import DropdownMenu components
-// import { Badge } from "../components/ui/badge"; 
-// import { twMerge } from 'tailwind-merge';
-// Define FamilyVisit locally because "./staff-create-event" does not export a named FamilyVisit type
-type FamilyVisit = {
-  id?: string;
-  priority?: string;
-  resident?: string;
-  datetime?: string;
-  datetimeISO?: string;
-  date?: string;
-  family?: string;
-  qr?: boolean;
-  quantity?: number;
-  notes?: string;
-};
+// import { Checkbox } from '../components/ui/checkbox';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import type { CareEvent } from "./staff-create-event";
+// Removed redundant local declaration of FamilyVisit
+// Ensure only the imported type is used
 
-type FilterState = {
-  from?: string;   // YYYY-MM-DD
-  to?: string;     // YYYY-MM-DD
-  priority?: "low" | "normal" | "high" | "urgent" | "all";
-  staff?: string | "all";
-  eventType?: string | "all"; // Added event type filter
-};
+// Define TypeScript types
+// type HealthLevel = "low" | "medium" | "high";
 
-type Props = {
-  value: FilterState;
-  onChange: (next: FilterState) => void;
-  staffOptions: Array<{ id: string; name: string }>;
-  eventTypeOptions: Array<string>; // Added prop for event type options
-};
+type EventStatus = "upcoming" | "ongoing" | "ended" | "cancelled";
 
-export function FilterButton({ value, onChange, staffOptions }: Props) {
-  const [open, setOpen] = React.useState(false);
-  const [draft, setDraft] = React.useState<FilterState>(value);
+function getEventStatus(
+  startTime: string,
+  endTime: string,
+  cancelled: boolean = false
+): EventStatus {
+  if (cancelled) return "cancelled";
 
-  // Sync value to draft when Popover opens
-  React.useEffect(() => {
-    if (open) setDraft(value);
-  }, [open, value]);
+  const now = new Date();
+  const start = new Date(startTime);
+  const end = new Date(endTime);
 
-  const set = (patch: Partial<FilterState>) =>
-    setDraft(prev => ({ ...prev, ...patch }));
-
-  const clearDraft = () =>
-    setDraft({ from: "", to: "", priority: "all", staff: "all" });
-
-  const apply = () => {
-    // Normalize draft before applying
-    const normalized: FilterState = {
-      from: draft.from || "",
-      to: draft.to || "",
-      priority: (draft.priority ?? "all") as any,
-      staff: (draft.staff ?? "all") as any,
-    };
-    onChange(normalized);
-    setOpen(false);
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Funnel className="h-4 w-4" />
-          Filter
-        </Button>
-      </PopoverTrigger>
-
-      <PopoverContent className="w-80 p-4 z-50">
-        {/* Time range */}
-        <div className="space-y-2">
-          <Label className="text-xs">Time range</Label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="from" className="text-[11px] text-slate-500">From</Label>
-              <Input
-                id="from"
-                type="date"
-                value={draft.from || ""}
-                onChange={e => set({ from: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="to" className="text-[11px] text-slate-500">To</Label>
-              <Input
-                id="to"
-                type="date"
-                value={draft.to || ""}
-                onChange={e => set({ to: e.target.value })}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Priority */}
-        <div className="mt-3 space-y-2">
-          <Label className="text-xs">Priority</Label>
-          <Select
-            value={draft.priority || "all"}
-            onValueChange={(v: string) => set({ priority: v as any })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select priority" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Staff */}
-        <div className="mt-3 space-y-2">
-          <Label className="text-xs">Staff</Label>
-          <Select
-            value={(draft.staff as string) || "all"}
-            onValueChange={(v: string) => set({ staff: v as any })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select staff" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All staff</SelectItem>
-              {staffOptions.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-4 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={clearDraft}>
-            Clear
-          </Button>
-          <Button size="sm" className="bg-blue-500 text-white hover:bg-blue-600" onClick={apply}>
-            Apply
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+  if (now < start) return "upcoming";
+  if (now >= start && now < end) return "ongoing";
+  return "ended";
 }
 
+type StaffEvent = {
+  id: string;
+  name: string;
+  // description?: string;
+  type: "care" | "family";
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  staffName?: string;
+  capacity: number;
+  registeredCount: number;
+  createdBy: string;
+  status: EventStatus;
+  careType?: string;
+};
 
-export default function StaffManageEvent(): React.JSX.Element {
+// Zod schema for form validation
+const eventSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  // description: z.string().optional(),
+  type: z.enum(["care", "family"]),
+  date: z.string().min(1, "Date is required"),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
+  location: z.string().min(1, "Location is required"),
+  capacity: z.number().min(1, "Capacity must be at least 1"),
+  careType: z.string().optional(),
+  staffName: z.string().optional(),
+  status: z.enum(["upcoming", "ongoing", "ended", "cancelled"]),
+});
+
+// Adjusted `defaultValues` to match the schema and removed `registeredCount` from form handling
+const defaultValues = {
+  name: "",
+  // description: "",
+  type: "care" as "care" | "family",
+  date: "",
+  startTime: "",
+  endTime: "",
+  location: "",
+  capacity: 1,
+  staffName: "",
+  status: "upcoming" as "upcoming" | "ongoing" | "ended" | "cancelled",
+  careType: "",
+};
+
+// Mock data for demonstration
+const mockEvents: StaffEvent[] = [
+  {
+    id: "1",
+    name: "Dưỡng sinh sáng",
+    // description: "Morning tai chi session",
+    type: "care",
+    careType: "vital_check",
+    date: "2025-10-15",
+    startTime: "07:00",
+    endTime: "08:00",
+    staffName: "Tran Thi B",
+    location: "Garden",
+    capacity: 20,
+    registeredCount: 15,
+    createdBy: "Nguyen Van A",
+    status: "upcoming",
+  },
+  {
+    id: "2",
+    name: "Yoga nhẹ",
+    // description: "Gentle yoga for seniors",
+    type: "care",
+    careType: "therapy",
+    date: "2025-10-16",
+    startTime: "09:00",
+    endTime: "10:00",
+    staffName: "Le Van C",
+    location: "Yoga Room",
+    capacity: 15,
+    registeredCount: 10,
+    createdBy: "Tran Thi B",
+    status: "ongoing",
+  },
+  {
+    id: "3",
+    name: "Đi dạo công viên",
+    // description: "Park walk",
+    type: "care",
+    careType: "hygiene",
+    date: "2025-10-14",
+    startTime: "14:00",
+    endTime: "15:30",
+    location: "Local Park",
+    capacity: 25,
+    registeredCount: 20,
+    staffName: "Le Van C",
+    createdBy: "Le Van C",
+    status: "ended",
+  },
+  {
+    id: "4",
+    name: "Văn nghệ cuối tuần",
+    // description: "Weekend entertainment show",
+    type: "care",
+    careType: "entertainment",
+    date: "2025-10-20",
+    startTime: "18:00",
+    endTime: "20:00",
+    staffName: "Pham Thi D",
+    location: "Auditorium",
+    capacity: 50,
+    registeredCount: 45,
+    createdBy: "Pham Thi D",
+    status: "cancelled",
+  },
+];
+
+// mock API faker staff list
+const staffList: string[] = [
+  "Nguyen Van A",
+  "Tran Thi B",
+  "Le Van C",
+  "Pham Thi D",
+];
+
+const StaffEventManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const outletContext = useOutletContext<{ care?: CareEvent[]; visits?: any[] }>() || {};
-  const care = outletContext.care || null;
-  const visits = outletContext.visits || [];
+  const [events, setEvents] = useState<StaffEvent[]>(mockEvents);
+  const [filterStatus, setFilterStatus] = useState<EventStatus | "all">("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [filterCareType, setFilterCareType] = useState<string>("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string>("");
+  const [filterFrom, setFilterFrom] = useState<string>("");
+  const [filterTo, setFilterTo] = useState<string>("");
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
-  if (!outletContext) {
-    console.error("useOutletContext returned undefined. Ensure the parent route provides the expected context.");
-    return (
-      <div className='text-center text-red-500'>
-        Error: Unable to load events. Please contact support.
-      </div>
-    );
-  }
-
-  const [filters, setFilters] = useState<FilterState>({ priority: "all", staff: "all" });
-  const [careEvents, setCareEvents] = useState<CareEvent[]>(care || []);
-  const [familyVisits, setFamilyVisits] = useState<any[]>(visits); // Changed to any[]
-  const [notifications, setNotifications] = useState<{
-    id: string;
-    type: string;
-    message: string;
-    timestamp: Date;
-  }[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [modalAction, setModalAction] = useState<"delete" | "done" | "edit" | null>(null);
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
-
-  const byTimeAsc = (a: { datetimeISO?: string; datetime?: string }, b: { datetimeISO?: string; datetime?: string }) => {
-    const aTime = a.datetimeISO ?? a.datetime ?? "";
-    const bTime = b.datetimeISO ?? b.datetime ?? "";
-    return aTime.localeCompare(bTime);
-  };
-
-
-  // Define a clear type for the new event payload
-  type NewEventPayload =
-    | ({ kind: "care" } & CareEvent)
-    | ({ kind: "visit" } & FamilyVisit);
-
-  useEffect(() => {
-    const ev = location.state?.newEvent as NewEventPayload | undefined;
-    console.log("[Manage] location.state:", location.state);
-    console.log("[Manage Event] Location State New Event:", ev);
-
-    if (!ev) return;
-
-    if (ev.kind === "care") {
-      const mapped: CareEvent = {
-        id: ev.id ?? crypto.randomUUID(),
-        priority: ev.priority ?? "normal",
-        eventName: ev.eventName ?? "Unknown",
-        datetimeISO: ev.datetimeISO!,
-        dateISO: ev.dateISO!,
-        datetimeLabel: ev.datetimeLabel!,
-        staffName: ev.staffName ?? "N/A",
-        location: ev.location || "",
-        type: ev.type ?? "General",
-        quantity: ev.quantity ?? 1,
-      };
-      setCareEvents((prev: CareEvent[]) =>
-        prev.some((x: CareEvent) => x.id === mapped.id) ? prev : [mapped, ...prev]
-      );
-    } else if (ev.kind === "visit") {
-      const mapped: FamilyVisit = {
-        id: ev.id ?? crypto.randomUUID(),
-        priority: ev.priority ?? "Normal",
-        resident: ev.resident ?? "",
-        datetime: ev.date ?? ev.datetime ?? ev.datetimeISO ?? "",
-        datetimeISO: ev.datetimeISO ?? ev.datetime ?? "",
-        family: ev.family ?? "",
-        qr: Boolean(ev.qr),
-        quantity: (ev as any).quantity ?? 1,
-        notes: ev.notes ?? undefined,
-      };
-      setFamilyVisits((prev: FamilyVisit[]) =>
-        prev.some((x: FamilyVisit) => x.id === mapped.id) ? prev : [mapped, ...prev]
-      );
-    }
-
-    // Clear state to prevent duplicate processing
-    navigate(location.pathname, { replace: true, state: null });
-  }, [location.state, navigate, location.pathname]);
-
-  //filter
-  const toNum = (d?: string) => (d ? Number(d.replaceAll("-", "")) : undefined);
-  const fNum = toNum(filters.from);
-  const tNum = toNum(filters.to);
-  const validRange = !fNum || !tNum || fNum <= tNum;
-
-  const filteredCareEvents = careEvents.filter(e => {
-    const dNum = toNum(e.dateISO);
-
-    if (validRange) {
-      if (fNum && (dNum ?? 0) < fNum) return false;
-      if (tNum && (dNum ?? 99999999) > tNum) return false;
-    }
-
-    const prOk = !filters.priority || filters.priority === "all" || e.priority === filters.priority;
-    const stOk = !filters.staff || filters.staff === "all" || (e.staffName ?? "").toLowerCase() === (filters.staff as string).toLowerCase();
-    return prOk && stOk;
+  const form = useForm<z.infer<typeof eventSchema>>({
+    resolver: zodResolver(eventSchema),
+    defaultValues,
   });
 
-  const filteredFamilyVisits = familyVisits.filter(() => true);
-
-  const staffOptions = [
-    { id: "s1", name: "Nurse Linh" },
-    { id: "s2", name: "Nurse Hoa" },
-    { id: "s3", name: "Dr. Nam" },
-  ];
-
-
-  const careSorted = React.useMemo(() => [...filteredCareEvents].sort(byTimeAsc), [filteredCareEvents]);
-  const visitsSorted = React.useMemo(() => [...filteredFamilyVisits].sort(byTimeAsc), [filteredFamilyVisits]);
-
-  // Function to add a notification
-  const addNotification = (type: string, message: string) => {
-    setNotifications((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), type, message, timestamp: new Date() },
-    ]);
-  };
-
-
-  const formatNotificationMessage = (eventType: string, eventName: string | undefined, fromDate: string, toDate: string, reason: string) => {
-    const namePart = eventName ? ` '${eventName}'` : "";
-    return `${eventType}${namePart} from ${fromDate} to ${toDate} has ${reason}.`;
-  };
-
-
+  // sync local hour/minute with form's startTime
+  const startTimeValue = form.watch("startTime");
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const upcomingEvents = careEvents.filter((e) => {
-        // Ensure datetimeISO exists before creating a Date from it
-        if (!e.datetimeISO) return false;
-        const eventTime = new Date(e.datetimeISO).getTime();
-        if (isNaN(eventTime)) return false;
-        return eventTime - now <= 15 * 60 * 1000 && eventTime > now;
-      });
+    const st = startTimeValue || "";
+    if (st && st.includes(":")) {
+      st.split(":"); // Split the time string without assigning unused variables
+    }
+  }, [startTimeValue]);
 
-      upcomingEvents.forEach((event) => {
-        addNotification("upcoming", `Event '${event.eventName}' is starting soon.`);
-      });
-    }, 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [careEvents]);
-
-
+  // Replace fetchEvents with mockEvents
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    setEvents(mockEvents);
   }, []);
 
-  const handleActionConfirm = (action: "delete" | "done" | "edit", eventId: string) => {
-    if (action === "edit") {
-      navigate(`/staff-create-event`, { state: { eventId } });
+  // Imported `CareEvent` type to resolve type errors
+  // Ensured `mapCareEventToStaffEvent` is used where necessary to avoid unused declaration
+  useEffect(() => {
+    if (!location.state) return;
+
+    const data = location.state.newEvent;
+    console.log("Received newEvent in Manage Event:", data); // Log the received data
+
+    if (!data) return;
+
+    let mappedEvent: StaffEvent;
+
+    if (data.type === "care") {
+      mappedEvent = mapCareEventToStaffEvent(data);
+    } else if (data.type === "family") {
+      mappedEvent = mapVisitEventToStaffEvent(data as FamilyVisit);
+    } else {
       return;
     }
-    setModalAction(action);
-    setSelectedEventId(eventId);
-    setShowConfirmModal(true);
-  };
 
-  const confirmAction = () => {
-    if (modalAction === "delete" && selectedEventId) {
-      console.log("Event deleted.", selectedEventId);
-      // Add delete logic here
-    } else if (modalAction === "done" && selectedEventId) {
-      console.log("Event marked as done.", selectedEventId);
-      // Add mark as done logic here
+    setEvents(prev => [...prev, mappedEvent]);
+  }, [location.state]);
+
+  // Filter events based on criteria
+  const filteredEvents = events.filter(e => {
+    const statusOk = filterStatus === "all" || e.status === filterStatus;
+    const typeOk = filterType === "all" || e.type === filterType;
+
+    const careTypeOk =
+      e.type !== "care" ||
+      filterCareType === "all" ||
+      e.careType === filterCareType;
+
+    const dateOk = (() => {
+      const eventDate = new Date(e.date).getTime();
+      const from = filterFrom ? new Date(filterFrom).getTime() : null;
+      const to = filterTo ? new Date(filterTo).getTime() : null;
+
+      if (from && to) return eventDate >= from && eventDate <= to;
+      if (from) return eventDate >= from;
+      if (to) return eventDate <= to;
+
+      return true;
+    })();
+
+    return statusOk && typeOk && careTypeOk && dateOk;
+  });
+
+  const handleDeleteEvent = async (id: string) => {
+    try {
+      await fetch(`/api/events/${id}`, { method: "DELETE" });
+      setEvents(prev => prev.filter(e => e.id !== id));
+      setToastMessage("Event deleted");
+    } catch {
+      setToastMessage("Error deleting event");
     }
-    setShowConfirmModal(false);
-    setSelectedEventId(null);
   };
 
-  const Modal = ({ children }: { children: React.ReactNode }) => {
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center">
-        <div className="bg-gray-200 rounded-lg border border-gray-200 shadow-lg p-4 w-96">
-          {children}
-        </div>
-      </div>
+  const openEditDialog = (event: StaffEvent) => {
+    setEditingEventId(event.id);
+
+    form.reset({
+      name: event.name,
+      // description: event.description || "",
+      type: event.type,
+      date: event.date,
+      startTime: event.startTime,
+      endTime: event.endTime,
+      location: event.location,
+      capacity: event.capacity,
+      staffName: event.staffName || "",
+      status: event.status,
+      careType: event.type === "care" ? event.careType || "" : "",
+    });
+
+    setDialogOpen(true);
+  };
+
+  const saveUpdateEvent = (values: z.infer<typeof eventSchema>) => {
+    if (!editingEventId) return;
+
+    setEvents(prev =>
+      prev.map(ev =>
+        ev.id === editingEventId
+          ? {
+            ...ev,
+            ...values,
+            careType: values.type === "care" ? values.careType : "",
+          }
+          : ev
+      )
     );
+
+    setDialogOpen(false);
+    setToastMessage("Event updated successfully");
   };
 
-  const ModalHeader = ({ children }: { children: React.ReactNode }) => {
-    return <div className="text-lg font-bold mb-4">{children}</div>;
-  };
-
-  const ModalContent = ({ children }: { children: React.ReactNode }) => {
-    return <div className="mb-4">{children}</div>;
-  };
-
-  const ModalFooter = ({ children }: { children: React.ReactNode }) => {
-    return <div className="flex justify-end gap-2">{children}</div>;
-  };
+  // Notification Logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const upcoming = events.filter(e => {
+        const start = new Date(`${e.date}T${e.startTime}`).getTime();
+        return start - now <= 15 * 60 * 1000 && start > now;
+      });
+      if (upcoming.length)
+        setToastMessage(`Upcoming: ${upcoming[0].name}`);
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [events]);
 
   return (
-    <div className="flex-1 min-h-screen overflow-x-auto overflow-y-hidden">
-      <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
+    <div className="relative flex flex-col min-h-screen">
+      <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
+      <div className="container max-w-full mx-auto p-4 bg-white rounded-lg border border-gray-200 space-y-6">
+        <h1 className="text-2xl font-bold">Staff Event Management</h1>
 
-      <div className="relative h-full p-6 lg:p-8 ">
-        <main className="flex min-h-full gap-4 lg:gap-6 bg-gray-50 p-4 rounded-2xl min-w-[1100px] w-max">
-          <div className="w-full max-w-6xl rounded-xl backdrop-blur border border-black/10 shadow-lg flex flex-col p-4 ">
-
-            {/* HEADER */}
-            <div className="pt-6 pb-3 relative z-50 pointer-events-auto">
-              <div className="flex items-start justify-between gap-4">
-                <h1 className="text-2xl text-[#5985d8]">Manage Event</h1>
-
-                <div className="flex items-center gap-4">
-                  {/* Add Event Button */}
-                  <button
-                    type="button"
-                    className="relative z-50 h-10 w-10 inline-flex items-center justify-center rounded-full bg-white text-black shadow-md hover:bg-gray-100 focus:outline-none"
-                    onClick={() => navigate('/staff-create-event')}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    aria-label="Add Event"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      className="h-6 w-6 flex-none"
-                      aria-hidden="true"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                  </button>
-
-                  {/* Filter Button */}
-                  <div className="relative z-50">
-                    <FilterButton
-                      value={{ ...filters }}
-                      onChange={(next) => setFilters(next)}
-                      staffOptions={staffOptions}
-                      eventTypeOptions={["all", "care", "visit"]}
-                    />
-                  </div>
-
-                  {/* Notification Icon */}
-                  <button
-                    className="relative z-50 rounded-full p-2 hover:bg-gray-100"
-                    onClick={() => setShowNotifications((p) => !p)}
-                    aria-label="Notification"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 22.5c1.5 0 2.25-.75 2.25-2.25h-4.5c0 1.5.75 2.25 2.25 2.25zm6.75-6.75v-4.5c0-3.75-2.25-6-6-6s-6 2.25-6 6v4.5l-1.5 1.5v.75h15v-.75l-1.5-1.5z" />
-                    </svg>
-                    {notifications.length > 0 && (
-                      <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">
-                        {notifications.length}
-                      </span>
-                    )}
-                  </button>
-                  {showNotifications && notifications.map((n) => (
-                    <div key={n.id}>{n.message}</div>
-                  ))}
-                </div>
-              </div>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Select value={filterStatus} onValueChange={(value: string) => setFilterStatus(value as EventStatus | "all")}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="ongoing">Ongoing</SelectItem>
+              <SelectItem value="ended">Ended</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="care">Care Event</SelectItem>
+              <SelectItem value="family">Family Visit</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterCareType} onValueChange={setFilterCareType}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Filter by Care Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Care Types</SelectItem>
+              <SelectItem value="vital_check">Vital Check</SelectItem>
+              <SelectItem value="therapy">Therapy</SelectItem>
+              <SelectItem value="hygiene">Hygiene</SelectItem>
+              <SelectItem value="entertainment">Entertainment</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex flex-col sm:flex-row gap-4 relative bg-white">
+            <div className="relative cursor-pointer" onClick={() => {
+              const input = document.getElementById("filter-from") as HTMLInputElement;
+              input?.showPicker?.();
+            }}>
+              <CalendarIcon
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer z-10"
+                onClick={() => {
+                  const input = document.getElementById("filter-from") as HTMLInputElement;
+                  input?.showPicker?.();
+                }}
+              />
+              <Input
+                id="filter-from"
+                type="date"
+                value={filterFrom}
+                onChange={(e) => setFilterFrom(e.target.value)}
+                className="pl-8 bg-white"
+              />
             </div>
 
-            {/* CONTENT */}
-            <div className="pb-2 flex-grow">
-              <div className="space-y-10 mb-4">
-                {/* Care Events */}
-                <div className="mt-6 flex gap-6 mb-4 snap-x snap-mandatory
-                                relative z-0 pointer-events-auto">
-                  {careSorted.map((e) => (
-                    <Card key={e.id} className="rounded-2xl bg-sky-50 ring-1 ring-sky-100 relative min-w-[240px] snap-start">
-                      <CardHeader>
-                        <CardTitle>Care Event</CardTitle>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
-                              <MoreVertical className="h-5 w-5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => e.id && handleActionConfirm("edit", e.id)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => e.id && handleActionConfirm("delete", e.id)}>Delete</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => e.id && handleActionConfirm("done", e.id)}>Mark as Done</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2 text-sm text-left -mt-5">
-                          <li><span className="font-medium">Care Type:</span> {e.type || "N/A"}</li>
-                          <li><span className="font-medium">Event Name:</span> {e.eventName || "N/A"}</li>
-                          <li><span className="font-medium">Quantity:</span> {e.quantity || "N/A"}</li>
-                          <li><span className="font-medium">Remaining Seat:</span> {e.quantity || "N/A"}</li>
-                          <li className="flex items-center gap-1">
-                            <span className="font-medium">Date:</span> {e.datetimeLabel}
-                          </li>
-                          <li><span className="font-medium">Location:</span> {e.location}</li>
-                          <li><span className="font-medium">Staff:</span> {e.staffName || "N/A"}</li>
-                          <li><span className="font-medium">Notes:</span> {e.notes || "N/A"}</li>
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {careSorted.length === 0 && (
-                    <p className="text-center text-gray-500">No care events available.</p>
-                  )}
-                </div>
-
-                {/* Family Visits */}
-                <div className="mt-6 flex gap-6 mb-4 snap-x snap-mandatory
-                                relative z-0 pointer-events-auto">
-                  {visitsSorted.map((v) => (
-                    <Card key={v.id} className="rounded-2xl bg-amber-50 ring-1 ring-amber-100 relative min-w-[240px] snap-start">
-                      <CardHeader>
-                        <CardTitle>Family Visit</CardTitle>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200">
-                              <MoreVertical className="h-5 w-5" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleActionConfirm("edit", v.id)}>Edit</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleActionConfirm("delete", v.id)}>Delete</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleActionConfirm("done", v.id)}>Mark as Done</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardHeader>
-                      <CardContent>
-                        <ul className="space-y-2 text-sm text-left -mt-5">
-                          <li><span className="font-medium">Resident:</span> {v.resident || "N/A"}</li>
-                          <li><span className="font-medium">Date:</span> {v.datetime || v.date || "N/A"}</li>
-                          <li><span className="font-medium">Family:</span> {v.family || "N/A"}</li>
-                          <li><span className="font-medium">QR:</span> {v.qr ? "Enabled" : "Disabled"}</li>
-                          <li><span className="font-medium">Notes:</span> {v.notes || "No notes available"}</li>
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {visitsSorted.length === 0 && (
-                    <p className="text-center text-gray-500">No family visits available.</p>
-                  )}
-                </div>
-              </div>
+            <div className="relative cursor-pointer" onClick={() => {
+              const input = document.getElementById("filter-to") as HTMLInputElement;
+              input?.showPicker?.();
+            }}>
+              <CalendarIcon
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer z-10"
+                onClick={() => {
+                  const input = document.getElementById("filter-to") as HTMLInputElement;
+                  input?.showPicker?.();
+                }}
+              />
+              <Input
+                id="filter-to"
+                type="date"
+                value={filterTo}
+                onChange={(e) => setFilterTo(e.target.value)}
+                className="pl-8 bg-white"
+              />
             </div>
           </div>
-        </main>
-      </div>
 
-      {/* Modal for confirmation */}
-      {showConfirmModal && (
-        <Modal>
-          <ModalHeader>
-            <h2>Confirm Action</h2>
-          </ModalHeader>
-          <ModalContent>
-            <p>
-              Are you sure you want to{" "}
-              {modalAction === "delete"
-                ? "delete this event"
-                : modalAction === "done"
-                  ? "mark this event as done"
-                  : "edit this event"}
-              ?
-            </p>
-          </ModalContent>
-          <ModalFooter>
-            <button onClick={() => setShowConfirmModal(false)}>Cancel</button>
-            <button className="text-white bg-[#5985d8]" onClick={confirmAction}>Confirm</button>
-          </ModalFooter>
-        </Modal>
-      )}
+          {/* Clear Filters Button */}
+          <Button
+            className="bg-gray-400 text-white hover:bg-gray-600"
+            onClick={() => {
+              setFilterStatus("all");
+              setFilterType("all");
+              setFilterCareType("all");
+              setFilterFrom("");
+              setFilterTo("");
+            }}
+          >
+            Clear
+          </Button>
+        </div>
+
+        {/* Add Event Button */}
+        <Button
+          className="bg-blue-500 text-white hover:bg-blue-500"
+          onClick={() => navigate("/staff-create-event")}
+        >
+          Add New Event
+        </Button>
+
+
+        {/* Events Table */}
+        <div className="overflow-visible">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className='text-center'>Name</TableHead>
+                <TableHead className='text-center'>Type</TableHead>
+                <TableHead className='text-center'>Date</TableHead>
+                <TableHead className='text-center'>Time</TableHead>
+                <TableHead className='text-center'>Location</TableHead>
+                <TableHead className='text-center'>Staff</TableHead>
+                <TableHead className='text-center'>Capacity</TableHead>
+                <TableHead className='text-center'>Registered</TableHead>
+                <TableHead className='text-center'>Status</TableHead>
+                <TableHead className='text-center'>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEvents.map(event => (
+                <TableRow key={event.id}>
+                  <TableCell className='text-left whitespace-pre-line'>{event.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">
+                      {event.type === "care"
+                        ? event.careType || "General"
+                        : event.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{event.date}</TableCell>
+                  <TableCell>{event.startTime} - {event.endTime}</TableCell>
+                  <TableCell>{event.location}</TableCell>
+                  <TableCell>{event.staffName}</TableCell>
+                  <TableCell>{event.capacity}</TableCell>
+                  <TableCell>{event.registeredCount}</TableCell>
+                  <TableCell>
+                    <Badge
+                      className={
+                        event.status === "upcoming"
+                          ? "bg-blue-500 text-white hover:bg-blue-500"
+                          : event.status === "ongoing"
+                            ? "bg-green-500 text-white hover:bg-green-500"
+                            : event.status === "ended"
+                              ? "bg-gray-400 text-white hover:bg-gray-400 "
+                              : "bg-red-500 text-white hover:bg-red-500"
+                      }
+                    >
+                      {event.status}
+                    </Badge>
+                  </TableCell>
+
+                  <TableCell className="grid grid-cols-3 ">
+                    <Button variant="outline" size="sm" className='bg-gray-200' onClick={() => openEditDialog(event)}>Edit</Button>
+                    <Button variant="destructive" size="sm" className="ml-2" onClick={() => handleDeleteEvent(event.id)}>Delete</Button>
+                    {event.type === "family" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 bg-blue-400"
+                        onClick={() => navigate(`/booking-status-qr/${event.id}`)}
+                      >
+                        QR
+                      </Button>
+                    ) : (
+                      <div />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Toast for notifications */}
+        {toastMessage && (
+          <div className="fixed bottom-4 right-4 bg-primary text-primary-foreground px-4 py-2 rounded shadow">
+            {toastMessage}
+          </div>
+        )}
+
+        {/* Edit Event Dialog */}
+        {dialogOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-xl shadow-lg space-y-6">
+
+              <h2 className="text-2xl font-bold text-center">Edit Event</h2>
+
+              <form
+                onSubmit={form.handleSubmit(saveUpdateEvent)}
+                className="space-y-4"
+              >
+
+                {/* 1. NAME */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Name</label>
+                  <Input {...form.register("name")} className="flex-1" />
+                </div>
+
+                {/* 2. TYPE */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Type</label>
+                  <Select
+                    value={form.watch("type")}
+                    onValueChange={(v) => form.setValue("type", v as any)}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choose type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="care">Care Event</SelectItem>
+                      <SelectItem value="family">Family Visit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* 2.1 CARE TYPE (if type=care) */}
+                {form.watch("type") === "care" && (
+                  <div className="flex items-center gap-4">
+                    <label className="w-36 text-sm font-medium">Care Type</label>
+                    <Select
+                      value={form.watch("careType")}
+                      onValueChange={(v) => form.setValue("careType", v)}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Choose care type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vital_check">Vital Check</SelectItem>
+                        <SelectItem value="therapy">Therapy</SelectItem>
+                        <SelectItem value="hygiene">Hygiene</SelectItem>
+                        <SelectItem value="entertainment">Entertainment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* 3. DATE */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Date</label>
+                  <Input type="date" {...form.register("date")} className="flex-1" />
+                </div>
+
+                {/* 4. TIME */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Time</label>
+                  <div className="flex gap-2 flex-1">
+                    <Input type="time" {...form.register("startTime")} />
+                    <Input type="time" {...form.register("endTime")} />
+                  </div>
+                </div>
+
+                {/* 5. LOCATION */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Location</label>
+                  <Input {...form.register("location")} className="flex-1" />
+                </div>
+
+                {/* 6. STAFF NAME */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Staff</label>
+
+                  <Select
+                    onValueChange={(value) => form.setValue("staffName", value)}
+                    defaultValue={form.watch("staffName")}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select staff" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {staffList.map((staff) => (
+                        <SelectItem key={staff} value={staff}>
+                          {staff}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+
+                {/* 7. CAPACITY */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Capacity</label>
+                  <Input
+                    type="number"
+                    {...form.register("capacity", { valueAsNumber: true })}
+                    className="flex-1"
+                  />
+                </div>
+
+                {/* 8. REGISTERED (readonly) */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Registered</label>
+                  <Input
+                    value={editingEventId ? events.find(e => e.id === editingEventId)?.registeredCount : ""}
+                    disabled
+                    className="flex-1 bg-gray-100"
+                  />
+                </div>
+
+                {/* 9. STATUS */}
+                <div className="flex items-center gap-4">
+                  <label className="w-36 text-sm font-medium">Status</label>
+                  <Select
+                    value={form.watch("status")}
+                    onValueChange={(v) => form.setValue("status", v as any)}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Choose status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="upcoming">Upcoming</SelectItem>
+                      <SelectItem value="ongoing">Ongoing</SelectItem>
+                      <SelectItem value="ended">Ended</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* BUTTONS */}
+                <div className="flex justify-end gap-3 pt-4">
+                  <Button variant="outline" type="button" onClick={() => setDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="bg-blue-500 text-white hover:bg-blue-500" type="submit">
+                    Save Changes
+                  </Button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   );
+};
+
+export default StaffEventManagementPage;
+
+
+function mapCareEventToStaffEvent(ce: CareEvent): StaffEvent {
+  const start = new Date(ce.datetimeISO);
+  const startTime = start.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
+  return {
+    id: ce.id,
+    name: ce.name, 
+    // description: ce.notes || "",
+    type: "care",
+    careType: ce.type || "",
+    date: ce.dateISO,
+    startTime,
+    endTime: "", 
+    location: ce.location, 
+    capacity: ce.quantity ?? 1,
+    registeredCount: 0,
+    createdBy: ce.staffName, 
+    status: "upcoming",
+  };
+}
+
+// Update FamilyVisit type to include `type`
+export type FamilyVisit = {
+  id: string;
+  type: "family";
+  resident: string;
+  visitor: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+};
+
+function mapVisitEventToStaffEvent(v: FamilyVisit): StaffEvent {
+  console.log("MAP VISIT INPUT:", v); // Debugging log
+  return {
+    id: v.id,
+    name: `Resident: ${v.resident} \n Visitor: ${v.visitor}`,
+    type: "family",
+    date: v.date,
+    startTime: v.startTime,
+    endTime: v.endTime,
+    location: v.location,
+    capacity: 1,
+    registeredCount: 0,
+    createdBy: v.visitor,
+    status: "upcoming",
+  };
 }
