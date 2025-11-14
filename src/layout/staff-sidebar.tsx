@@ -98,7 +98,7 @@ const staffMenu: StaffMenuItem[] = [
     label: "Account & Settings",
     children: [
       { label: "My Profile", path: "/staff/profile", icon: <UserCircle size={20} /> },
-      { label: "Settings", path: "/staff/settings", icon: <Cog size={20} /> },
+      // { label: "Settings", path: "/staff/settings", icon: <Cog size={20} /> },
     ],
   },
 ];
