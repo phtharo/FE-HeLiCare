@@ -543,7 +543,7 @@ function toMinutes(hhmm: string) {
 
 export function WeeklyDailyCalendar() {
   return (
-    <div className="bg-white px-6 py-6 rounded-2xl shadow-sm w-[1250px] -mt-13 -ml-10">
+    <div className="bg-white px-6 py-6 rounded-2xl shadow-sm w-[1250px] -ml-10 ">
       <div className="flex-1  flex flex-col w-[1200px] bg-white overflow-x-hidden rounded-xl border border-gray-200">
 
         {/* Toolbar */}

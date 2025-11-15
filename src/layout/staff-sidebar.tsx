@@ -69,7 +69,7 @@ const staffMenu: StaffMenuItem[] = [
   {
     label: "Nutrition & Diet",
     children: [
-      { label: "Diet Plans", path: "/staff/diet-plans", icon: <Utensils size={20} /> },
+      { label: "Diet Plans", path: "/staff-nutrition", icon: <Utensils size={20} /> },
       { label: "Meal Tracking", path: "/staff/meal-tracking", icon: <ChefHat size={20} /> },
     ],
   },
@@ -91,14 +91,14 @@ const staffMenu: StaffMenuItem[] = [
     label: "Reports & Analytics",
     children: [
       { label: "Resident Reports", path: "/staff/resident-reports", icon: <BarChart3 size={20} /> },
-      { label: "Operations Dashboard", path: "/staff/operations-dashboard", icon: <BarChart3 size={20} /> },
+      { label: "Operations Dashboard", path: "/staff-payment", icon: <BarChart3 size={20} /> },
     ],
   },
   {
     label: "Account & Settings",
     children: [
       { label: "My Profile", path: "/staff/profile", icon: <UserCircle size={20} /> },
-      { label: "Settings", path: "/staff/settings", icon: <Cog size={20} /> },
+      // { label: "Settings", path: "/staff/settings", icon: <Cog size={20} /> },
     ],
   },
 ];

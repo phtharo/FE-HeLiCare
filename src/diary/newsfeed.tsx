@@ -81,7 +81,16 @@ const App: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [filter, setFilter] = useState<string>("Day");
   const [search, setSearch] = useState<string>("");
-  const [userRole] = useState<UserRole>("Staff");
+  const [userRole, setUserRole] = useState<UserRole>("Family");
+
+  React.useEffect(() => {
+    const storedRole = localStorage.getItem("userRole") as UserRole | null;
+
+    if (storedRole) {
+      setUserRole(storedRole);
+    }
+  }, []);
+
   const [likedPosts, setLikedPosts] = useState<number[]>([]);
   const [showMenu, setShowMenu] = useState<number | null>(null);
   const [selectedResidentIds, setSelectedResidentIds] = React.useState<string[]>([]);
@@ -221,9 +230,9 @@ const App: React.FC = () => {
       const updatedPosts = prev.map((post) =>
         post.id === id
           ? {
-              ...post,
-              likes: likedPosts.includes(id) ? post.likes - 1 : post.likes + 1,
-            }
+            ...post,
+            likes: likedPosts.includes(id) ? post.likes - 1 : post.likes + 1,
+          }
           : post
       );
       syncLocalStorage(updatedPosts);
@@ -231,8 +240,8 @@ const App: React.FC = () => {
     });
     setLikedPosts((prev) =>
       prev.includes(id)
-        ? prev.filter((pid) => pid !== id) 
-        : [...prev, id] 
+        ? prev.filter((pid) => pid !== id)
+        : [...prev, id]
     );
   };
 
@@ -353,7 +362,7 @@ const App: React.FC = () => {
   });
 
   return (
-    <div className="flex-1 flex flex-col w-[1200px] overflow-x-hidden rounded-xl ">
+    <div className="flex-1 flex flex-col w-[1100px] overflow-x-hidden rounded-2xl ">
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
       {/* Main Area */}
       <div className="flex-1 flex overflow-x-hidden bg-white mx-auto rounded-xl">

@@ -26,9 +26,15 @@ import FamilySidebar from './layout/family-sidebar';
 
 import BookingStatusQR from './event/BookingStatusQR';
 import Newsfeed from './diary/newsfeed';
-import Demo from './event/staff-manage-event';
-import DemoN from './diary/demo-N';
+import ManageEvent from './event/staff-manage-event';
+import StaffNutrition from './Nutrition&Allergy/staff';
 import CreatePost from './diary/post';
+import ResidentNutrition from './Nutrition&Allergy/resident';
+import FamilyNutrition from './Nutrition&Allergy/family';
+import PaymentModuleFamily from './family/demo';
+import PaymentModuleStaff from './payment/staff-payment';
+import PaymentModuleAdmin from './payment/admin-payment';
+import AdminLayout from './layout/admin-sidebar';
 
 // Mock API for login
 const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
@@ -70,27 +76,38 @@ export default function App() {
           <Route path="/newsfeed" element={<Newsfeed />} />
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/create-post/:postId" element={<CreatePost />} />
-          <Route path="/demo" element={<Demo />} />
+          <Route path="/demo" element={<ManageEvent />} />
           <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} />
+          <Route path="/staff-nutrition" element={<StaffNutrition />} />
+          <Route path="/staff-payment" element={<PaymentModuleStaff />} />
+          
         </Route>
         <Route path="/resident" element={<Sidebar />}>
           <Route index element={<Navigate to="newsfeed" replace />} />
           <Route path="newsfeed" element={<Newsfeed />} />
           <Route path="resident-schedule" element={<ResidentSchedule />} />
+          <Route path="resident-nutrition" element={<ResidentNutrition />} />
         </Route>
         <Route path="/family" element={<FamilySidebar />}>
           <Route index element={<Navigate to="newsfeed" replace />} />
           <Route path="newsfeed" element={<Newsfeed />} />
           <Route path="family-schedule" element={<FamilySchedule />} />
+          <Route path="family-nutrition" element={<FamilyNutrition />} />
+          <Route path="demo" element={<PaymentModuleFamily />} />
         </Route>
+
+        <Route element={<AdminLayout />}>
+          <Route path="/admin-payment" element={<PaymentModuleAdmin />} />
+        </Route>
+
         {/* no side bar */}
         <Route path="/issue-link-code" element={<IssueLinkCode />} />
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/resident-sidebar" element={<Sidebar />} />
-        
         <Route path="/family-sidebar" element={<FamilySidebar />} />
+
         
-        <Route path="/demoN" element={<DemoN />} />
+        {/* <Route path="/admin-payment" element={<PaymentModuleAdmin />} /> */}
         {/* <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} /> */}
         {/* Set the default route to Signin*/}
         <Route path="*" element={<Navigate to="/" replace />} />

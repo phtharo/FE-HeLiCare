@@ -654,7 +654,7 @@ const StaffEventManagementPage: React.FC = () => {
   );
 };
 
-export default StaffEventManagementPage;
+
 
 
 function mapCareEventToStaffEvent(ce: CareEvent): StaffEvent {
@@ -706,3 +706,5 @@ function mapVisitEventToStaffEvent(v: FamilyVisit): StaffEvent {
     status: "upcoming",
   };
 }
+
+export default StaffEventManagementPage;

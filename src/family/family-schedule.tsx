@@ -147,16 +147,59 @@ function Calendar() {
 
   const [eventsState, setEventsState] = useState<CareEvent[]>([]);
 
-  useEffect(() => {
-    // Fetch care events from API or shared state
-    fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
-  }, []);
+  // useEffect(() => {
+  //   // Fetch care events from API or shared state
+  //   fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
+  // }, []);
 
+  useEffect(() => {
+  if (resident === "all") {
+    setEventsState([]);     // không fetch → clear event
+    return;
+  }
+
+  fetchFamilyVisits(resident)
+    .then((data) => {
+      const mapped = mapFamilyVisitToEvent(data || []);
+      setEventsState(mapped);
+    })
+    .catch((err) => {
+      console.error("Failed to fetch family visits:", err);
+      setEventsState([]);
+    });
+}, [resident]);
+
+
+
+  function mapFamilyVisitToEvent(visits: any[]): CareEvent[] {
+    return visits.map(v => ({
+      id: v.id,
+      date: v.date,
+      start: v.start ?? "08:00",
+      end: v.end ?? "09:00",
+      name: "Family Visit",
+      type: "visit",
+      location: "Lobby A",
+      staff: "Frontdesk",
+      capacity: 1,
+      registered: 1,
+      note: v.notes ?? "",
+    }));
+  }
+
+
+  // FIX
   const handleSubmit = (newVisit: FamilyVisit) => {
-    const startStr = String(
-      (newVisit as any).start ?? (newVisit as any).time ?? (newVisit as any).startTime ?? "00:00"
-    );
-    const startHour = Number(startStr.split(":"[0]));
+    // Normalize input time
+    const rawStart =
+      (newVisit as any).start ??
+      (newVisit as any).time ??
+      (newVisit as any).startTime ??
+      "00:00";
+
+    const startStr = String(rawStart).substring(0, 5); // ensure HH:mm
+    const startHour = Number(startStr.split(":")[0]);
+
     if (startHour < 8 || startHour >= 17) {
       alert("Visits can only be scheduled between 08:00 and 17:00.");
       return;
@@ -165,25 +208,29 @@ function Calendar() {
     createFamilyVisit(newVisit)
       .then((createdVisit) => {
         const cv = createdVisit as any;
-        const familyVisit = {
+
+        const familyVisit: FamilyVisit = {
           id: String(cv.id ?? `e${Date.now()}`),
           date: cv.date ?? newVisit.date,
-          start: cv.start ?? (newVisit as any).start,
-          end: cv.end ?? (newVisit as any).end,
+          start: (cv.start ?? rawStart).substring(0, 5),  // FIXED
+          end: (cv.end ?? rawStart).substring(0, 5),      // FIXED
           resident: cv.resident ?? newVisit.resident,
           family: cv.family ?? "Unknown",
           qr: cv.qr ?? false,
           notes: cv.notes ?? "",
-        } as unknown as FamilyVisit;
+        };
 
-        setVisits((prevVisits) => [...prevVisits, familyVisit]);
-        setEventsState((prevEvents) => [
-          ...prevEvents,
+        // Push into visits state
+        setVisits((prev) => [...prev, familyVisit]);
+
+        // Push into calendar event state
+        setEventsState((prev) => [
+          ...prev,
           {
             id: familyVisit.id,
             date: familyVisit.date,
-            start: (familyVisit as any).start,
-            end: (familyVisit as any).end,
+            start: familyVisit.start,   // FIXED FORMAT
+            end: familyVisit.end,       // FIXED FORMAT
             name: "Family visit",
             type: "visit",
             location: "Lobby A",
@@ -193,6 +240,7 @@ function Calendar() {
             note: familyVisit.notes || "",
           } as CareEvent,
         ]);
+
         alert("New family visit added successfully!");
       })
       .catch((err) => {
@@ -349,7 +397,7 @@ function EmptySlot({
   };
 
   return (
-    <div className="h-16 border-t text-[11px] text-slate-400 pl-1 flex items-start">
+    <div className="h-20 border-t text-[11px] text-slate-400 pl-1 flex items-start">
       <button
         className={`w-full h-full bg-transparent hover:bg-blue-50 ${disabled ? "pointer-events-none hover:bg-transparent" : ""}`}
         onClick={() => !disabled && setActiveSlot(time)}
@@ -424,41 +472,41 @@ function ResidentCombobox({
 }
 
 function EventBlock({ ev }: { ev: typeof events[number] }) {
-  const SLOT_PX = 64;
-  const BORDER_PX = 1;
+  // fix
+  const SLOT_PX = 80;
   const PX_PER_MIN = SLOT_PX / 60;
+  const CAL_START = 8 * 60;      // 08:00
+  const CAL_END = 20 * 60;
 
   const startMin = toMinutes(ev.start);
   const endMin = toMinutes(ev.end);
+
+  const startOffset = startMin - CAL_START; // 08–20h
   const durMin = Math.max(0, endMin - startMin);
 
-  const startHour = Math.floor(startMin / 60);
-  const startMinute = startMin % 60;
+  if (startMin < CAL_START || startMin >= CAL_END) {
+    return null;
+  }
 
-  const hourBoundariesCrossed =
-    Math.max(0, Math.floor((endMin - 1) / 60) - Math.floor(startMin / 60));
-
-  const top =
-    startHour * SLOT_PX +
-    startHour * BORDER_PX +
-    startMinute * PX_PER_MIN;
-
-  const height = Math.max(
-    36,
-    durMin * PX_PER_MIN + hourBoundariesCrossed * BORDER_PX
-  );
+  const top = startOffset * PX_PER_MIN;
+  const height = Math.max(36, durMin * PX_PER_MIN);
 
   const [mine, setMine] = React.useState(false);
   const [count, setCount] = React.useState(ev.registered);
   const [selectedResident, setSelectedResident] = React.useState<string | null>(null);
+
   const full = count >= ev.capacity;
   const remaining = Math.max(ev.capacity - count, 0);
 
   const color =
-    ev.type === "visit" ? "bg-amber-50 ring-amber-200" : "bg-sky-50 ring-sky-200";
+    ev.type === "visit"
+      ? "bg-amber-50 ring-amber-200"
+      : "bg-sky-50 ring-sky-200";
 
   const canRegister =
-    ev.type === "visit" ? !!selectedResident && !mine && !full : !mine && !full;
+    ev.type === "visit"
+      ? !!selectedResident && !mine && !full
+      : !mine && !full;
 
   const onRegister = () => {
     if (!canRegister) return;
@@ -478,7 +526,8 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
           className={`absolute left-1 right-1 rounded-xl ring-1 text-left p-2 shadow-sm hover:shadow ${color} z-20`}
           style={{ top, height }}
         >
-          <div className="flex items-center justify-between">
+          {/* fix */}
+          <div className="flex flex-col items-start justify-between">
             <div className="font-medium text-sm truncate">{ev.name}</div>
             <Badge variant={full ? "destructive" : "secondary"}>
               <Users className="h-3.5 w-3.5 mr-1" />
@@ -487,6 +536,7 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
           </div>
         </button>
       </PopoverTrigger>
+
       <PopoverContent className="w-80">
         <Card className="shadow-none border-0">
           <CardHeader className="pb-2">
@@ -495,6 +545,7 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
               <Badge variant="outline">{ev.type}</Badge>
             </CardTitle>
           </CardHeader>
+
           <CardContent className="space-y-3 text-sm">
             <div className="flex items-center gap-2 text-slate-600">
               <Clock className="h-4 w-4" /> {ev.start}–{ev.end}
@@ -504,7 +555,8 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
             <div className="text-slate-600">
               Note: {ev.note || "No notes available"}
             </div>
-            <div className="flex items-center gap-2">
+
+            <div className="flex flex-col items-start gap-1">
               <Badge variant="secondary">
                 <Users className="h-3.5 w-3.5 mr-1" />
                 {count}/{ev.capacity}
@@ -517,7 +569,6 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
                 </span>
               )}
             </div>
-
 
             {ev.type === "visit" && (
               <div className="space-y-1">
@@ -544,13 +595,13 @@ function EventBlock({ ev }: { ev: typeof events[number] }) {
                 Cancel
               </Button>
             </div>
-
           </CardContent>
         </Card>
       </PopoverContent>
     </Popover>
   );
 }
+
 
 function DayColumn({
   date,
@@ -588,10 +639,15 @@ function DayColumn({
   const [activeSlot, setActiveSlot] = useState<string | null>(null);
   const dayISO = date.toISOString().slice(0, 10);
   const dayEvents = items.filter((e) => e.date === dayISO);
-  const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
+
+  // FIX
+  const hours = Array.from({ length: 13 }, (_, i) =>
+    `${String(i + 8).padStart(2, "0")}:00`
+  );
+
 
   return (
-    <div className="col-span-1 border-r min-h-[1024px] relative">
+    <div className="border-r relative flex flex-col">
       <div className="h-10 flex items-center justify-center text-xs border-b">
         {date.toLocaleDateString(undefined, { weekday: "short", day: "2-digit", month: "short" })}
       </div>
@@ -627,79 +683,6 @@ export function WeeklyDailyCalendar() {
 
   return (
     <div className="p-4 md:p-6 space-y-4" style={{ width: '100%', overflowX: 'auto', maxWidth: '100vw' }}>
-      {/* Top horizontal sidebar (fixed) */}
-      <div className="fixed top-0 left-0 w-full bg-[#5985D8] text-white shadow-md z-50">
-        <div className="flex justify-around items-center py-4">
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Monitor health records" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Monitor health records");
-              navigate("/monitor-health-records");
-            }}
-          >
-            Monitor health records
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Diary" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Diary");
-              navigate("/diary");
-            }}
-          >
-            Diary
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Notifications" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Notifications");
-              navigate("/notifications");
-            }}
-          >
-            Notifications
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Schedule Visit" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Schedule Visit");
-              navigate("/register-visit");
-            }}
-          >
-            Schedule Visit
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Feedback" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Feedback");
-              navigate("/feedback");
-            }}
-          >
-            Feedback
-          </button>
-
-          <button
-            type="button"
-            className={`px-4 py-2 font-semibold ${activeButton === "Payment" ? "bg-white text-black" : "hover:bg-[#4773c1]"}`}
-            onClick={() => {
-              setActiveButton("Payment");
-              navigate("/payment");
-            }}
-          >
-            Payment
-          </button>
-        </div>
-      </div>
-
-      {/* spacer to offset fixed top bar height */}
-      <div style={{ height: 64 }} />
 
       {/* Toolbar */}
       <Calendar />
