@@ -43,7 +43,22 @@ const initialPlans = [
     // Add more mock data as needed
 ];
 
-type Plan = typeof initialPlans[0];
+interface DietGroup {
+    conditions?: string[];
+    allergies?: string[];
+}
+
+type Plan = {
+    id: number;
+    mealName: string;
+    calories: number;
+    mealType: string;
+    date: string;
+    assignedResident: string;
+    notes: string;
+    dietGroup?: DietGroup;
+    dietCategory?: string;
+};
 
 const NutritionPlanManagementPage: React.FC = () => {
     const [plans, setPlans] = useState<Plan[]>(initialPlans);
@@ -69,6 +84,17 @@ const NutritionPlanManagementPage: React.FC = () => {
         notes: '',
     });
 
+    const uniqueDietGroups = useMemo<string[]>(() => {
+        const groups = plans.map(p => {
+            const g = p.dietGroup;
+            if (!g) return null;
+            return `${g.conditions?.join(",") || ""}|${g.allergies?.join(",") || ""}`;
+        });
+
+        return Array.from(new Set(groups.filter((g): g is string => g !== null && g !== undefined)));
+    }, [plans]);
+
+
     const dietCategories = [
         "Low Sugar",
         "Low Sodium",
@@ -80,17 +106,53 @@ const NutritionPlanManagementPage: React.FC = () => {
 
     // Filtered and searched plans
     const filteredPlans = useMemo(() => {
-        return plans.filter(plan => {
-            const matchesSearch = plan.mealName.toLowerCase().includes(search.toLowerCase()) ||
-                plan.notes.toLowerCase().includes(search.toLowerCase());
-            const matchesMealType = !mealTypeFilter || plan.mealType === mealTypeFilter;
-            const matchesResident = !residentFilter || plan.assignedResident === residentFilter;
-            const matchesDate = !dateFilter || plan.date === dateFilter;
-            const matchesGroup = !groupFilter || (plan as any).dietGroup?.conditions.includes(groupFilter) || (plan as any).dietGroup?.allergies.includes(groupFilter);
+        const s = search.toLowerCase();
 
-            return matchesSearch && matchesMealType && matchesResident && matchesDate && matchesGroup;
+        return plans.filter(plan => {
+            // Search theo nhiều field
+            const matchesSearch =
+                plan.mealName.toLowerCase().includes(s) ||
+                plan.notes.toLowerCase().includes(s) ||
+                plan.assignedResident.toLowerCase().includes(s);
+
+            // Meal type filter fix all_types
+            const matchesMealType =
+                mealTypeFilter === "" ||
+                mealTypeFilter === "all_types" ||
+                plan.mealType === mealTypeFilter;
+
+            // Resident filter fix all_residents
+            const matchesResident =
+                residentFilter === "" ||
+                residentFilter === "all_residents" ||
+                plan.assignedResident === residentFilter;
+
+            const matchesDate = !dateFilter || plan.date === dateFilter;
+
+            // Diet Group filter fix
+            let matchesGroup = true;
+
+            if (groupFilter && groupFilter !== "all") {
+                const [condStr, allergyStr] = groupFilter.split("|");
+                const condArr = condStr ? condStr.split(",") : [];
+                const allergyArr = allergyStr ? allergyStr.split(",") : [];
+
+                matchesGroup =
+                    condArr.some(c => plan.dietGroup?.conditions?.includes(c)) ||
+                    allergyArr.some(a => plan.dietGroup?.allergies?.includes(a));
+            }
+
+            return (
+                matchesSearch &&
+                matchesMealType &&
+                matchesResident &&
+                matchesDate &&
+                matchesGroup
+            );
         });
     }, [plans, search, mealTypeFilter, residentFilter, dateFilter, groupFilter]);
+
+
     // Paginated plans
     const paginatedPlans = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
@@ -157,7 +219,7 @@ const NutritionPlanManagementPage: React.FC = () => {
 
     return (
         <div className="container mx-auto p-6 space-y-6 min-h-screen">
-            <h1 className="text-3xl font-bold text-gray-800">Nutrition Plan Management</h1>
+            <h1 className="text-3xl font-bold text-blue-800">Nutrition Plan Management</h1>
 
             {/* Filters and Search */}
             <Card className="shadow-sm">
@@ -194,19 +256,23 @@ const NutritionPlanManagementPage: React.FC = () => {
                             </Select>
                         </div>
                         <div>
-                            <Label htmlFor="groupFilter">Diet Group</Label>
+                            <Label>Diet Group</Label>
                             <Select value={groupFilter} onValueChange={setGroupFilter}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select Group" />
+                                    <SelectValue placeholder="All Groups" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all_groups">All Groups</SelectItem>
-                                    {dietCategories.map((g) => (
-                                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                                    <SelectItem value="all">All Groups</SelectItem>
+
+                                    {uniqueDietGroups.map(g => (
+                                        <SelectItem key={g} value={g}>
+                                            {g.replace("|", " + ")}
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+
                         <div>
                             <Label htmlFor="residentFilter">Resident</Label>
                             <Select value={residentFilter} onValueChange={setResidentFilter}>
@@ -325,24 +391,38 @@ const NutritionPlanManagementPage: React.FC = () => {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="text-lg">Meal Name</TableHead>
-                                <TableHead className="text-lg">Calories</TableHead>
-                                <TableHead className="text-lg">Meal Type</TableHead>
-                                <TableHead className="text-lg">Date</TableHead>
-                                <TableHead className="text-lg">Resident</TableHead>
-                                <TableHead className="text-lg">Diet Group</TableHead>
-                                <TableHead className="text-lg">Actions</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Meal Name</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Calories</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Meal Type</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Date</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Resident</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Diet Group</TableHead>
+                                <TableHead className="text-base font-semibold text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {paginatedPlans.map((plan) => (
                                 <TableRow key={plan.id}>
-                                    <TableCell className="text-lg font-medium">{plan.mealName}</TableCell>
-                                    <TableCell className="text-lg">{plan.calories}</TableCell>
-                                    <TableCell className="text-lg">{plan.mealType}</TableCell>
-                                    <TableCell className="text-lg">{plan.date}</TableCell>
-                                    <TableCell className="text-lg">{plan.assignedResident}</TableCell>
-                                    <TableCell className="text-lg">{plan.notes}</TableCell>
+                                    <TableCell className="text-base font-medium text-left">{plan.mealName}</TableCell>
+                                    <TableCell className="text-base text-center">{plan.calories}</TableCell>
+                                    <TableCell className="text-base text-center">{plan.mealType}</TableCell>
+                                    <TableCell className="text-base text-center">{plan.date}</TableCell>
+                                    <TableCell className="text-base text-left">{plan.assignedResident}</TableCell>
+                                    <TableCell className="text-lg">
+                                        <div className="flex flex-wrap gap-1">
+                                            {plan.dietGroup?.conditions?.map((c, i) => (
+                                                <Badge key={`c-${i}`} variant="outline" className="bg-blue-50 text-blue-700">
+                                                    {c}
+                                                </Badge>
+                                            ))}
+                                            {plan.dietGroup?.allergies?.map((a, i) => (
+                                                <Badge key={`a-${i}`} variant="outline" className="bg-red-50 text-red-700">
+                                                    {a}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </TableCell>
+
                                     <TableCell>
                                         <div className="flex space-x-2">
                                             <Button variant="outline" size="sm" onClick={() => handleView(plan)}>

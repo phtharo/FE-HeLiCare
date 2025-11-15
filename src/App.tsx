@@ -44,6 +44,11 @@ import ResidentManagementPage from './admin/resident-manage';
 import StaffManagementPage from './admin/staff_manage';
 import ScheduleActivitiesManagementPage from './admin/schedule-activity';
 import NutritionPlanManagementPage from './admin/nutrition-plan';
+import VisitCheckinAdmin from './admin/visit-qrcheckin';
+import AdminSOSIncidentPage from './admin/sos-incident';
+import AdminReportsAnalyticsPage from './admin/report-analytics';
+import AdminSettingsPage from './admin/system-setting';
+import MedicationCarePlan from './vitalSign/medication';
 
 // Mock API for login
 const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
@@ -93,6 +98,7 @@ export default function App() {
           <Route path="/staff-nutrition" element={<StaffNutrition />} />
           <Route path="/staff-payment" element={<PaymentModuleStaff />} />
           <Route path="/staff-room" element={<RoomBedStaffPage />} />
+          <Route path="/staff-medication-careplan" element={<MedicationCarePlan />} />
           
         </Route>
         <Route path="/resident" element={<Sidebar />}>
@@ -122,6 +128,10 @@ export default function App() {
           <Route path='/admin-staff' element={<StaffManagementPage />} />
           <Route path="/admin-activities" element={<ScheduleActivitiesManagementPage />} />
           <Route path="/admin-nutrition" element={<NutritionPlanManagementPage />} />
+          <Route path="/admin-visit-qrcheckin" element={<VisitCheckinAdmin />} />
+          <Route path="/admin-sos-incident" element={<AdminSOSIncidentPage />} />
+          <Route path="/admin-report-analytics" element={<AdminReportsAnalyticsPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
         </Route>
 
         {/* no side bar */}

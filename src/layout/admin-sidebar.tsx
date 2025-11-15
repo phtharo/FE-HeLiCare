@@ -27,10 +27,10 @@ const sidebarItems = [
   { name: 'Rooms & Beds', path: '/admin-room', icon: Bed },
   { name: 'Activities & Schedules', path: '/admin-activities', icon: Calendar },
   { name: 'Nutrition Plans', path: '/admin-nutrition', icon: Utensils },
-  { name: 'Visits & QR Check-in', path: '/admin/visits', icon: QrCode },
-  { name: 'SOS & Incidents', path: '/admin/sos', icon: AlertTriangle },
+  { name: 'Visits & QR Check-in', path: '/admin-visit-qrcheckin', icon: QrCode },
+  { name: 'SOS & Incidents', path: '/admin-sos-incident', icon: AlertTriangle },
   { name: 'Payments & Pricing', path: '/admin-payment', icon: CreditCard },
-  { name: 'Reports & Analytics', path: '/admin/reports', icon: BarChart3 },
+  { name: 'Reports & Analytics', path: '/admin-report-analytics', icon: BarChart3 },
   // { name: 'AI Suggestions / Risk Alerts', path: '/admin/ai', icon: Brain },
   { name: 'System Settings', path: '/admin/settings', icon: Settings },
 ];
@@ -45,6 +45,7 @@ const AdminLayout: React.FC = () => {
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const handleLogout = () => navigate('/signin');
 
+ 
   return (
     <>
       {/* Background fixed toàn màn hình nhưng không che main */}
@@ -63,21 +64,15 @@ const AdminLayout: React.FC = () => {
 
         {/* Sidebar */}
         <aside
-          className={`
-          fixed md:relative top-0 left-0 h-full bg-white shadow-lg border-r
-          overflow-hidden
-          z-50 transition-all duration-300
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          ${isCollapsed ? 'w-16' : 'w-64'}
-        `}>
+          className={`fixed left-0 top-0 w-60 h-screen bg-white/80 backdrop-blur shadow-lg border-r rounded-r-xl flex flex-col`}>
 
-        <div className="flex items-center justify-between p-2 border-b border-gray-200">
-          {!isCollapsed && <h2 className="text-xl font-bold text-gray-800">HeLiCare Admin</h2>}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          {!isCollapsed && <h2 className="text-2xl font-bold text-[#5985d8]">HeLiCare</h2>}
 
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={toggleCollapse} className="hidden md:flex">
+          <div className="flex items-center space-x-2 text-gray-600">
+            {/* <Button variant="ghost" size="icon" onClick={toggleCollapse} className="hidden md:flex text-gray-600">
               <Menu className="h-5 w-5" />
-            </Button>
+            </Button> */}
             <Button variant="ghost" size="icon" onClick={handleLogout}>
               <LogOut className="h-5 w-5" />
             </Button>
@@ -100,7 +95,7 @@ const AdminLayout: React.FC = () => {
                   to={item.path}
                   className={`
                       flex items-center space-x-3 p-2 rounded-lg transition-colors
-                      ${isActive ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'}
+                      ${isActive ? 'bg-blue-100 text-black' : 'text-gray-700 hover:bg-gray-100'}
                       ${isCollapsed ? 'justify-center' : ''}
                     `}
                   onClick={() => setIsSidebarOpen(false)}
@@ -115,15 +110,15 @@ const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 lg:ml-64">
 
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
-          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-black hover:bg-transparent">
             <Menu className="h-6 w-6" />
           </Button>
           <h1 className="font-bold text-xl">HeLiCare Admin</h1>
-          <Button variant="ghost" size="icon" onClick={handleLogout}>
+          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-black hover:bg-transparent">
             <LogOut className="h-6 w-6" />
           </Button>
         </header>

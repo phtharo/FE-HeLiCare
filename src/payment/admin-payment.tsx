@@ -99,28 +99,51 @@ const PaymentModuleAdmin: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge variant="default" className="text-lg">Paid</Badge>;
+        return <Badge variant="default" className="text-base bg-green-500">Paid</Badge>;
       case 'unpaid':
-        return <Badge variant="secondary" className="text-lg">Unpaid</Badge>;
+        return <Badge variant="secondary" className="text-base bg-yellow-500">Unpaid</Badge>;
       case 'failed':
-        return <Badge variant="destructive" className="text-lg">Failed</Badge>;
+        return <Badge variant="destructive" className="text-base bg-red-500">Failed</Badge>;
       case 'approved':
-        return <Badge variant="default" className="text-lg">Approved</Badge>;
+        return <Badge variant="default" className="text-base bg-blue-500">Approved</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="text-lg">Rejected</Badge>;
+        return <Badge variant="destructive" className="text-base bg-red-500">Rejected</Badge>;
       default:
         return <Badge className="text-lg">Unknown</Badge>;
     }
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <Tabs defaultValue="revenue" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="revenue" className="text-lg">Revenue Summary</TabsTrigger>
-          <TabsTrigger value="prices" className="text-lg">Manage Price List</TabsTrigger>
-          <TabsTrigger value="invoices" className="text-lg">View Invoices</TabsTrigger>
+    <div className="w-full flex flex-col items-center ">
+      <h1 className="text-3xl font-bold text-blue-800 text-center mb-6">
+        Payment Overview
+      </h1>
+      <Tabs defaultValue="revenue" className="w-full max-w-[1100px]">
+        <TabsList
+          className="flex bg-white p-4 rounded-xl shadow-sm gap-2"
+        >
+          <TabsTrigger
+            value="revenue"
+            className="h-10 px-6 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow text-center text-lg"
+          >
+            Revenue Summary
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="prices"
+            className="h-10 px-6 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow text-center text-lg"
+          >
+            Manage Price List
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="invoices"
+            className="h-10 px-6 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow text-center text-lg"
+          >
+            View Invoices
+          </TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="revenue">
           <Card>
@@ -152,7 +175,7 @@ const PaymentModuleAdmin: React.FC = () => {
               <CardTitle className="text-2xl font-bold">Manage Price List</CardTitle>
               <Dialog open={isAddPriceDialogOpen} onOpenChange={setIsAddPriceDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="text-lg">Add New Service</Button>
+                  <Button className="text-lg text-blue-600 ">Add New Service</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -178,7 +201,7 @@ const PaymentModuleAdmin: React.FC = () => {
                         className="text-lg"
                       />
                     </div>
-                    <Button onClick={handleAddPrice} className="w-full text-lg">Add</Button>
+                    <Button onClick={handleAddPrice} className="w-full text-lg bg-blue-600 text-white">Add</Button>
                   </div>
                 </DialogContent>
               </Dialog>
@@ -187,16 +210,16 @@ const PaymentModuleAdmin: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-lg">Service Name</TableHead>
-                    <TableHead className="text-lg">Price (VND)</TableHead>
-                    <TableHead className="text-lg">Actions</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Service Name</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Price (VND)</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {priceList.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="text-lg">{item.serviceName}</TableCell>
-                      <TableCell className="text-lg">{item.price.toLocaleString()}</TableCell>
+                      <TableCell className="text-base ">{item.serviceName}</TableCell>
+                      <TableCell className="text-base font-semibold">{item.price.toLocaleString()}</TableCell>
                       <TableCell className="space-x-2">
                         <Button
                           variant="outline"
@@ -204,7 +227,7 @@ const PaymentModuleAdmin: React.FC = () => {
                             setEditingPrice(item);
                             setIsEditPriceDialogOpen(true);
                           }}
-                          className="text-lg"
+                          className="text-lg bg-gray-200 hover:bg-gray-300"
                         >
                           Edit
                         </Button>
@@ -263,7 +286,7 @@ const PaymentModuleAdmin: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <Label htmlFor="filter" className="text-lg">Filter by Status:</Label>
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-48 text-lg">
+                  <SelectTrigger className="w-48 text-base">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -281,37 +304,37 @@ const PaymentModuleAdmin: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-lg">Service Name</TableHead>
-                    <TableHead className="text-lg">Resident Name</TableHead>
-                    <TableHead className="text-lg">Amount (VND)</TableHead>
-                    <TableHead className="text-lg">VAT (VND)</TableHead>
-                    <TableHead className="text-lg">Total (VND)</TableHead>
-                    <TableHead className="text-lg">Status</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Service Name</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Resident Name</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Amount (VND)</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">VAT (VND)</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Total (VND)</TableHead>
+                    <TableHead className="text-lg font-semibold text-center">Status</TableHead>
                     <TableHead className="text-lg">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredInvoices.map((invoice) => (
                     <TableRow key={invoice.id}>
-                      <TableCell className="text-lg">{invoice.serviceName}</TableCell>
-                      <TableCell className="text-lg">{invoice.residentName}</TableCell>
-                      <TableCell className="text-lg">{invoice.amount.toLocaleString()}</TableCell>
-                      <TableCell className="text-lg">{invoice.vat.toLocaleString()}</TableCell>
-                      <TableCell className="text-lg font-bold">{invoice.total.toLocaleString()}</TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell className="space-x-2">
+                      <TableCell className="text-base">{invoice.serviceName}</TableCell>
+                      <TableCell className="text-base">{invoice.residentName}</TableCell>
+                      <TableCell className="text-base">{invoice.amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-base">{invoice.vat.toLocaleString()}</TableCell>
+                      <TableCell className="text-base font-bold">{invoice.total.toLocaleString()}</TableCell>
+                      <TableCell className="text-base">{getStatusBadge(invoice.status)}</TableCell>
+                      <TableCell className="space-x-2 bg-white p-2 rounded-lg shadow">
                         {invoice.status !== 'approved' && invoice.status !== 'rejected' && (
                           <>
                             <Button
                               onClick={() => handleMarkInvoice(invoice.id, 'approved')}
-                              className="text-lg"
+                              className="text-base bg-green-500 hover:bg-green-600 text-white"
                             >
                               Approve
                             </Button>
                             <Button
                               variant="destructive"
                               onClick={() => handleMarkInvoice(invoice.id, 'rejected')}
-                              className="text-lg"
+                              className="text-base bg-red-500 hover:bg-red-600 text-white"
                             >
                               Reject
                             </Button>

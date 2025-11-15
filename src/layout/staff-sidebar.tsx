@@ -47,7 +47,7 @@ const staffMenu: StaffMenuItem[] = [
       { label: "Resident List", path: "/list-resident", icon: <Users size={20} /> },
       { label: "Resident Profile", path: "/resident-information", icon: <User size={20} /> },
       { label: "Vital Signs Input", path: "/input-vital", icon: <Activity size={20} /> },
-      { label: "Medication & Care Plan", path: "/staff/medication", icon: <Pill size={20} /> },
+      { label: "Medication & Care Plan", path: "/staff-medication-careplan", icon: <Pill size={20} /> },
     ],
   },
   {
@@ -177,7 +177,7 @@ const StaffLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen ">
+    <div className="fixed inset-0 -z-50 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]">
       {/* Sidebar */}
       <aside
         className={`fixed left-0 top-0 z-40 h-screen bg-white shadow-lg rounded-r-3xl transition-all duration-300 ${
