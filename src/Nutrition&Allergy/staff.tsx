@@ -30,6 +30,14 @@ import {
   TableRow,
 } from "../components/ui/table";
 
+const normalizeList = (value: string | string[]): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  return value
+    .split(",")
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
+};
 
 // CONDITION + ALLERGY MAPPING
 const conditionMap: Record<string, string> = {
@@ -312,7 +320,7 @@ const MealLogTable = ({ residents, date, mealType, dishId, onLog }: any) => {
                 {r.name}
                 {conflict && (
                   <span className="text-red-600 ml-2">
-                     Allergy Risk
+                    Allergy Risk
                   </span>
                 )}
               </TableCell>
@@ -365,6 +373,27 @@ const NutritionPage: React.FC = () => {
     setResidents(convertResidents(raw, rooms));
   }, []);
 
+  const saveResident = (form: any) => {
+    const resident = {
+      id: form.id ?? crypto.randomUUID(),
+      fullName: form.fullName.trim(),
+      avatar: form.avatar || "",
+      comorbidities: normalizeList(form.comorbidities),
+      allergies: normalizeList(form.allergies),
+      dietGroupId: form.dietGroupId || undefined,
+    };
+
+    const stored = JSON.parse(localStorage.getItem("residents") || "[]");
+
+    const updated = [
+      ...stored.filter((r: any) => String(r.id) !== String(resident.id)),
+      resident
+    ];
+
+    localStorage.setItem("residents", JSON.stringify(updated));
+    setResidents(updated);
+  };
+
   const groupCounts = mockDietGroups.map((g) => ({
     ...g,
     count: residents.filter((r) => r.dietGroupId === g.id).length,
@@ -382,33 +411,58 @@ const NutritionPage: React.FC = () => {
   );
 
   const assignResident = (id: string, groupId: string) => {
-    setResidents((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, dietGroupId: groupId } : r
-      )
+    const updated = residents.map((r) =>
+      r.id === id ? { ...r, dietGroupId: groupId } : r
     );
+
+    setResidents(updated);
+    localStorage.setItem("residents", JSON.stringify(updated));
   };
 
   const logMeal = (record: any) => {
-    if (!record.mealType || !record.dishId) { alert("Invalid meal record"); return; }
+    if (!record.mealType || !record.dishId) {
+      alert("Invalid meal record");
+      return;
+    }
+
     const resident = residents.find((r) => r.id === record.residentId);
     const item = mockMenuItems.find((m) => m.id === record.dishId);
-
     if (!item) return;
 
+    // Allergy check
     const conflict = resident?.allergies.some((a) =>
       item.allergens.some((al) => al.id === a.id)
     );
 
     if (conflict) {
       const ok = window.confirm(
-        ` ${resident?.name} is allergic to this meal. Continue?`
+        `${resident?.name} is allergic to this meal. Continue?`
       );
       if (!ok) return;
     }
 
-    console.log("Saved Meal:", record);
+    // ------------------------------
+    // ✅ SAVE MEAL LOG TO localStorage
+    // ------------------------------
+    const logs = JSON.parse(localStorage.getItem("mealLogs") || "[]");
+
+    const newLog = {
+      id: crypto.randomUUID(),
+      residentId: record.residentId,
+      date: record.date,
+      mealType: record.mealType,
+      dishId: record.dishId,
+      consumption: record.consumption,
+      timestamp: Date.now(),
+    };
+
+    const updatedLogs = [...logs, newLog];
+    localStorage.setItem("mealLogs", JSON.stringify(updatedLogs));
+
+    console.log("Saved Meal:", newLog);
+    alert("Meal logged!");
   };
+
 
   return (
     <div className="w-full relative">
@@ -493,7 +547,7 @@ const NutritionPage: React.FC = () => {
 
                     {r.allergies.length > 0 && (
                       <p className="text-red-600 text-sm">
-                         Resident has allergies.
+                        Resident has allergies.
                       </p>
                     )}
                   </div>
@@ -552,7 +606,7 @@ const NutritionPage: React.FC = () => {
               </Select>
 
               <Select
-                value={selectedLogGroup?.id}
+                value={selectedLogGroup?.id ?? ""}
                 onValueChange={(val) =>
                   setSelectedLogGroup(mockDietGroups.find((g) => g.id === val) || null)
                 }

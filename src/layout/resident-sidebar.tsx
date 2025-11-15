@@ -25,9 +25,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Home",              icon: Home,          path: "/home" },
-  { label: "My Day",            icon: Calendar,      path: "/resident-schedule" },
-  { label: "Activities",        icon: Users,         path: "/newsfeed" },
-  { label: "Meals & Nutrition", icon: Utensils,      path: "/meals" },
+  { label: "My Day",            icon: Calendar,      path: "/resident/resident-schedule" },
+  { label: "Activities",        icon: Users,         path: "/resident/newsfeed" },
+  { label: "Meals & Nutrition", icon: Utensils,      path: "/resident/resident-nutrition" },
   { label: "My Health",         icon: Heart,         path: "/health" },
   { label: "Family",            icon: MessageCircle, path: "/family" },
   { label: "My Room",           icon: Bed,           path: "/room" },
@@ -52,7 +52,7 @@ export const Sidebar: React.FC = () => {
       />
 
       {/* SIDEBAR FIXED */}
-      <aside className="fixed left-0 top-0 w-64 h-screen bg-white/80 backdrop-blur shadow-lg border-r rounded-r-xl flex flex-col">
+      <aside className="fixed left-0 top-0 w-60 h-screen bg-white/80 backdrop-blur shadow-lg border-r rounded-r-xl flex flex-col">
         {/* Top: logo + resident info */}
         <div className="p-6 text-center">
           <h1 className="text-lg font-bold text-blue-700 mb-4">HeLiCare</h1>

@@ -19,22 +19,25 @@ import {
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
 import { Separator } from '../components/ui/separator';
+import type { FamilyVisit } from '../lib/api';
 
 const navigationItems = [
   { to: '/family/home', label: 'Dashboard / Overview', icon: Home },
   { to: '/family/residents', label: 'My Residents', icon: Users },
   { to: '/family/health', label: 'Health & Care', icon: Heart },
-  { to: '/family-register-visit', label: 'Schedule & Activities', icon: Calendar },
-  { to: '/family/meals', label: 'Meals & Nutrition', icon: Utensils },
+  { to: '/family/family-schedule', label: 'Schedule & Activities', icon: Calendar },
+  { to: '/family/family-nutrition', label: 'Meals & Nutrition', icon: Utensils },
   { to: '/family/room', label: 'Room & Facility', icon: Building },
-  { to: '/family/visits', label: 'Visits', icon: CalendarCheck },
-  { to: '/newsfeed', label: 'Family Diary', icon: BookOpen },
+  // { to: '/family/family-schedule', label: 'Visits', icon: CalendarCheck },
+  { to: '/family/newsfeed', label: 'Resident Diary', icon: BookOpen },
   { to: '/family/notifications', label: 'Notifications', icon: Bell },
   { to: '/family/feedback', label: 'Feedback & Support', icon: MessageSquare },
   { to: '/family/billing', label: 'Billing & Payments', icon: CreditCard },
 ];
 
+
 const FamilySidebar: React.FC = () => {
+  const [visits, setVisits] = useState<FamilyVisit[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const toggleSidebar = () => setIsOpen(!isOpen);
   const familyMemberName = 'John Doe';
@@ -113,7 +116,7 @@ const FamilySidebar: React.FC = () => {
 
         {/* Routed pages */}
         <section className="flex-1 p-6 overflow-y-auto bg-gray-50">
-          <Outlet />
+          <Outlet context={{visits, setVisits}}/>
         </section>
       </main>
     </div>
