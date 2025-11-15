@@ -1,6 +1,6 @@
 // FamilySidebar.tsx
 import React, { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Home,
   Users,
@@ -15,6 +15,7 @@ import {
   CreditCard,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Avatar, AvatarFallback } from '../components/ui/avatar';
@@ -27,7 +28,7 @@ const navigationItems = [
   { to: '/family/health', label: 'Health & Care', icon: Heart },
   { to: '/family/family-schedule', label: 'Schedule & Activities', icon: Calendar },
   { to: '/family/family-nutrition', label: 'Meals & Nutrition', icon: Utensils },
-  { to: '/family/room', label: 'Room & Facility', icon: Building },
+  { to: '/family/family-room', label: 'Room & Facility', icon: Building },
   // { to: '/family/family-schedule', label: 'Visits', icon: CalendarCheck },
   { to: '/family/newsfeed', label: 'Resident Diary', icon: BookOpen },
   { to: '/family/notifications', label: 'Notifications', icon: Bell },
@@ -40,7 +41,12 @@ const FamilySidebar: React.FC = () => {
   const [visits, setVisits] = useState<FamilyVisit[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const toggleSidebar = () => setIsOpen(!isOpen);
+  const navigate = useNavigate();
   const familyMemberName = 'John Doe';
+
+  const handleLogout = () => {
+    navigate('/signin');
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -56,20 +62,30 @@ const FamilySidebar: React.FC = () => {
         </div>
 
         {/* Avatar */}
-        <div className="flex items-center space-x-4 p-4">
-          <Avatar>
-            <AvatarFallback>
-              {familyMemberName
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm font-medium text-gray-900">{familyMemberName}</p>
-            <p className="text-xs text-gray-500">Family Member</p>
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center space-x-4">
+            <Avatar>
+              <AvatarFallback>
+                {familyMemberName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium text-gray-900">{familyMemberName}</p>
+              <p className="text-xs text-gray-500">Family Member</p>
+            </div>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            title="Logout"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
         </div>
 
         <Separator />
@@ -109,9 +125,14 @@ const FamilySidebar: React.FC = () => {
         
         <header className="flex h-16 items-center justify-between border-b bg-white px-4 lg:hidden">
           <h1 className="text-xl font-bold text-gray-900">HeLiCare</h1>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar}>
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
+              <LogOut className="h-6 w-6" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
         </header>
 
         {/* Routed pages */}

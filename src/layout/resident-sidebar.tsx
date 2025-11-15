@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
   { label: "Meals & Nutrition", icon: Utensils,      path: "/resident/resident-nutrition" },
   { label: "My Health",         icon: Heart,         path: "/health" },
   { label: "Family",            icon: MessageCircle, path: "/family" },
-  { label: "My Room",           icon: Bed,           path: "/room" },
+  { label: "My Room",           icon: Bed,           path: "/resident/resident-room" },
   { label: "Notifications",     icon: Bell,          path: "/notifications" },
   { label: "Settings",          icon: Settings,      path: "/settings" },
 ];

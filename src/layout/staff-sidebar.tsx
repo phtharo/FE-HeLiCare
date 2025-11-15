@@ -76,7 +76,7 @@ const staffMenu: StaffMenuItem[] = [
   {
     label: "Rooms & Beds",
     children: [
-      { label: "Room Allocation", path: "/staff/rooms", icon: <Bed size={20} /> },
+      { label: "Room Allocation", path: "/staff-room", icon: <Bed size={20} /> },
       // { label: "Maintenance Tickets", path: "/staff/maintenance", icon: <Wrench size={20} /> },
     ],
   },
@@ -226,7 +226,7 @@ const StaffLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-16' : 'ml-64'}`}>
+      <div className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-10' : 'ml-64'}`}>
         {/* Header với nút hamburger */}
         <header className="flex items-center justify-between px-4 py-1 shadow-sm md:hidden">
           <button

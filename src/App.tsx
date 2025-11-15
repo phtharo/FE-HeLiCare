@@ -31,10 +31,19 @@ import StaffNutrition from './Nutrition&Allergy/staff';
 import CreatePost from './diary/post';
 import ResidentNutrition from './Nutrition&Allergy/resident';
 import FamilyNutrition from './Nutrition&Allergy/family';
-import PaymentModuleFamily from './family/demo';
+import PaymentModuleFamily from './payment/family-payment';
 import PaymentModuleStaff from './payment/staff-payment';
 import PaymentModuleAdmin from './payment/admin-payment';
 import AdminLayout from './layout/admin-sidebar';
+import RoomBedStaffPage from './room-bed/staff-room';
+import RoomBedResidentPage from './room-bed/resident-room';
+import { RoomBedFamilyPage } from './room-bed/family-room';
+import RoomBedAdminPage from './admin/admin-room';
+import AdminDashboardPage from './admin/dashboard';
+import ResidentManagementPage from './admin/resident-manage';
+import StaffManagementPage from './admin/staff_manage';
+import ScheduleActivitiesManagementPage from './admin/schedule-activity';
+import NutritionPlanManagementPage from './admin/nutrition-plan';
 
 // Mock API for login
 const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
@@ -46,6 +55,8 @@ const mockLogin = async (email: string, password: string): Promise<{ role: strin
         resolve({ role: "resident" });
       } else if (email === "family@gmail.com") {
         resolve({ role: "family" });
+      } else if (email === "admin@gmail.com") {
+        resolve({ role: "admin" });
       } else {
         resolve({ role: "unknown" });
       }
@@ -66,6 +77,7 @@ export default function App() {
         <Route path="/signup-verify" element={<SignupVerifyWrapper />} />
         <Route path="/signup-setpassword" element={<SignupSetPasswordWrapper />} />
         <Route path="/forgotpassword-update" element={<ForgotPasswordUpdateWrapper />} />
+
         {/* staff */}
         <Route element={<StaffSidebar />}>
           <Route path="/list-resident" element={<ListResident />} />
@@ -80,6 +92,7 @@ export default function App() {
           <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} />
           <Route path="/staff-nutrition" element={<StaffNutrition />} />
           <Route path="/staff-payment" element={<PaymentModuleStaff />} />
+          <Route path="/staff-room" element={<RoomBedStaffPage />} />
           
         </Route>
         <Route path="/resident" element={<Sidebar />}>
@@ -87,17 +100,28 @@ export default function App() {
           <Route path="newsfeed" element={<Newsfeed />} />
           <Route path="resident-schedule" element={<ResidentSchedule />} />
           <Route path="resident-nutrition" element={<ResidentNutrition />} />
+          <Route path="resident-room" element={<RoomBedResidentPage />} />
         </Route>
+
         <Route path="/family" element={<FamilySidebar />}>
           <Route index element={<Navigate to="newsfeed" replace />} />
           <Route path="newsfeed" element={<Newsfeed />} />
           <Route path="family-schedule" element={<FamilySchedule />} />
           <Route path="family-nutrition" element={<FamilyNutrition />} />
-          <Route path="demo" element={<PaymentModuleFamily />} />
+          <Route path="family-room" element={<RoomBedFamilyPage />} />
+          {/* <Route path="demo" element={<PaymentModuleFamily />} /> */}
+          <Route path="family-payment" element={<PaymentModuleFamily />} />
+
         </Route>
 
         <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/admin-payment" element={<PaymentModuleAdmin />} />
+          <Route path="/admin-room" element={<RoomBedAdminPage />} />
+          <Route path='/admin-resident' element={<ResidentManagementPage />} />
+          <Route path='/admin-staff' element={<StaffManagementPage />} />
+          <Route path="/admin-activities" element={<ScheduleActivitiesManagementPage />} />
+          <Route path="/admin-nutrition" element={<NutritionPlanManagementPage />} />
         </Route>
 
         {/* no side bar */}
@@ -129,6 +153,9 @@ function SigninWrapper() {
       navigate("/resident/newsfeed");
     } else if (response.role === "family") {
       navigate("/family/newsfeed");
+    } 
+    else if (response.role === "admin") {
+      navigate("/admin/dashboard");
     } else {
       alert("Invalid credentials");
     }
