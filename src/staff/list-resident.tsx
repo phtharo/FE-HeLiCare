@@ -91,7 +91,7 @@ export default function ListResident(): React.JSX.Element {
                             <th className="text-left px-0 py-3 black min-w-[200px]">Last vital sign</th>
                             <th className="text-left px-0 py-3 black min-w-[100px]">Diet group</th>
                             <th className="text-left px-0 py-3 black min-w-[120px]">Last alert</th>
-                            <th className="text-left px-0 py-3 black min-w-[150px]">Family's Contact</th> {/* Added column header for family's contact */}
+                            <th className="text-left px-0 py-3 black min-w-[150px]">Family's Contact</th> 
                           </tr>
                         </thead>
                         <tbody>
@@ -103,8 +103,6 @@ export default function ListResident(): React.JSX.Element {
                             >
                               <td className="px-0 py-4 text-gray-800 font-medium text-left">{r.fullName}</td>
                               <td className="px-0 py-4 text-gray-800 text-left">{r.dob}</td>
-
-                              {/* chưa map với room/bed data */}
                               <td className="px-0 py-4 text-gray-800 text-left relative" style={{ minWidth: '120px' }}>
                                 Room 101 / Bed 1
                               </td>
@@ -122,7 +120,7 @@ export default function ListResident(): React.JSX.Element {
                               </td>
                               <td className="px-0 py-4 text-gray-800 text-left">
                                 {r.ec?.name} ({r.ec?.relation}) - {r.ec?.phone || "N/A"}
-                              </td> {/* Added family's contact column data */}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

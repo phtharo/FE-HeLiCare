@@ -262,7 +262,7 @@ export default function VitalInputFormHospital() {
 
   /* -------------------- Render -------------------- */
   return (
-    <div className="relative min-h-screen w-full overflow-hidden -pt-5">
+    <div className="relative min-h-screen w-full overflow-hidden ">
       <div className="fixed inset-0 -z-10 pointer-events-none" style={{ background: BG }}></div>
         <div className="max-w-[1200px] mx-auto bg-white rounded-2xl shadow-lg p-6 lg:p-8 mt-0 ">
 

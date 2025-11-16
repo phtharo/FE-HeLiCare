@@ -309,7 +309,7 @@ const StaffEventManagementPage: React.FC = () => {
   }, [events]);
 
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen p-4">
       <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
       <div className="container max-w-full mx-auto p-4 bg-white rounded-lg border border-gray-200 space-y-6">
         <h1 className="text-2xl font-bold">Staff Event Management</h1>
