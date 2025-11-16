@@ -36,7 +36,7 @@ const staffMenu: StaffMenuItem[] = [
     label: "Resident & Health Records",
     children: [
       { label: "Resident List", path: "/list-resident", icon: <Users size={20} /> },
-      { label: "Resident Profile", path: "/resident-information", icon: <User size={20} /> },
+      { label: "Create Resident", path: "/resident-information", icon: <User size={20} /> },
       { label: "Vital Signs Input", path: "/input-vital", icon: <Activity size={20} /> },
       { label: "Medication & Care Plan", path: "/staff-medication-careplan", icon: <Pill size={20} /> },
     ],

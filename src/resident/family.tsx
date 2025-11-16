@@ -51,8 +51,11 @@ const ResidentFamily: React.FC = () => {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState<boolean>(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState<boolean>(false);
+  const [newMessage, setNewMessage] = useState<string>('');
+  const [isVideoCallDialogOpen, setIsVideoCallDialogOpen] = useState<boolean>(false);
+  const [selectedCallMember, setSelectedCallMember] = useState<string>('');
 
-  const messages: Message[] = [
+  const initialMessages: Message[] = [
     {
       id: '1',
       sender: 'Alice Johnson',
@@ -76,6 +79,8 @@ const ResidentFamily: React.FC = () => {
       content: 'New medication schedule updated.',
     },
   ];
+
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
 
   const visits: Visit[] = [
     {
@@ -122,6 +127,29 @@ const ResidentFamily: React.FC = () => {
     setPurpose('');
   };
 
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    const msg: Message = {
+      id: Date.now().toString(),
+      sender: 'You',
+      timestamp: format(new Date(), 'yyyy-MM-dd hh:mm a'),
+      type: 'text',
+      content: newMessage,
+    };
+    setMessages([...messages, msg]);
+    setNewMessage('');
+  };
+
+  const handleStartVideoCall = () => {
+    if (!selectedCallMember) {
+      alert('Please select a family member to call.');
+      return;
+    }
+    alert(`Starting video call with ${selectedCallMember}`);
+    setIsVideoCallDialogOpen(false);
+    setSelectedCallMember('');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -136,15 +164,45 @@ const ResidentFamily: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl bg-gradient-to-r from-blue-50 to-white min-h-screen">
+    <div className="container mx-auto p-4 max-w-6xl min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-center" style={{ color: '#5985D8' }}>
         Family Module
       </h1>
 
       {/* Family Communication Overview */}
       <Card className="mb-6 shadow-lg rounded-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-100 to-white rounded-t-lg">
-          <CardTitle>Family Communication</CardTitle>
+        <CardHeader className=" rounded-t-lg flex justify-between items-center">
+          <CardTitle></CardTitle>
+          <Dialog open={isVideoCallDialogOpen} onOpenChange={setIsVideoCallDialogOpen}>
+            <DialogTrigger asChild>
+              <Button style={{ backgroundColor: '#5985D8' }}>Video Call</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Start Video Call</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Select Family Member</label>
+                  <Select value={selectedCallMember} onValueChange={setSelectedCallMember}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select member" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {familyMembers.map((member) => (
+                        <SelectItem key={member} value={member}>
+                          {member}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleStartVideoCall} className="w-full" style={{ backgroundColor: '#5985D8' }}>
+                  Start Call
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent className="p-4">
           <ScrollArea className="h-64">
@@ -173,6 +231,17 @@ const ResidentFamily: React.FC = () => {
               </div>
             ))}
           </ScrollArea>
+          <div className="mt-4 flex space-x-2">
+            <Textarea
+              value={newMessage}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="flex-1"
+            />
+            <Button onClick={handleSendMessage} style={{ backgroundColor: '#5985D8' }}>
+              Send
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -282,7 +351,7 @@ const ResidentFamily: React.FC = () => {
       </Card>
 
       {/* Photo & Memory Gallery */}
-      <Card className="mb-6 shadow-lg rounded-lg">
+      {/* <Card className="mb-6 shadow-lg rounded-lg">
         <CardHeader className="bg-gradient-to-r from-blue-100 to-white rounded-t-lg">
           <CardTitle>Photo & Memory Gallery</CardTitle>
         </CardHeader>
@@ -303,10 +372,10 @@ const ResidentFamily: React.FC = () => {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Notifications Panel */}
-      <Card className="shadow-lg rounded-lg">
+      {/* <Card className="shadow-lg rounded-lg">
         <CardHeader className="bg-gradient-to-r from-blue-100 to-white rounded-t-lg">
           <CardTitle>Notifications</CardTitle>
         </CardHeader>
@@ -321,7 +390,7 @@ const ResidentFamily: React.FC = () => {
             ))}
           </ScrollArea>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Photo Preview Dialog */}
       <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>

@@ -1,474 +1,683 @@
-import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Badge } from '../components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../components/ui/pagination';
-import { Textarea } from '../components/ui/textarea';
-import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover"
+import { Calendar } from "../components/ui/calendar"
+import { Calendar as CalendarIcon } from "lucide-react"
 
-// Mock data for nutrition plans
-const initialPlans = [
-    {
-        id: 1,
-        mealName: 'Breakfast - Oatmeal',
-        calories: 300,
-        mealType: 'Breakfast',
-        date: '2023-10-01',
-        assignedResident: 'Nguyen Van A',
-        notes: 'Low sugar, high fiber',
-    },
-    {
-        id: 2,
-        mealName: 'Lunch - Grilled Chicken Salad',
-        calories: 450,
-        mealType: 'Lunch',
-        date: '2023-10-01',
-        assignedResident: 'Tran Thi B',
-        notes: 'Balanced protein and veggies',
-    },
-    {
-        id: 3,
-        mealName: 'Dinner - Baked Salmon',
-        calories: 500,
-        mealType: 'Dinner',
-        date: '2023-10-02',
-        assignedResident: 'Le Van C',
-        notes: 'Omega-3 rich',
-    },
-    // Add more mock data as needed
-];
+import {
+    mapConditions,
+    mapAllergies,
+    detectDietGroup,
+    normalizeList,
+    mockDietGroups,
+    mockMenuItems
+} from "../utils/nutrition-core";
 
-interface DietGroup {
-    conditions?: string[];
-    allergies?: string[];
-}
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from "../components/ui/dialog";
 
-type Plan = {
-    id: number;
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Badge } from "../components/ui/badge";
+
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem
+} from "../components/ui/select";
+
+import {
+    Table,
+    TableRow,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader
+} from "../components/ui/table";
+
+import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious, PaginationLink } from "../components/ui/pagination";
+
+import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
+
+
+// ===========================================================
+// 🎯 PLAN INTERFACE
+// ===========================================================
+interface Plan {
+    id: string;
     mealName: string;
     calories: number;
     mealType: string;
     date: string;
     assignedResident: string;
     notes: string;
-    dietGroup?: DietGroup;
+    dietGroup: {
+        conditions: any[];
+        allergies: any[];
+    };
     dietCategory?: string;
-};
+}
 
-const NutritionPlanManagementPage: React.FC = () => {
-    const [plans, setPlans] = useState<Plan[]>(initialPlans);
-    const [search, setSearch] = useState('');
-    const [mealTypeFilter, setMealTypeFilter] = useState('');
-    const [residentFilter, setResidentFilter] = useState('');
-    const [dateFilter, setDateFilter] = useState('');
-    const [groupFilter, setGroupFilter] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+
+// ===========================================================
+// 📌 MAIN COMPONENT
+// ===========================================================
+const NutritionAdminPage: React.FC = () => {
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [searchText, setSearchText] = useState("");
+    const [mealTypeFilter, setMealTypeFilter] = useState("");
+    const [residentFilter, setResidentFilter] = useState("");
+    const [dateFilter, setDateFilter] = useState("");
+    const [groupFilter, setGroupFilter] = useState("");
+
+    const [openDialog, setOpenDialog] = useState(false);
     const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+
     const [formData, setFormData] = useState({
-        mealName: '',
-        calories: '',
-        mealType: '',
-        date: '',
-        assignedResident: '',
+        mealName: "",
+        calories: "",
+        mealType: "",
+        date: "",
+        assignedResident: "",
         dietGroup: {
             conditions: [] as string[],
             allergies: [] as string[],
         },
-        dietCategory: '',
-        notes: '',
+        notes: "",
     });
 
-    const uniqueDietGroups = useMemo<string[]>(() => {
-        const groups = plans.map(p => {
-            const g = p.dietGroup;
-            if (!g) return null;
-            return `${g.conditions?.join(",") || ""}|${g.allergies?.join(",") || ""}`;
-        });
-
-        return Array.from(new Set(groups.filter((g): g is string => g !== null && g !== undefined)));
-    }, [plans]);
-
-    const dietCategories = [
-        "Low Sugar",
-        "Low Sodium",
-        "Low Carb",
-        "High Protein",
-        "Soft",
-    ];
     const itemsPerPage = 5;
-    // Filtered and searched plans
-    const filteredPlans = useMemo(() => {
-        const s = search.toLowerCase();
+    const [currentPage, setCurrentPage] = useState(1);
 
-        return plans.filter(plan => {
-            // Search theo nhiều field
-            const matchesSearch =
-                plan.mealName.toLowerCase().includes(s) ||
-                plan.notes.toLowerCase().includes(s) ||
-                plan.assignedResident.toLowerCase().includes(s);
+    // do not select past dates
+    const isFutureDate = (dateStr: string) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-            // Meal type filter fix all_types
-            const matchesMealType =
-                mealTypeFilter === "" ||
-                mealTypeFilter === "all_types" ||
-                plan.mealType === mealTypeFilter;
+        const picked = new Date(dateStr);
+        picked.setHours(0, 0, 0, 0);
 
-            // Resident filter fix all_residents
-            const matchesResident =
-                residentFilter === "" ||
-                residentFilter === "all_residents" ||
-                plan.assignedResident === residentFilter;
-
-            const matchesDate = !dateFilter || plan.date === dateFilter;
-
-            // Diet Group filter fix
-            let matchesGroup = true;
-            if (groupFilter && groupFilter !== "all") {
-                const [condStr, allergyStr] = groupFilter.split("|");
-                const condArr = condStr ? condStr.split(",") : [];
-                const allergyArr = allergyStr ? allergyStr.split(",") : [];
-
-                matchesGroup =
-                    condArr.some(c => plan.dietGroup?.conditions?.includes(c)) ||
-                    allergyArr.some(a => plan.dietGroup?.allergies?.includes(a));
-            }
-            return (
-                matchesSearch &&
-                matchesMealType &&
-                matchesResident &&
-                matchesDate &&
-                matchesGroup
-            );
-        });
-    }, [plans, search, mealTypeFilter, residentFilter, dateFilter, groupFilter]);
+        return picked > today;
+    };
 
 
-    // Paginated plans
-    const paginatedPlans = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredPlans.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredPlans, currentPage]);
+    // ===========================================================
+    // LOAD STORAGE
+    // ===========================================================
+    useEffect(() => {
+        const stored = JSON.parse(localStorage.getItem("nutritionPlans") || "[]");
+        setPlans(stored);
+    }, []);
 
-    const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
+    const savePlans = (updated: Plan[]) => {
+        setPlans(updated);
+        localStorage.setItem("nutritionPlans", JSON.stringify(updated));
+    };
 
-    const handleAddEdit = () => {
-        if (editingPlan) {
-            setPlans(prev =>
-                prev.map(plan => (plan.id === editingPlan.id ? { ...plan, ...formData, calories: parseInt(formData.calories) || 0 } : plan))
-            );
-        } else {
-            const newPlan = {
-                id: plans.length + 1,
-                ...formData,
-                calories: parseInt(formData.calories) || 0,
-            };
-            setPlans(prev => [...prev, newPlan]);
-        }
-        setIsDialogOpen(false);
-        setEditingPlan(null);
-        setFormData({
-            mealName: '',
-            calories: '',
-            mealType: '',
-            date: '',
-            assignedResident: '',
+
+    // ===========================================================
+    // AUTO-FILL ALLERGEN WHEN SELECTING A MEAL FROM MENU
+    // ===========================================================
+    const autoFillAllergens = (mealName: string) => {
+        const found = mockMenuItems.find((m) => m.name === mealName);
+        return found?.allergens.map((a) => a.name) || [];
+    };
+
+
+    // ===========================================================
+    // HANDLE SUBMIT
+    // ===========================================================
+    const handleSubmit = () => {
+        const mappedConditions = mapConditions(formData.dietGroup.conditions);
+        const mappedAllergies = mapAllergies(formData.dietGroup.allergies);
+
+        const dietCategory = detectDietGroup(mappedConditions);
+
+        const newPlan: Plan = {
+            id: editingPlan?.id || crypto.randomUUID(),
+            mealName: formData.mealName,
+            calories: Number(formData.calories),
+            mealType: formData.mealType,
+            date: formData.date,
+            assignedResident: formData.assignedResident,
+            notes: formData.notes,
             dietGroup: {
-                conditions: [] as string[],
-                allergies: [] as string[],
+                conditions: mappedConditions,
+                allergies: mappedAllergies,
             },
-            dietCategory: '',
-            notes: '',
+            dietCategory,
+        };
+
+        const updated = editingPlan
+            ? plans.map((p) => (p.id === editingPlan.id ? newPlan : p))
+            : [...plans, newPlan];
+
+        savePlans(updated);
+        setOpenDialog(false);
+        setEditingPlan(null);
+
+        setFormData({
+            mealName: "",
+            calories: "",
+            mealType: "",
+            date: "",
+            assignedResident: "",
+            dietGroup: { conditions: [], allergies: [] },
+            notes: "",
         });
     };
 
+
+    // ===========================================================
+    // EDIT
+    // ===========================================================
     const handleEdit = (plan: Plan) => {
         setEditingPlan(plan);
+
         setFormData({
             mealName: plan.mealName,
-            calories: plan.calories.toString(),
+            calories: String(plan.calories),
             mealType: plan.mealType,
             date: plan.date,
             assignedResident: plan.assignedResident,
-            dietGroup: (plan as any).dietGroup ?? { conditions: [] as string[], allergies: [] as string[] },
-            dietCategory: (plan as any).dietCategory ?? '', // Load giá trị dietCategory
+            dietGroup: {
+                conditions: plan.dietGroup.conditions.map((c) => c.name),
+                allergies: plan.dietGroup.allergies.map((a) => a.name),
+            },
             notes: plan.notes,
         });
-        setIsDialogOpen(true);
+
+        setOpenDialog(true);
     };
 
-    const handleDelete = (id: number) => {
-        setPlans(prev => prev.filter(plan => plan.id !== id));
+
+    // ===========================================================
+    // DELETE
+    // ===========================================================
+    const handleDelete = (id: string) => {
+        const updated = plans.filter((p) => p.id !== id);
+        savePlans(updated);
     };
 
-    const handleView = (plan: Plan) => {
-        alert(`Viewing details for ${plan.mealName}`);
-    };
 
-    const uniqueMealTypes = [...new Set(plans.map(p => p.mealType))];
-    const uniqueResidents = [...new Set(plans.map(p => p.assignedResident))];
+    // ===========================================================
+    // FILTER + SEARCH
+    // ===========================================================
+    const filteredPlans = useMemo(() => {
+        const s = searchText.toLowerCase();
 
+        return plans.filter((p) => {
+            const matchSearch =
+                p.mealName.toLowerCase().includes(s) ||
+                p.notes.toLowerCase().includes(s) ||
+                p.assignedResident.toLowerCase().includes(s);
+
+            const matchMealType =
+                mealTypeFilter === "" ||
+                mealTypeFilter === "all" ||
+                p.mealType === mealTypeFilter;
+
+            const matchResident =
+                residentFilter === "" ||
+                residentFilter === "all" ||
+                p.assignedResident === residentFilter;
+
+            const matchDate =
+                dateFilter === "" ||
+                p.date === dateFilter;
+
+            const matchGroup =
+                groupFilter === "" ||
+                groupFilter === "all" ||
+                p.dietGroup.conditions.some((c) => c.name === groupFilter) ||
+                p.dietGroup.allergies.some((a) => a.name === groupFilter);
+
+            return (
+                matchSearch &&
+                matchMealType &&
+                matchResident &&
+                matchDate &&
+                matchGroup
+            );
+        });
+    }, [plans, searchText, mealTypeFilter, residentFilter, dateFilter, groupFilter]);
+
+
+
+    const paginatedPlans = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredPlans.slice(start, start + itemsPerPage);
+    }, [filteredPlans, currentPage]);
+
+    const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchText, mealTypeFilter, residentFilter, dateFilter, groupFilter]);
+
+
+    // ===========================================================
+    // RENDER
+    // ===========================================================
     return (
-        <div className="container mx-auto p-6 space-y-6 min-h-screen">
-            <h1 className="text-3xl font-bold text-blue-800">Nutrition Plan Management</h1>
+        <div className="container mx-auto p-6 space-y-6">
 
-            {/* Filters and Search */}
-            <Card className="shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-xl">Filters</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <Label htmlFor="search">Search</Label>
-                            <div className="relative">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="search"
-                                    placeholder="Search plans..."
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-8"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <Label htmlFor="mealTypeFilter">Meal Type</Label>
-                            <Select value={mealTypeFilter} onValueChange={setMealTypeFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Types" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all_types">All Types</SelectItem>
-                                    {uniqueMealTypes.map(type => (
-                                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label>Diet Group</Label>
-                            <Select value={groupFilter} onValueChange={setGroupFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Groups" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Groups</SelectItem>
+            {/* <h1 className="text-3xl font-bold">Nutrition Plan Management</h1> */}
 
-                                    {uniqueDietGroups.map(g => (
-                                        <SelectItem key={g} value={g}>
-                                            {g.replace("|", " + ")}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
 
-                        <div>
-                            <Label htmlFor="residentFilter">Resident</Label>
-                            <Select value={residentFilter} onValueChange={setResidentFilter}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Residents" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all_residents">All Residents</SelectItem>
-                                    {uniqueResidents.map(resident => (
-                                        <SelectItem key={resident} value={resident}>{resident}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div>
-                            <Label htmlFor="dateFilter">Date</Label>
-                            <Input
-                                id="dateFilter"
-                                type="date"
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                            />
-                        </div>
+            {/* ==================== SEARCH + FILTER ==================== */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-md shadow-sm bg-white">
+
+                {/* Search */}
+                <div>
+                    <Label>Search</Label>
+                    <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                        <Input
+                            className="pl-8"
+                            placeholder="Search plans..."
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                        />
                     </div>
-                </CardContent>
-            </Card>
+                </div>
 
-            {/* Add Plan Button */}
-            <div className="flex justify-end">
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={() => setEditingPlan(null)} className="bg-blue-600 hover:bg-blue-700">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Nutrition Plan
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-lg">
-                        <DialogHeader>
-                            <DialogTitle>{editingPlan ? 'Edit Nutrition Plan' : 'Add New Nutrition Plan'}</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="mealName">Meal Name</Label>
-                                <Input
-                                    id="mealName"
-                                    value={formData.mealName}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, mealName: e.target.value }))}
+                {/* Meal Type Filter */}
+                <div>
+                    <Label>Meal Type</Label>
+                    <Select value={mealTypeFilter} onValueChange={setMealTypeFilter}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="All Types" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="breakfast">Breakfast</SelectItem>
+                            <SelectItem value="lunch">Lunch</SelectItem>
+                            <SelectItem value="dinner">Dinner</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Resident Filter */}
+                <div>
+                    <Label>Resident</Label>
+                    <Select value={residentFilter} onValueChange={setResidentFilter}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="All Residents" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            {[...new Set(plans.map((p) => p.assignedResident))].map((r) => (
+                                r ? (
+                                    <SelectItem key={r} value={r}>
+                                        {r}
+                                    </SelectItem>
+                                ) : null
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Date Filter */}
+                <div>
+                    <Label>Date</Label>
+                    <div className="relative">
+                        <Input
+                            type="date"
+                            value={dateFilter}
+                            onChange={(e) => setDateFilter(e.target.value)}
+                            className="pr-10"
+                        />
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button
+                                    type="button"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    <CalendarIcon className="h-5 w-5" />
+                                </button>
+                            </PopoverTrigger>
+
+                            <PopoverContent align="end" className="p-0 scale-70">
+                                <Calendar
+                                    mode="single"
+                                    selected={dateFilter ? new Date(dateFilter) : undefined}
+                                    onSelect={(day) => {
+                                        if (!day) return
+                                        const iso = day.toISOString().split("T")[0]
+                                        setDateFilter(iso)
+                                    }}
                                 />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="calories">Calories</Label>
-                                    <Input
-                                        id="calories"
-                                        type="number"
-                                        value={formData.calories}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value }))}
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="mealType">Meal Type</Label>
-                                    <Select value={formData.mealType} onValueChange={(value) => setFormData(prev => ({ ...prev, mealType: value }))}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Breakfast">Breakfast</SelectItem>
-                                            <SelectItem value="Lunch">Lunch</SelectItem>
-                                            <SelectItem value="Dinner">Dinner</SelectItem>
-                                            <SelectItem value="Snack">Snack</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="date">Date</Label>
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                                    />
-                                </div>
-                                <div>
-                                    <Label htmlFor="assignedResident">Assigned Resident</Label>
-                                    <Input
-                                        id="assignedResident"
-                                        value={formData.assignedResident}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, assignedResident: e.target.value }))}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <Label htmlFor="notes">Notes</Label>
-                                <Textarea
-                                    id="notes"
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                                />
-                            </div>
-                            <Button onClick={handleAddEdit} className="w-full bg-blue-600 hover:bg-blue-700">
-                                {editingPlan ? 'Update Plan' : 'Add Plan'}
-                            </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+
+
+                {/* Diet Group Filter */}
+                <div>
+                    <Label>Diet Group</Label>
+                    <Select value={groupFilter} onValueChange={setGroupFilter}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="All" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            {mockDietGroups.map((g) => (
+                                <SelectItem key={g.id} value={g.name}>
+                                    {g.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
             </div>
 
-            {/* Plans Table */}
-            <Card className="shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-xl">Nutrition Plans</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="text-base font-semibold text-center">Meal Name</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Calories</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Meal Type</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Date</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Resident</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Diet Group</TableHead>
-                                <TableHead className="text-base font-semibold text-center">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {paginatedPlans.map((plan) => (
-                                <TableRow key={plan.id}>
-                                    <TableCell className="text-base font-medium text-left">{plan.mealName}</TableCell>
-                                    <TableCell className="text-base text-center">{plan.calories}</TableCell>
-                                    <TableCell className="text-base text-center">{plan.mealType}</TableCell>
-                                    <TableCell className="text-base text-center">{plan.date}</TableCell>
-                                    <TableCell className="text-base text-left">{plan.assignedResident}</TableCell>
-                                    <TableCell className="text-lg">
-                                        <div className="flex flex-wrap gap-1">
-                                            {plan.dietGroup?.conditions?.map((c, i) => (
-                                                <Badge key={`c-${i}`} variant="outline" className="bg-blue-50 text-blue-700">
-                                                    {c}
-                                                </Badge>
-                                            ))}
-                                            {plan.dietGroup?.allergies?.map((a, i) => (
-                                                <Badge key={`a-${i}`} variant="outline" className="bg-red-50 text-red-700">
-                                                    {a}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex space-x-2">
-                                            <Button variant="outline" size="sm" onClick={() => handleView(plan)}>
-                                                <Eye className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleEdit(plan)}>
-                                                <Edit className="h-4 w-4" />
-                                            </Button>
-                                            <Button variant="outline" size="sm" onClick={() => handleDelete(plan.id)}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
 
-            {/* Pagination */}
+
+
+            {/* ==================== ADD BUTTON ==================== */}
+            <div className="flex justify-end">
+                <Button onClick={() => setOpenDialog(true)} className="bg-blue-600">
+                    <Plus className="w-4 h-4 mr-2" /> Add Plan
+                </Button>
+            </div>
+
+
+
+            {/* ==================== TABLE ==================== */}
+            <div className="bg-white rounded-lg shadow-md p-4">
+                <h2 className="text-xl font-bold mb-3">Nutrition Plans</h2>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="text-base font-semibold text-center">Meal</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Calories</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Type</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Date</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Resident</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Diet</TableHead>
+                            <TableHead className="text-base font-semibold text-center">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+
+                    <TableBody>
+                        {paginatedPlans.map((plan) => (
+                            <TableRow key={plan.id}>
+                                <TableCell>{plan.mealName}</TableCell>
+                                <TableCell>{plan.calories}</TableCell>
+                                <TableCell>{plan.mealType}</TableCell>
+                                <TableCell>{plan.date}</TableCell>
+                                <TableCell>{plan.assignedResident}</TableCell>
+
+                                <TableCell>
+                                    <div className="flex items-center justify-center gap-2">
+                                        {plan.dietGroup.conditions.map((c) => (
+                                            <Badge key={c.id} className="bg-blue-100 text-blue-700">
+                                                {c.name}
+                                            </Badge>
+                                        ))}
+                                        {plan.dietGroup.allergies.map((a) => (
+                                            <Badge
+                                                key={a.id}
+                                                variant="destructive"
+                                                className="text-white"
+                                            >
+                                                {a.name}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </TableCell>
+
+                                <TableCell className="flex items-center justify-center gap-2">
+                                    <Button size="sm" onClick={() => alert("Viewing...")}>
+                                        <Eye className="w-4 h-4 text-black" />
+                                    </Button>
+                                    <Button size="sm" onClick={() => handleEdit(plan)}>
+                                        <Edit className="w-4 h-4 text-black" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDelete(plan.id)}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+
+
+            {/* ==================== PAGINATION ==================== */}
             {totalPages > 1 && (
                 <Pagination>
                     <PaginationContent>
-                        <PaginationItem>
-                            <PaginationPrevious
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                            <PaginationItem key={page}>
+
+                        <PaginationPrevious
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        />
+
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <PaginationItem key={i}>
                                 <PaginationLink
-                                    onClick={() => setCurrentPage(page)}
-                                    isActive={page === currentPage}
+                                    isActive={currentPage === i + 1}
+                                    onClick={() => setCurrentPage(i + 1)}
                                 >
-                                    {page}
+                                    {i + 1}
                                 </PaginationLink>
                             </PaginationItem>
                         ))}
-                        <PaginationItem>
-                            <PaginationNext
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                            />
-                        </PaginationItem>
+
+                        <PaginationNext
+                            onClick={() =>
+                                setCurrentPage((p) => Math.min(totalPages, p + 1))
+                            }
+                        />
+
                     </PaginationContent>
                 </Pagination>
             )}
-        </div>
+
+
+
+            {/* ==================== ADD/EDIT DIALOG ==================== */}
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogContent className="max-w-lg max-w-lg overflow-visible">
+                    <DialogHeader>
+                        <DialogTitle>{editingPlan ? "Edit Plan" : "Add Nutrition Plan"}</DialogTitle>
+                        <DialogDescription>
+                            Fill in the nutrition plan information below.
+                        </DialogDescription>
+                    </DialogHeader>
+
+
+                    <div className="space-y-4">
+
+                        <div>
+                            <Label>Meal Name</Label>
+                            <Input
+                                value={formData.mealName}
+                                onChange={(e) => {
+                                    const meal = e.target.value;
+
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        mealName: meal,
+                                        dietGroup: {
+                                            ...prev.dietGroup,
+                                            allergies: autoFillAllergens(meal),
+                                        },
+                                    }));
+                                }}
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Calories</Label>
+                            <Input
+                                type="number"
+                                value={formData.calories}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, calories: e.target.value }))
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Meal Type</Label>
+                            <Select
+                                value={formData.mealType}
+                                onValueChange={(v) =>
+                                    setFormData((prev) => ({ ...prev, mealType: v }))
+                                }
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="breakfast">Breakfast</SelectItem>
+                                    <SelectItem value="lunch">Lunch</SelectItem>
+                                    <SelectItem value="dinner">Dinner</SelectItem>
+                                    <SelectItem value="snack">Snack</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label>Date</Label>
+
+                            <div className="relative">
+                                <Input
+                                    type="date"
+                                    value={formData.date}
+                                    min={new Date().toISOString().split("T")[0]}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+
+                                        if (!isFutureDate(value)) {
+                                            alert("Do not select a past date!");
+                                            return;
+                                        }
+
+                                        setFormData((prev) => ({ ...prev, date: value }));
+                                    }}
+                                    className="pr-10"
+                                />
+
+
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        >
+                                            <CalendarIcon className="h-5 w-5" />
+                                        </button>
+                                    </PopoverTrigger>
+
+                                    <PopoverContent align="end" side="top" sideOffset={6} className="p-0 w-[200px] z-[99999]">
+                                        <div className="scale-[0.75] origin-top-right">
+                                            <Calendar
+                                                mode="single"
+                                                selected={formData.date ? new Date(formData.date) : undefined}
+                                                onSelect={(day) => {
+                                                    if (!day) return;
+
+                                                    const iso = day.toISOString().split("T")[0];
+
+                                                    if (!isFutureDate(iso)) {
+                                                        alert("Do not select a past date!");
+                                                        return; // Do not update input
+                                                    }
+
+                                                    setFormData((prev) => ({ ...prev, date: iso }));
+                                                }}
+                                            />
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </div>
+
+
+                        <div>
+                            <Label>Resident</Label>
+                            <Input
+                                value={formData.assignedResident}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        assignedResident: e.target.value,
+                                    }))
+                                }
+                            />
+                        </div>
+
+                        <div>
+                            <Label>Conditions (comma separated)</Label>
+                            <Input
+                                value={formData.dietGroup.conditions.join(", ")}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        dietGroup: {
+                                            ...prev.dietGroup,
+                                            conditions: normalizeList(e.target.value),
+                                        },
+                                    }))
+                                }
+                            />
+
+                        </div>
+
+                        <div>
+                            <Label>Allergies (comma separated)</Label>
+                            <Input
+                                value={formData.dietGroup.allergies.join(", ")}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({
+                                        ...prev,
+                                        dietGroup: {
+                                            ...prev.dietGroup,
+                                            allergies: normalizeList(e.target.value),
+                                        },
+                                    }))
+                                }
+                            />
+
+                        </div>
+
+                        <div>
+                            <Label>Notes</Label>
+                            <Input
+                                value={formData.notes}
+                                onChange={(e) =>
+                                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                                }
+                            />
+                        </div>
+
+                        <Button onClick={handleSubmit} className="w-full bg-blue-600">
+                            {editingPlan ? "Save Changes" : "Add Plan"}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+        </div >
     );
 };
 
-export default NutritionPlanManagementPage;
+export default NutritionAdminPage;

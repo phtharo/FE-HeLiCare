@@ -250,7 +250,7 @@ const RoomBedStaffPage: React.FC = () => {
                                                         setSelectedResident(resident);
                                                         setIsTransferDialogOpen(true);
                                                     }}
-                                                    className="text-lg"
+                                                    className="text-lg bg-gray-200"
                                                 >
                                                     Transfer
                                                 </Button>

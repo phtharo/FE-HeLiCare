@@ -1,4 +1,13 @@
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route, useNavigate, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const location = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+  return null;
+}
 import { Toaster } from "sonner";
 
 import SignupEmail from './Login/Signup-Email';
@@ -26,10 +35,10 @@ import FamilySidebar from './Sidebar/family-sidebar';
 
 import BookingStatusQR from './event/BookingStatusQR';
 import Newsfeed from './diary/newsfeed';
-import StaffNutrition from './Nutrition&Allergy/staff';
+import StaffNutrition from './Nutrition-Allergy/staff';
 import CreatePost from './diary/post';
-import ResidentNutrition from './Nutrition&Allergy/resident';
-import FamilyNutrition from './Nutrition&Allergy/family';
+import ResidentNutrition from './Nutrition-Allergy/resident';
+import FamilyNutrition from './Nutrition-Allergy/family';
 import PaymentModuleFamily from './payment/family-payment';
 import PaymentModuleStaff from './payment/staff-payment';
 import PaymentModuleAdmin from './payment/admin-payment';
@@ -49,7 +58,6 @@ import AdminReportsAnalyticsPage from './admin/report-analytics';
 import AdminSettingsPage from './admin/system-setting';
 import MedicationCarePlan from './staff/medication';
 import StaffSOSAlerts from './staff/sos';
-import Demo from './vitalSign/demo';
 import StaffDashboard from './staff/dashboard';
 import FamilyDashboard from './family/dashboard';
 import MyResident from './family/my-resident';
@@ -60,6 +68,10 @@ import ResidentMyHealth from './resident/my-health';
 import MyFamily from './resident/family';
 import ResidentNotificationsCenter from './resident/notification';
 import ResidentHomeScreen from './resident/home';
+
+import DemoS from './Nutrition-Allergy/demoS';
+import DemoA from './Nutrition-Allergy/demoA';
+
 // Mock API for login
 const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
   return new Promise((resolve) => {
@@ -82,6 +94,7 @@ const mockLogin = async (email: string, password: string): Promise<{ role: strin
 export default function App() {
   return (
     <div className="App">
+      <ScrollToTop />
       <Toaster richColors position="top-right" />
       <Routes>
         <Route path="/" element={<SigninWrapper />} />
@@ -109,7 +122,7 @@ export default function App() {
           <Route path="/staff-room" element={<RoomBedStaffPage />} />
           <Route path="/staff-medication-careplan" element={<MedicationCarePlan />} />
           <Route path="/sos-alerts" element={<StaffSOSAlerts />} />
-          <Route path="/staff-dashboard" element={<StaffDashboard />} />          
+          <Route path="/staff-dashboard" element={<StaffDashboard />} />
         </Route>
         <Route path="/resident" element={<Sidebar />}>
           <Route index element={<Navigate to="newsfeed" replace />} />
@@ -159,10 +172,12 @@ export default function App() {
         <Route path="/enter-invite-code" element={<EnterInviteCode />} />
         <Route path="/resident-sidebar" element={<Sidebar />} />
         <Route path="/family-sidebar" element={<FamilySidebar />} />
-        <Route path="/demo" element={<Demo />} />
-        
+
         {/* <Route path="/admin-payment" element={<PaymentModuleAdmin />} /> */}
         {/* <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} /> */}
+        <Route path="/demoS" element={<DemoS />} />
+        <Route path="/demoA" element={<DemoA />} />
+
         {/* Set the default route to Signin*/}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
@@ -183,7 +198,7 @@ function SigninWrapper() {
       navigate("/resident/newsfeed");
     } else if (response.role === "family") {
       navigate("/family/newsfeed");
-    } 
+    }
     else if (response.role === "admin") {
       navigate("/admin/dashboard");
     } else {
