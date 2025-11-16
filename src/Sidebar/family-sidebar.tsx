@@ -23,17 +23,17 @@ import { Separator } from '../components/ui/separator';
 import type { FamilyVisit } from '../lib/api';
 
 const navigationItems = [
-  { to: '/family/home', label: 'Dashboard / Overview', icon: Home },
-  { to: '/family/residents', label: 'My Residents', icon: Users },
-  { to: '/family/health', label: 'Health & Care', icon: Heart },
+  { to: '/family/family-dashboard', label: 'Dashboard / Overview', icon: Home },
+  { to: '/family/my-resident', label: 'My Residents', icon: Users },
+  { to: '/family/family-health-care', label: 'Health & Care', icon: Heart },
   { to: '/family/family-schedule', label: 'Schedule & Activities', icon: Calendar },
   { to: '/family/family-nutrition', label: 'Meals & Nutrition', icon: Utensils },
   { to: '/family/family-room', label: 'Room & Facility', icon: Building },
   // { to: '/family/family-schedule', label: 'Visits', icon: CalendarCheck },
   { to: '/family/newsfeed', label: 'Resident Diary', icon: BookOpen },
   { to: '/family/notifications', label: 'Notifications', icon: Bell },
-  { to: '/family/feedback', label: 'Feedback & Support', icon: MessageSquare },
-  { to: '/family/billing', label: 'Billing & Payments', icon: CreditCard },
+  { to: '/family/family-feedback', label: 'Feedback & Support', icon: MessageSquare },
+  { to: '/family/family-payment', label: 'Billing & Payments', icon: CreditCard },
 ];
 
 

@@ -50,10 +50,8 @@ const AdminLayout: React.FC = () => {
     <>
       {/* Background fixed toàn màn hình nhưng không che main */}
       <div className="fixed inset-0 -z-50 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]" />
-
       {/* Layout wrapper */}
       <div className="flex min-h-screen relative z-10">
-
         {/* Overlay mobile */}
         {isSidebarOpen && (
           <div
@@ -61,14 +59,11 @@ const AdminLayout: React.FC = () => {
             onClick={toggleSidebar}
           />
         )}
-
         {/* Sidebar */}
         <aside
           className={`fixed left-0 top-0 w-60 h-screen bg-white/80 backdrop-blur shadow-lg border-r rounded-r-xl flex flex-col`}>
-
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           {!isCollapsed && <h2 className="text-2xl font-bold text-[#5985d8]">HeLiCare</h2>}
-
           <div className="flex items-center space-x-2 text-gray-600">
             {/* <Button variant="ghost" size="icon" onClick={toggleCollapse} className="hidden md:flex text-gray-600">
               <Menu className="h-5 w-5" />
@@ -77,18 +72,15 @@ const AdminLayout: React.FC = () => {
               <LogOut className="h-5 w-5" />
             </Button>
           </div>
-
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
             <X className="h-5 w-5" />
           </Button>
         </div>
-
         <ScrollArea className="h-[calc(100%-56px)]">
           <nav className="p-2 space-y-2">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-
               return (
                 <Link
                   key={item.path}
@@ -111,7 +103,6 @@ const AdminLayout: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 lg:ml-64">
-
         {/* Mobile Header */}
         <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-200">
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="text-black hover:bg-transparent">
@@ -122,12 +113,10 @@ const AdminLayout: React.FC = () => {
             <LogOut className="h-6 w-6" />
           </Button>
         </header>
-
         {/* Page Content */}
         <div className="p-4">
           <Outlet />
         </div>
-
       </main>
     </div >
     </>

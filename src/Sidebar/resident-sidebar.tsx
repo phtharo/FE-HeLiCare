@@ -24,15 +24,15 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: "Home",              icon: Home,          path: "/home" },
+  { label: "Home",              icon: Home,          path: "/resident/home" },
   { label: "My Day",            icon: Calendar,      path: "/resident/resident-schedule" },
   { label: "Activities",        icon: Users,         path: "/resident/newsfeed" },
   { label: "Meals & Nutrition", icon: Utensils,      path: "/resident/resident-nutrition" },
-  { label: "My Health",         icon: Heart,         path: "/health" },
-  { label: "Family",            icon: MessageCircle, path: "/family" },
+  { label: "My Health",         icon: Heart,         path: "/resident/my-health" },
+  { label: "Family",            icon: MessageCircle, path: "/resident/family" },
   { label: "My Room",           icon: Bed,           path: "/resident/resident-room" },
-  { label: "Notifications",     icon: Bell,          path: "/notifications" },
-  { label: "Settings",          icon: Settings,      path: "/settings" },
+  { label: "Notifications",     icon: Bell,          path: "/resident/notifications" },
+  // { label: "Settings",          icon: Settings,      path: "/resident/settings" },
 ];
 
 export const Sidebar: React.FC = () => {

@@ -82,7 +82,7 @@ export default function BookingStatusQR() {
 
             <div className="fixed inset-0 -z-10 bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
 
-            
+
             {/* <button
                 onClick={() => navigate("/staff-manage-event")}
                 className="absolute top-6 left-6 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full px-4 py-2 shadow-md z-20"
@@ -93,7 +93,7 @@ export default function BookingStatusQR() {
             {/* Form center */}
             <div className="flex items-center justify-center min-h-screen px-4">
                 <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md text-center">
-                    
+
                     <div className="text-2xl font-bold text-[#5985D8] mb-2">
                         HeLiCare
                     </div>
@@ -123,6 +123,13 @@ export default function BookingStatusQR() {
                     >
                         Print / Save QR
                     </button>
+                    <button
+                        onClick={() => navigate("/staff-manage-event")}
+                        className="mt-3 w-full py-3 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition print:hidden"
+                    >
+                        ← Back to Schedule
+                    </button>
+
                 </div>
             </div>
         </div>

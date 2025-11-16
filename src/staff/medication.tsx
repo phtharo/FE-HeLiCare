@@ -7,6 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover";
+import { Calendar } from "../components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+
 
 // Mock data
 const mockMedications = [
@@ -127,24 +132,31 @@ const MedicationCarePlan: React.FC = () => {
         <div className="min-h-screen p-6">
             <div className="max-w-6xl mx-auto relative">
                 <h1 className="text-3xl font-bold text-blue-800 mb-8">Medication & Care Plan</h1>
-
-                <Tabs defaultValue="medications" className="w-full">
+                <Tabs defaultValue="medications" className="w-full h-20">
                     {/* chưa click được */}
-                    <TabsList className="!grid grid-cols-2 w-full bg-white p-4 rounded-xl shadow-sm gap-4 relative z-50">
-                        <TabsTrigger value="medications">Medications</TabsTrigger>
-                        <TabsTrigger value="care-plans">Care Plans</TabsTrigger>
+                    <TabsList className="flex bg-white p-4 rounded-xl shadow-sm gap-2">
+                        <TabsTrigger value="medications"
+                            className="h-10 px-6 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow text-center"
+                        >
+                            Medications
+                        </TabsTrigger>
+                        <TabsTrigger value="care-plans"
+                            className="h-10 px-6 rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow text-center"
+                        >
+                            Care Plans
+                        </TabsTrigger>
                     </TabsList>
                     <TabsContent value="medications">
                         <Card className="rounded-xl shadow-sm">
                             <CardHeader className="relative z-0">
-                                <CardTitle>Medications</CardTitle>
+                                <CardTitle className='text-lg font-bold'>Medications</CardTitle>
                                 <Dialog open={isMedicationDialogOpen} onOpenChange={setIsMedicationDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button onClick={resetMedicationForm}>Add Medication</Button>
+                                        <Button className='text-blue-500 text-lg font-semibold' onClick={resetMedicationForm}>Add Medication</Button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>{editingMedication ? 'Edit Medication' : 'Add Medication'}</DialogTitle>
+                                            <DialogTitle  className='text-center font-bold'>{editingMedication ? 'Edit Medication' : 'Add Medication'}</DialogTitle>
                                         </DialogHeader>
                                         <div className="space-y-4">
                                             <div>
@@ -169,14 +181,70 @@ const MedicationCarePlan: React.FC = () => {
                                                 </Select>
                                             </div>
                                             <div>
-                                                <Label htmlFor="medStartDate">Start Date</Label>
-                                                <Input id="medStartDate" type="date" value={medStartDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMedStartDate(e.target.value)} />
+                                                <div className="flex flex-col space-y-1">
+                                                    <Label htmlFor="cpStartDate">Start Date</Label>
+
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    id="cpStartDate"
+                                                                    readOnly
+                                                                    value={cpStartDate ? format(new Date(cpStartDate), "yyyy-MM-dd") : ""}
+                                                                    placeholder="Select date"
+                                                                    className="text-xs cursor-pointer"
+                                                                />
+
+                                                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60 pointer-events-none" />
+                                                            </div>
+                                                        </PopoverTrigger>
+
+                                                        <PopoverContent className="p-0 scale-70" align="start">
+                                                            <Calendar
+                                                                mode="single"
+                                                                selected={cpStartDate ? new Date(cpStartDate) : undefined}
+                                                                onSelect={(date) => {
+                                                                    if (date) setCpStartDate(format(date, "yyyy-MM-dd"));
+                                                                }}
+                                                                initialFocus
+                                                            />
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                </div>
                                             </div>
                                             <div>
-                                                <Label htmlFor="medEndDate">End Date</Label>
-                                                <Input id="medEndDate" type="date" value={medEndDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMedEndDate(e.target.value)} />
+                                                <div className="flex flex-col space-y-1">
+                                                    <Label htmlFor="cpEndDate">End Date</Label>
+
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <div className="relative">
+                                                                <Input
+                                                                    id="cpStartDate"
+                                                                    readOnly
+                                                                    value={cpStartDate ? format(new Date(cpStartDate), "yyyy-MM-dd") : ""}
+                                                                    placeholder="Select date"
+                                                                    className="text-xs cursor-pointer"
+                                                                />
+
+                                                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60 pointer-events-none" />
+                                                            </div>
+                                                        </PopoverTrigger>
+
+                                                        <PopoverContent className="p-0 scale-70" align="start">
+                                                            <Calendar
+                                                                mode="single"
+                                                                selected={cpStartDate ? new Date(cpStartDate) : undefined}
+                                                                onSelect={(date) => {
+                                                                    if (date) setCpStartDate(format(date, "yyyy-MM-dd"));
+                                                                }}
+                                                                initialFocus
+                                                            />
+                                                        </PopoverContent>
+                                                    </Popover>
+                                                </div>
                                             </div>
-                                            <Button onClick={handleAddMedication}>{editingMedication ? 'Update' : 'Add'}</Button>
+                                            <Button className='bg-blue-500' onClick={handleAddMedication}>{editingMedication ? 'Update' : 'Add'}</Button>
                                         </div>
                                     </DialogContent>
                                 </Dialog>
@@ -185,12 +253,12 @@ const MedicationCarePlan: React.FC = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Medication Name</TableHead>
-                                            <TableHead>Dosage</TableHead>
-                                            <TableHead>Frequency</TableHead>
-                                            <TableHead>Start Date</TableHead>
-                                            <TableHead>End Date</TableHead>
-                                            <TableHead>Actions</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>Medication Name</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>Dosage</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>Frequency</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>Start Date</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>End Date</TableHead>
+                                            <TableHead className='text-base text-center font-semibold'>Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -202,8 +270,8 @@ const MedicationCarePlan: React.FC = () => {
                                                 <TableCell>{med.startDate}</TableCell>
                                                 <TableCell>{med.endDate}</TableCell>
                                                 <TableCell>
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditMedication(med)}>Edit</Button>
-                                                    <Button variant="outline" size="sm" onClick={() => handleDeleteMedication(med.id)}>Delete</Button>
+                                                    <Button className='text-blue-700' variant="outline" size="sm" onClick={() => handleEditMedication(med)}>Edit</Button>
+                                                    <Button className='text-gray-700' variant="outline" size="sm" onClick={() => handleDeleteMedication(med.id)}>Delete</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -215,14 +283,14 @@ const MedicationCarePlan: React.FC = () => {
                     <TabsContent value="care-plans">
                         <Card className="rounded-xl shadow-sm">
                             <CardHeader className="relative z-0">
-                                <CardTitle>Care Plans</CardTitle>
+                                <CardTitle className='text-lg font-bold'>Care Plans</CardTitle>
                                 <Dialog open={isCarePlanDialogOpen} onOpenChange={setIsCarePlanDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button onClick={resetCarePlanForm}>Add Care Plan</Button>
+                                        <Button className='text-blue-500 font-semibold text-base' onClick={resetCarePlanForm}>Add Care Plan</Button>
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>{editingCarePlan ? 'Edit Care Plan' : 'Add Care Plan'}</DialogTitle>
+                                            <DialogTitle className='text-center font-bold'>{editingCarePlan ? 'Edit Care Plan' : 'Add Care Plan'}</DialogTitle>
                                         </DialogHeader>
                                         <div className="space-y-4">
                                             <div>
@@ -233,9 +301,35 @@ const MedicationCarePlan: React.FC = () => {
                                                 <Label htmlFor="cpAssignedStaff">Assigned Staff</Label>
                                                 <Input id="cpAssignedStaff" value={cpAssignedStaff} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCpAssignedStaff(e.target.value)} />
                                             </div>
-                                            <div>
+                                            <div className="flex flex-col space-y-1">
                                                 <Label htmlFor="cpStartDate">Start Date</Label>
-                                                <Input id="cpStartDate" type="date" value={cpStartDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCpStartDate(e.target.value)} />
+
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <div className="relative">
+                                                            <Input
+                                                                id="cpStartDate"
+                                                                readOnly
+                                                                value={cpStartDate ? format(new Date(cpStartDate), "yyyy-MM-dd") : ""}
+                                                                placeholder="Select date"
+                                                                className="text-xs cursor-pointer"
+                                                            />
+
+                                                            <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60 pointer-events-none" />
+                                                        </div>
+                                                    </PopoverTrigger>
+
+                                                    <PopoverContent className="p-0 scale-60" side="bottom" align="start" sideOffset={4} collisionPadding={10}>
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={cpStartDate ? new Date(cpStartDate) : undefined}
+                                                            onSelect={(date) => {
+                                                                if (date) setCpStartDate(format(date, "yyyy-MM-dd"));
+                                                            }}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                             <div>
                                                 <Label htmlFor="cpStatus">Status</Label>
@@ -249,7 +343,7 @@ const MedicationCarePlan: React.FC = () => {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <Button onClick={handleAddCarePlan}>{editingCarePlan ? 'Update' : 'Add'}</Button>
+                                            <Button className='bg-blue-500' onClick={handleAddCarePlan}>{editingCarePlan ? 'Update' : 'Add'}</Button>
                                         </div>
                                     </DialogContent>
                                 </Dialog>
@@ -258,11 +352,11 @@ const MedicationCarePlan: React.FC = () => {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Care Plan Title</TableHead>
-                                            <TableHead>Assigned Staff</TableHead>
-                                            <TableHead>Start Date</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Actions</TableHead>
+                                            <TableHead className='text-lg font-semibold text-center'>Care Plan Title</TableHead>
+                                            <TableHead className='text-lg font-semibold text-center'>Assigned Staff</TableHead>
+                                            <TableHead className='text-lg font-semibold text-center'>Start Date</TableHead>
+                                            <TableHead className='text-lg font-semibold text-center'>Status</TableHead>
+                                            <TableHead className='text-lg font-semibold text-center'>Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -272,9 +366,9 @@ const MedicationCarePlan: React.FC = () => {
                                                 <TableCell>{cp.assignedStaff}</TableCell>
                                                 <TableCell>{cp.startDate}</TableCell>
                                                 <TableCell>{cp.status}</TableCell>
-                                                <TableCell>
-                                                    <Button variant="outline" size="sm" onClick={() => handleEditCarePlan(cp)}>Edit</Button>
-                                                    <Button variant="outline" size="sm" onClick={() => handleDeleteCarePlan(cp.id)}>Delete</Button>
+                                                <TableCell >
+                                                    <Button className='text-blue-700' variant="outline" size="sm" onClick={() => handleEditCarePlan(cp)}>Edit</Button>
+                                                    <Button className='text-gray-700' variant="outline" size="sm" onClick={() => handleDeleteCarePlan(cp.id)}>Delete</Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -288,5 +382,4 @@ const MedicationCarePlan: React.FC = () => {
         </div>
     );
 };
-
 export default MedicationCarePlan;

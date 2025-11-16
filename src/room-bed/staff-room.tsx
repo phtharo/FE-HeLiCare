@@ -120,7 +120,7 @@ const RoomBedStaffPage: React.FC = () => {
     const availableOptions = availableRooms.filter(room => room.status === 'Available');
 
     return (
-        <div className="w-full relative">
+        <div className="w-full relative p-0">
             <div className="fixed inset-0 -z-10 pointer-events-none bg-[radial-gradient(120%_120%_at_0%_100%,#dfe9ff_0%,#ffffff_45%,#efd8d3_100%)]"></div>
             <div className="container mx-auto p-6 space-y-6">
                 <h1 className="text-3xl font-bold text-gray-800">Room & Bed Management - Staff</h1>

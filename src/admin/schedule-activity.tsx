@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../components/ui/pagination';
 import { Textarea } from '../components/ui/textarea';
-import { Search, Plus, Edit, Trash2, Calendar } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover"
 import { Calendar as ShadCalendar } from "../components/ui/calendar"
 import { format } from "date-fns"
@@ -194,9 +194,12 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                 <CardHeader>
                     <CardTitle className="text-xl">Filters</CardTitle>
                 </CardHeader>
+
                 <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        <div>
+
+                        {/* Search */}
+                        <div className="flex flex-col space-y-1">
                             <Label htmlFor="search">Search</Label>
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -204,43 +207,30 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                                     id="search"
                                     placeholder="Search activities..."
                                     value={search}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
+                                    onChange={(e) => setSearch(e.target.value)}
                                     className="pl-8"
                                 />
                             </div>
                         </div>
-                        <div className="flex flex-col">
-                            <Label>Date</Label>
 
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <button
-                                        className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-3 py-2 
-                                                    text-left text-sm hover:bg-gray-50 "
-                                    >
-                                        {dateFilter
-                                            ? format(new Date(dateFilter), "yyyy-MM-dd")
-                                            : <span className="text-muted-foreground">Select date</span>
-                                        }
-
-                                        <Calendar className="w-4 h-4 opacity-60" />
-                                    </button>
-                                </PopoverTrigger>
-
-                                <PopoverContent className="p-0 w-auto scale-80 origin-top-left ">
-                                    <ShadCalendar
-                                        mode="single"
-                                        selected={dateFilter ? new Date(dateFilter) : undefined}
-                                        onSelect={(date) => {
-                                            setDateFilter(date ? format(date, "yyyy-MM-dd") : "")
-                                        }}
-                                        initialFocus
-                                    />
-                                </PopoverContent>
-                            </Popover>
+                        {/* Date with Input */}
+                        <div className="flex flex-col space-y-1">
+                            <Label htmlFor="date">Date *</Label>
+                            <Input
+                                id="date"
+                                type="date"
+                                value={formData.date}
+                                onChange={(e) =>
+                                    setFormData(prev => ({ ...prev, date: e.target.value }))
+                                }
+                            />
+                            {formErrors.date && (
+                                <p className="text-red-500 text-sm">{formErrors.date}</p>
+                            )}
                         </div>
 
-                        <div>
+                        {/* Location */}
+                        <div className="flex flex-col space-y-1">
                             <Label htmlFor="roomFilter">Location</Label>
                             <Select value={roomFilter} onValueChange={setRoomFilter}>
                                 <SelectTrigger>
@@ -254,7 +244,9 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div>
+
+                        {/* Category */}
+                        <div className="flex flex-col space-y-1">
                             <Label htmlFor="categoryFilter">Category</Label>
                             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                                 <SelectTrigger>
@@ -268,7 +260,9 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <div>
+
+                        {/* Staff */}
+                        <div className="flex flex-col space-y-1">
                             <Label htmlFor="staffFilter">Staff</Label>
                             <Select value={staffFilter} onValueChange={setStaffFilter}>
                                 <SelectTrigger>
@@ -282,6 +276,7 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                                 </SelectContent>
                             </Select>
                         </div>
+
                     </div>
                 </CardContent>
             </Card>
@@ -333,16 +328,46 @@ const ScheduleActivitiesManagementPage: React.FC = () => {
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
+                                <div className="flex flex-col space-y-1">
                                     <Label htmlFor="date">Date *</Label>
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                                    />
-                                    {formErrors.date && <p className="text-red-500 text-sm">{formErrors.date}</p>}
+
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <div className="relative">
+                                                <Input
+                                                    id="date"
+                                                    readOnly
+                                                    value={formData.date ? format(new Date(formData.date), "yyyy-MM-dd") : ""}
+                                                    placeholder="Select date"
+                                                    className={`cursor-pointer ${formErrors.date ? "border-red-500" : ""}`}
+                                                />
+
+                                                <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60 pointer-events-none" />
+                                            </div>
+                                        </PopoverTrigger>
+
+                                        <PopoverContent className="p-0 w-auto" align="start">
+                                            <ShadCalendar
+                                                mode="single"
+                                                selected={formData.date ? new Date(formData.date) : undefined}
+                                                onSelect={(date) => {
+                                                    if (date) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            date: format(date, "yyyy-MM-dd")
+                                                        }));
+                                                    }
+                                                }}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    {formErrors.date && (
+                                        <p className="text-red-500 text-sm">{formErrors.date}</p>
+                                    )}
                                 </div>
+
                                 <div>
                                     <Label htmlFor="room">Room *</Label>
                                     <Input

@@ -94,7 +94,6 @@ const NutritionPlanManagementPage: React.FC = () => {
         return Array.from(new Set(groups.filter((g): g is string => g !== null && g !== undefined)));
     }, [plans]);
 
-
     const dietCategories = [
         "Low Sugar",
         "Low Sodium",
@@ -103,7 +102,6 @@ const NutritionPlanManagementPage: React.FC = () => {
         "Soft",
     ];
     const itemsPerPage = 5;
-
     // Filtered and searched plans
     const filteredPlans = useMemo(() => {
         const s = search.toLowerCase();
@@ -131,7 +129,6 @@ const NutritionPlanManagementPage: React.FC = () => {
 
             // Diet Group filter fix
             let matchesGroup = true;
-
             if (groupFilter && groupFilter !== "all") {
                 const [condStr, allergyStr] = groupFilter.split("|");
                 const condArr = condStr ? condStr.split(",") : [];
@@ -141,7 +138,6 @@ const NutritionPlanManagementPage: React.FC = () => {
                     condArr.some(c => plan.dietGroup?.conditions?.includes(c)) ||
                     allergyArr.some(a => plan.dietGroup?.allergies?.includes(a));
             }
-
             return (
                 matchesSearch &&
                 matchesMealType &&
@@ -422,7 +418,6 @@ const NutritionPlanManagementPage: React.FC = () => {
                                             ))}
                                         </div>
                                     </TableCell>
-
                                     <TableCell>
                                         <div className="flex space-x-2">
                                             <Button variant="outline" size="sm" onClick={() => handleView(plan)}>
