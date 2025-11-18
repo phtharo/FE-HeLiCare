@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   CreditCard,
   BarChart3,
-  Brain,
+  Pill,
   Settings,
   Menu,
   X,
@@ -31,7 +31,7 @@ const sidebarItems = [
   { name: 'SOS & Incidents', path: '/admin-sos-incident', icon: AlertTriangle },
   { name: 'Payments & Pricing', path: '/admin-payment', icon: CreditCard },
   { name: 'Reports & Analytics', path: '/admin-report-analytics', icon: BarChart3 },
-  // { name: 'AI Suggestions / Risk Alerts', path: '/admin/ai', icon: Brain },
+  { name: 'Medication Management', path: '/medication-management', icon: Pill },
   { name: 'System Settings', path: '/admin/settings', icon: Settings },
 ];
 

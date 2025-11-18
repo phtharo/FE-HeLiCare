@@ -68,9 +68,7 @@ import ResidentMyHealth from './resident/my-health';
 import MyFamily from './resident/family';
 import ResidentNotificationsCenter from './resident/notification';
 import ResidentHomeScreen from './resident/home';
-
-import DemoS from './Nutrition-Allergy/demoS';
-import DemoA from './Nutrition-Allergy/demoA';
+import MedicationManagement from './admin/medication-management';
 
 // Mock API for login
 const mockLogin = async (email: string, password: string): Promise<{ role: string }> => {
@@ -165,6 +163,7 @@ export default function App() {
           <Route path="/admin-sos-incident" element={<AdminSOSIncidentPage />} />
           <Route path="/admin-report-analytics" element={<AdminReportsAnalyticsPage />} />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="/medication-management" element={<MedicationManagement />} />
         </Route>
 
         {/* no side bar */}
@@ -175,12 +174,11 @@ export default function App() {
 
         {/* <Route path="/admin-payment" element={<PaymentModuleAdmin />} /> */}
         {/* <Route path="/booking-status-qr/:id" element={<BookingStatusQR />} /> */}
-        <Route path="/demoS" element={<DemoS />} />
-        <Route path="/demoA" element={<DemoA />} />
 
         {/* Set the default route to Signin*/}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      < ScrollToTop />
     </div>
   );
 }
