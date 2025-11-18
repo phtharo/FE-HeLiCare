@@ -147,29 +147,30 @@ function Calendar() {
 
   const [eventsState, setEventsState] = useState<CareEvent[]>([]);
 
-  // useEffect(() => {
-  //   // Fetch care events from API or shared state
-  //   fetchCareEvents().then((events: CareEvent[]) => setEventsState(events));
-  // }, []);
-
   useEffect(() => {
-  if (resident === "all") {
-    setEventsState([]);     // không fetch → clear event
-    return;
+    if (resident === "all") {
+      setEventsState([]);     
+      return;
+    }
+
+    fetchFamilyVisits(resident)
+      .then((data) => {
+        const mapped = mapFamilyVisitToEvent(data || []);
+        setEventsState(mapped);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch family visits:", err);
+        setEventsState([]);
+      });
+  }, [resident]);
+
+  async function fetchFamilyVisits(resident?: string): Promise<FamilyVisit[]> {
+    if (resident) {
+      console.log("Fetching visits for resident:", resident);
+    }
+    // Mock data, update when backend is ready:
+    return Promise.resolve([]);
   }
-
-  fetchFamilyVisits(resident)
-    .then((data) => {
-      const mapped = mapFamilyVisitToEvent(data || []);
-      setEventsState(mapped);
-    })
-    .catch((err) => {
-      console.error("Failed to fetch family visits:", err);
-      setEventsState([]);
-    });
-}, [resident]);
-
-
 
   function mapFamilyVisitToEvent(visits: any[]): CareEvent[] {
     return visits.map(v => ({
@@ -186,7 +187,6 @@ function Calendar() {
       note: v.notes ?? "",
     }));
   }
-
 
   // FIX
   const handleSubmit = (newVisit: FamilyVisit) => {
