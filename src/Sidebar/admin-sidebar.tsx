@@ -92,8 +92,8 @@ const AdminLayout: React.FC = () => {
                     `}
                   onClick={() => setIsSidebarOpen(false)}
                 >
-                  <Icon className="h-6 w-6" />
-                  {!isCollapsed && <span>{item.name}</span>}
+                  <Icon className="h-6 w-6 flex-shrink-0" />
+                  {!isCollapsed && <span className="text-left whitespace-nowrap">{item.name}</span>}
                 </Link>
               );
             })}
